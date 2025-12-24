@@ -100,6 +100,23 @@
 
 ---
 
+## 設計資料（Architecture）
+
+本システムの設計意図・全体構成については、以下のドキュメントにまとめています。
+
+- [Architecture Overview（設計意図・全体構成）](./docs/architecture.md)
+
+あわせて、業務フローおよびデータ構造を以下の図で整理しています。
+
+### 状態遷移図
+- [管理者 画面遷移図](./docs/diagram/admin-diagram.drawio.png)
+- [会員 画面遷移図](./docs/diagram/member-diagram.drawio.png)
+
+### ER図
+- [ER Diagram（データベース設計）](./docs/diagram/er-diagram.drawio.png)
+
+---
+
 ## 設計上のポイント
 
 - **フロントエンド / バックエンド分離**
