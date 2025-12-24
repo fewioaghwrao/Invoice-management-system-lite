@@ -108,23 +108,26 @@
 
 あわせて、業務フローおよびデータ構造を以下の図で整理しています。
 
-### 状態遷移図
-- [管理者 画面遷移図](./docs/diagram/admin-diagram.drawio.png)
-- [会員 画面遷移図](./docs/diagram/member-diagram.drawio.png)
+### ER図（概要）
+![ER Diagram](./docs/diagram/er-diagram.drawio.png)
 
-### ER図
-- [ER Diagram（データベース設計）](./docs/diagram/er-diagram.drawio.png)
+### 管理者 画面遷移
+![Admin State](./docs/diagram/admin-diagram.drawio.png)
+
+### 会員 画面遷移
+![Member State](./docs/diagram/member-diagram.drawio.png)
+
 
 ---
 
-## 設計上のポイント
+## 技術的設計ポイント（まとめ）
 
-- **フロントエンド / バックエンド分離**
-  - APIベースの設計で責務を明確化
-- **入金合計からステータスを自動判定**
-  - 未入金／一部入金／入金済みをロジックで一元管理
-- **レイヤードアーキテクチャ**
-  - Domain / Application / Infrastructure を分離し、変更に強い構成
+- バックエンドは **Layered Architecture** を採用
+  - Domain / Application / Infrastructure の責務分離
+- ステータスは DB に保持せずロジックで判定
+  - 未入金 / 一部入金 / 入金済み を動的に計算
+- 一部入金対応を可能にするため PAYMENT_ALLOCATIONS を導入
+- フロントエンドは JWT + クライアント側権限制御
 
 ---
 
@@ -152,6 +155,28 @@ invoice-management-system-lite/
 └─ README.md   # 本ドキュメント
 
 ```
+---
+
+## 自動テスト方針（今後の改善）
+
+本システムでは、Lite 版として業務設計・実装を優先しており、
+現時点では自動テストは未実装としています。
+
+今後の改善として、以下の段階的なテスト導入を想定しています。
+
+### バックエンド
+- ドメインロジックの単体テスト
+  - 請求ステータス自動判定ロジック
+  - 入金割当（Payment Allocation）の計算処理
+- API 単体テスト（認証・権限制御含む）
+
+### フロントエンド
+- 重要画面（ログイン・請求書一覧・詳細）の E2E テスト
+- 管理者 / 会員の権限による表示制御確認
+
+テストは「全体網羅」ではなく、
+**業務上の重要度が高いロジックから優先的に追加**する方針としています。
+
 ---
 
 ## 補足
