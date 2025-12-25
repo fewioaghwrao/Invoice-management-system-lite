@@ -128,7 +128,7 @@
   - 本番：Heroku Postgres（マネージドDB）
 
 ### Infrastructure
-- Frontend：Vercel
+- Frontend：Heroku
 - Backend：Heroku
 
 ---
