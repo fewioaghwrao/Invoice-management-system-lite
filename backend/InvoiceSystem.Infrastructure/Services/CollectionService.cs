@@ -14,6 +14,17 @@ namespace InvoiceSystem.Infrastructure.Services
             _db = db;
         }
 
+        private static DateTime EnsureUtc(DateTime dt)
+        {
+            return dt.Kind switch
+            {
+                DateTimeKind.Utc => dt,
+                DateTimeKind.Local => dt.ToUniversalTime(),
+                DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+                _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+            };
+        }
+
         public async Task<InvoiceSnapshotDto> GetSnapshotAsync(long invoiceId)
         {
             var invoice = await _db.Invoices
@@ -71,7 +82,7 @@ namespace InvoiceSystem.Infrastructure.Services
             if (invoice is null) throw new KeyNotFoundException("Invoice not found");
 
             // ① ReminderHistory を追加
-            var now = DateTime.Now; // 国内運用なら Now 推奨（UTCに統一したいならUtcNowに統一）
+            var now = DateTime.UtcNow;
             var entity = new ReminderHistory
             {
                 InvoiceId = invoiceId,
@@ -80,7 +91,9 @@ namespace InvoiceSystem.Infrastructure.Services
                 Tone = req.Tone,               // "SOFT" | "NORMAL" | "STRONG"
                 Title = req.Title,
                 Note = req.Memo,
-                NextActionDate = req.NextActionDate,
+                NextActionDate = req.NextActionDate.HasValue
+                ? EnsureUtc(req.NextActionDate.Value)
+                : null,
                 Subject = req.Subject,
                 BodyText = req.BodyText,
                 CreatedAt = now,
@@ -92,8 +105,8 @@ namespace InvoiceSystem.Infrastructure.Services
             // すでに DUNNING の場合は何もしない
             var code = invoice.Status?.Code;
 
-            if (code is "PENDING" or "PARTIAL")
-            {
+            if (code is "UNPAID" or "PARTIAL" or "OVERDUE")
+                {
                 var dunningStatusId = await _db.InvoiceStatuses
                     .Where(s => s.Code == "DUNNING")
                     .Select(s => (long?)s.Id)

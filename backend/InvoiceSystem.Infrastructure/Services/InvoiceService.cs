@@ -22,6 +22,17 @@ public class InvoiceService : IInvoiceService
         _db = db;
     }
 
+    private static DateTime EnsureUtc(DateTime dt)
+    {
+        return dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+        };
+    }
+
     public async Task<InvoiceDto> CreateAsync(CreateInvoiceCommand command)
     {
         // Member が存在するか簡単にチェック
@@ -37,8 +48,8 @@ public class InvoiceService : IInvoiceService
         {
             MemberId = member.Id,
             InvoiceNumber = command.InvoiceNumber,
-            InvoiceDate = command.InvoiceDate,
-            DueDate = command.DueDate,
+            InvoiceDate = EnsureUtc(command.InvoiceDate),
+            DueDate = EnsureUtc(command.DueDate),
             TotalAmount = command.TotalAmount,
             StatusId = defaultStatus.Id,
             Remarks = command.Remarks,
@@ -89,12 +100,27 @@ public class InvoiceService : IInvoiceService
 
         if (query.FromInvoiceDate.HasValue)
         {
-            q = q.Where(i => i.InvoiceDate >= query.FromInvoiceDate.Value);
+            var fromUtc = EnsureUtc(query.FromInvoiceDate.Value);
+            q = q.Where(i => i.InvoiceDate >= fromUtc);
         }
 
         if (query.ToInvoiceDate.HasValue)
         {
-            q = q.Where(i => i.InvoiceDate <= query.ToInvoiceDate.Value);
+            // 「日付だけ指定」の場合、23:59:59扱いにしたいなら EndOfDay にするのが親切
+            // ただし timestamp with time zone なので “翌日0時未満” が安全
+            var toUtc = EnsureUtc(query.ToInvoiceDate.Value);
+
+            // ✅ to を「その日の終わり」扱いにしたい場合はこれ（推奨）
+            // 例: 2026-01-08 を指定したら 2026-01-09 00:00 未満まで含める
+            if (toUtc.TimeOfDay == TimeSpan.Zero)
+            {
+                var nextDay = toUtc.Date.AddDays(1);
+                q = q.Where(i => i.InvoiceDate < nextDay);
+            }
+            else
+            {
+                q = q.Where(i => i.InvoiceDate <= toUtc);
+            }
         }
 
         if (query.StatusId.HasValue)
@@ -147,8 +173,8 @@ public class InvoiceService : IInvoiceService
         {
             MemberId = member.Id,
             InvoiceNumber = req.InvoiceNumber,
-            InvoiceDate = req.InvoiceDate,
-            DueDate = req.DueDate,
+            InvoiceDate = EnsureUtc(req.InvoiceDate),
+            DueDate = EnsureUtc(req.DueDate),
             StatusId = req.StatusId,
             Remarks = req.Remarks,
             CreatedAt = DateTime.UtcNow,
@@ -333,8 +359,8 @@ public class InvoiceService : IInvoiceService
         // 4. ヘッダ更新
         // =========================
         invoice.InvoiceNumber = req.InvoiceNumber;
-        invoice.InvoiceDate = req.InvoiceDate;
-        invoice.DueDate = req.DueDate;
+        invoice.InvoiceDate = EnsureUtc(req.InvoiceDate);
+        invoice.DueDate = EnsureUtc(req.DueDate);
         invoice.StatusId = req.StatusId;
         invoice.Remarks = req.Remarks;
         invoice.UpdatedAt = DateTime.UtcNow;

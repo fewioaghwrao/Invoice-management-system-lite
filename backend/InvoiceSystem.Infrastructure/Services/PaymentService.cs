@@ -10,6 +10,18 @@ public class PaymentService : IPaymentService
     private readonly AppDbContext _db;
     public PaymentService(AppDbContext db) => _db = db;
 
+    private static DateTime EnsureUtc(DateTime dt)
+    {
+        return dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+        };
+    }
+
+
     public async Task<PaymentListResultDto> SearchAsync(PaymentSearchQuery query)
     {
         // ✅ ここがポイント：最初から IQueryable<Payment> で受ける
@@ -238,7 +250,7 @@ public class PaymentService : IPaymentService
         var payment = new Domain.Entities.Payment
         {
             MemberId = req.MemberId,
-            PaymentDate = req.PaymentDate,
+            PaymentDate = EnsureUtc(req.PaymentDate),
             Amount = req.Amount,
             PayerName = string.IsNullOrWhiteSpace(req.PayerName) ? null : req.PayerName.Trim(),
             Method = string.IsNullOrWhiteSpace(req.Method) ? null : req.Method.Trim(),

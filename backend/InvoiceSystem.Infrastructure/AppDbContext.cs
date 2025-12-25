@@ -1,6 +1,7 @@
 ﻿using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using InvoiceSystem.Application.Common.Interfaces;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace InvoiceSystem.Infrastructure;
 
@@ -25,8 +26,10 @@ public class AppDbContext : DbContext, IAppDbContext
 
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    => base.SaveChangesAsync(cancellationToken);
-
+    {
+        NormalizeDateTimesToUtc();
+        return base.SaveChangesAsync(cancellationToken);
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -155,6 +158,53 @@ public class AppDbContext : DbContext, IAppDbContext
         });
 
     }
+
+public override int SaveChanges()
+{
+    NormalizeDateTimesToUtc();
+    return base.SaveChanges();
+}
+
+
+
+private void NormalizeDateTimesToUtc()
+{
+    foreach (var entry in ChangeTracker.Entries())
+    {
+        if (entry.State is not (EntityState.Added or EntityState.Modified)) continue;
+
+        foreach (var prop in entry.Properties)
+        {
+            // DateTime
+            if (prop.Metadata.ClrType == typeof(DateTime))
+            {
+                var dt = (DateTime)prop.CurrentValue!;
+                prop.CurrentValue = EnsureUtc(dt);
+            }
+
+            // DateTime?
+            if (prop.Metadata.ClrType == typeof(DateTime?))
+            {
+                var dt = (DateTime?)prop.CurrentValue;
+                if (dt.HasValue)
+                    prop.CurrentValue = EnsureUtc(dt.Value);
+            }
+        }
+    }
+
+    static DateTime EnsureUtc(DateTime dt)
+    {
+        return dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc),
+        };
+    }
+}
+
+
 }
 
 
