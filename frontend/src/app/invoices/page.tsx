@@ -152,6 +152,32 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
           className="grid gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md shadow-sky-900/20 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
           method="get"
         >
+{/* ✅ デモ用クイックフィルタ（保存済み検索） */}
+<div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-md shadow-sky-900/10">
+  <span className="text-[11px] text-slate-400 mr-1">デモ：</span>
+
+  <Link
+    href="/invoices?invoiceNumber=FIX&fromInvoiceDate=2025-11-01&toInvoiceDate=2025-12-31"
+    className="inline-flex items-center justify-center min-w-[120px] rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-800 hover:text-sky-200 transition"
+  >
+    FIX（デモ見本）
+  </Link>
+
+  <Link
+    href="/invoices?statusId=4"
+    className="inline-flex items-center justify-center min-w-[120px] rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-1.5 text-xs font-medium text-slate-100 hover:bg-slate-800 hover:text-sky-200 transition"
+  >
+    OVERDUE（期限超過）
+  </Link>
+
+  <Link
+    href="/invoices"
+    className="ml-auto inline-flex items-center justify-center min-w-[80px] rounded-lg border border-slate-600 bg-slate-900 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 whitespace-nowrap"
+  >
+    クリア
+  </Link>
+</div>
+
           {/* 請求番号 */}
           <div className="flex flex-col gap-1">
             <label className="text-[11px] font-medium text-slate-300">

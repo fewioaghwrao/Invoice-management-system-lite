@@ -160,6 +160,19 @@ export default async function AdminDashboardPage({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* ★集計年度バッジ */}
+            <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400">年度</span>
+  <Link href={`/dashboards/admin?year=${selectedYear - 1}`} className="text-xs text-slate-300 hover:text-sky-300">
+    ← {selectedYear - 1}
+  </Link>
+  <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs font-medium text-slate-100">
+    {selectedYear} 年
+  </span>
+  <Link href={`/dashboards/admin?year=${selectedYear + 1}`} className="text-xs text-slate-300 hover:text-sky-300">
+    {selectedYear + 1} →
+  </Link>
+</div>
             <CurrentUserBadge />
             <LogoutButton />
           </div>
