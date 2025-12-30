@@ -39,7 +39,17 @@ public interface IInvoiceService
 
     Task UpdateAsync(long invoiceId, UpdateInvoiceRequestDto req);
 
-    // ★追加：会員（自分）の請求書一覧
+    //会員（自分）の請求書一覧
     Task<MyInvoiceListResultDto> SearchMyInvoicesAsync(MyInvoiceSearchQuery query);
+
+    Task<long?> GetOwnerMemberIdAsync(long invoiceId);
+
+    // ★追加：invoiceNumber で詳細取得
+    Task<InvoiceDetailDto?> GetDetailByNumberAsync(string invoiceNumber);
+
+    // ★追加：invoiceNumber で所有者取得（OwnerOrAdmin判定用）
+    Task<long?> GetOwnerMemberIdByNumberAsync(string invoiceNumber);
+    Task<long?> GetIdByInvoiceNumberAsync(string invoiceNumber);
+
 }
 

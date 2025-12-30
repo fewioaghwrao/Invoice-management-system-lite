@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\Fonts\NotoSansJP-Bold.ttf" />
+    <None Remove="Assets\Fonts\NotoSansJP-Regular.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.20" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
@@ -22,5 +27,14 @@
     <ProjectReference Include="..\InvoiceSystem.Application\InvoiceSystem.Application.csproj" />
     <ProjectReference Include="..\InvoiceSystem.Infrastructure\InvoiceSystem.Infrastructure.csproj" />
   </ItemGroup>
+
+	<ItemGroup>
+		<Content Include="Assets\Fonts\NotoSansJP-Regular.ttf">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+		<Content Include="Assets\Fonts\NotoSansJP-Bold.ttf">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>

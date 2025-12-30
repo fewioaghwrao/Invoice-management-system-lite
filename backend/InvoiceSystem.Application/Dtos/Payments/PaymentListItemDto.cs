@@ -8,7 +8,8 @@ public class PaymentListItemDto
     public decimal Amount { get; set; }
 
     public decimal AllocatedAmount { get; set; } // 割当済合計
-    public List<string> InvoiceIds { get; set; } = new(); // INV-001 等（InvoiceNumber）
+                                                 // public List<string> InvoiceIds { get; set; } = new(); // INV-001 等（InvoiceNumber）
+    public List<InvoiceLinkDto> Invoices { get; set; } = new();
 
     public string Status { get; set; } = null!;  // "UNALLOCATED" | "PARTIAL" | "ALLOCATED"
 }

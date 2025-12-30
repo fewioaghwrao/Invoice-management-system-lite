@@ -1,7 +1,9 @@
-﻿using InvoiceSystem.Domain.Entities;
+﻿using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using InvoiceSystem.Application.Common.Interfaces;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Collections.Generic;
+using System.Security.AccessControl;
 
 namespace InvoiceSystem.Infrastructure;
 
@@ -23,6 +25,8 @@ public class AppDbContext : DbContext, IAppDbContext
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
     public DbSet<InvoiceLine> InvoiceLines => Set<InvoiceLine>();
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -155,6 +159,33 @@ public class AppDbContext : DbContext, IAppDbContext
               .OnDelete(DeleteBehavior.Cascade);
 
             e.HasIndex(x => new { x.InvoiceId, x.LineNo }).IsUnique();
+        });
+
+        modelBuilder.Entity<AuditLog>(e =>
+        {
+            e.ToTable("AuditLogs");
+            e.HasKey(x => x.Id);
+
+            e.Property(x => x.ActorUserId).IsRequired();
+            e.Property(x => x.ActorRole).HasMaxLength(50);
+
+            e.Property(x => x.Action).HasMaxLength(100).IsRequired();
+            e.Property(x => x.Entity).HasMaxLength(100).IsRequired();
+            e.Property(x => x.EntityId).HasMaxLength(50);
+
+            e.Property(x => x.Summary).HasMaxLength(400);
+            e.Property(x => x.DataJson).HasColumnType("text");
+
+            e.Property(x => x.CorrelationId).HasMaxLength(100);
+            e.Property(x => x.IpAddress).HasMaxLength(64);
+            e.Property(x => x.UserAgent).HasMaxLength(300);
+
+            e.Property(x => x.CreatedAt).IsRequired();
+
+            e.HasIndex(x => x.CreatedAt);
+            e.HasIndex(x => new { x.Entity, x.EntityId });
+            e.HasIndex(x => x.Action);
+            e.HasIndex(x => x.ActorUserId);
         });
 
     }

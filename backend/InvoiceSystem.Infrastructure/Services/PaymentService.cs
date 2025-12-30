@@ -1,6 +1,8 @@
-﻿using InvoiceSystem.Application.Dtos.Payments;
+﻿using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Application.Dtos.Payments;
 using InvoiceSystem.Application.Queries.Payments;
 using InvoiceSystem.Application.Services;
+using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace InvoiceSystem.Infrastructure.Services;
@@ -8,7 +10,14 @@ namespace InvoiceSystem.Infrastructure.Services;
 public class PaymentService : IPaymentService
 {
     private readonly AppDbContext _db;
-    public PaymentService(AppDbContext db) => _db = db;
+
+    private readonly IAuditLogger _audit;
+
+    public PaymentService(AppDbContext db, IAuditLogger audit)
+    {
+        _db = db;
+        _audit = audit;
+    }
 
     private static DateTime EnsureUtc(DateTime dt)
     {
@@ -84,10 +93,16 @@ public class PaymentService : IPaymentService
             .Select(p =>
             {
                 var allocated = Allocated(p);
-                var invNos = p.PaymentAllocations
-                    .Select(a => a.Invoice.InvoiceNumber)
-                    .Distinct()
-                    .OrderBy(x => x)
+                var invoices = p.PaymentAllocations
+                    .Select(a => a.Invoice)
+                    .Where(i => i != null)
+                    .Select(i => new InvoiceLinkDto
+                    {
+                        Id = i!.Id,
+                        InvoiceNumber = i.InvoiceNumber
+                    })
+                    .DistinctBy(x => x.Id)
+                    .OrderBy(x => x.InvoiceNumber)
                     .ToList();
 
                 return new PaymentListItemDto
@@ -97,7 +112,7 @@ public class PaymentService : IPaymentService
                     PayerName = p.PayerName,
                     Amount = p.Amount,
                     AllocatedAmount = allocated,
-                    InvoiceIds = invNos,
+                    Invoices = invoices,
                     Status = allocated <= 0 ? "UNALLOCATED"
                           : allocated >= p.Amount ? "ALLOCATED"
                           : "PARTIAL"
@@ -336,6 +351,174 @@ public class PaymentService : IPaymentService
 
         await RecalcInvoiceStatusAsync(invoiceId);
 
+        await _db.SaveChangesAsync();
+    }
+
+
+    public async Task SaveAllocationsAsync(long paymentId, IReadOnlyList<SaveAllocationLine> lines, AuditActor actor)
+    {
+        var payment = await _db.Payments
+            .Include(p => p.PaymentAllocations)
+            .FirstOrDefaultAsync(p => p.Id == paymentId)
+            ?? throw new InvalidOperationException("Payment not found");
+
+        var before = payment.PaymentAllocations
+            .Select(a => new { a.Id, a.InvoiceId, a.Amount })
+            .OrderBy(x => x.InvoiceId)
+            .ToList();
+
+        // 入力バリデーション（あなたの既存）
+        if (lines.Count == 0)
+        {
+            _db.PaymentAllocations.RemoveRange(payment.PaymentAllocations);
+            payment.UpdatedAt = DateTime.UtcNow;
+
+            await _audit.WriteAsync(
+                action: "PAYMENT_ALLOCATIONS_CLEARED",
+                entity: "Payment",
+                entityId: paymentId.ToString(),
+                summary: $"PaymentId={paymentId} allocations cleared.",
+                data: new { paymentId, before },
+                actor: actor
+            );
+
+            var beforeInvoiceIds = before.Select(x => x.InvoiceId).Distinct().ToList();
+            foreach (var invId in beforeInvoiceIds)
+                await RecalcInvoiceStatusAsync(invId);
+
+            await _db.SaveChangesAsync();
+            return;
+        }
+
+        if (lines.Any(x => x.Amount <= 0))
+            throw new InvalidOperationException("Amount must be > 0");
+
+        var sum = lines.Sum(x => x.Amount);
+        if (sum > payment.Amount)
+            throw new InvalidOperationException("Allocated sum exceeds payment amount");
+
+        var invoiceIds = lines.Select(x => x.InvoiceId).Distinct().ToList();
+        var existing = await _db.Invoices
+            .Where(i => invoiceIds.Contains(i.Id))
+            .Select(i => i.Id)
+            .ToListAsync();
+
+        if (existing.Count != invoiceIds.Count)
+            throw new InvalidOperationException("Some invoices not found");
+
+        _db.PaymentAllocations.RemoveRange(payment.PaymentAllocations);
+
+        foreach (var l in lines)
+        {
+            _db.PaymentAllocations.Add(new Domain.Entities.PaymentAllocation
+            {
+                PaymentId = payment.Id,
+                InvoiceId = l.InvoiceId,
+                Amount = l.Amount
+            });
+        }
+
+        payment.UpdatedAt = DateTime.UtcNow;
+
+        await _audit.WriteAsync(
+            action: "PAYMENT_ALLOCATIONS_REPLACED",
+            entity: "Payment",
+            entityId: paymentId.ToString(),
+            summary: $"PaymentId={paymentId} allocations replaced.",
+            data: new
+            {
+                paymentId,
+                before,
+                after = lines.Select(x => new { x.InvoiceId, x.Amount }).OrderBy(x => x.InvoiceId).ToList()
+            },
+            actor: actor
+        );
+
+        var affected = before.Select(x => x.InvoiceId)
+            .Concat(invoiceIds)
+            .Distinct()
+            .ToList();
+
+        foreach (var invId in affected)
+            await RecalcInvoiceStatusAsync(invId);
+
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task<long> AddAllocationAsync(long paymentId, long invoiceId, decimal amount, AuditActor actor)
+    {
+        if (paymentId <= 0) throw new InvalidOperationException("PaymentId is required");
+        if (invoiceId <= 0) throw new InvalidOperationException("InvoiceId is required");
+        if (amount <= 0) throw new InvalidOperationException("Amount must be > 0");
+
+        var payment = await _db.Payments
+            .Include(p => p.PaymentAllocations)
+            .FirstOrDefaultAsync(p => p.Id == paymentId)
+            ?? throw new InvalidOperationException("Payment not found");
+
+        var invoiceExists = await _db.Invoices.AnyAsync(i => i.Id == invoiceId);
+        if (!invoiceExists) throw new InvalidOperationException("Invoice not found");
+
+        if (payment.PaymentAllocations.Any(a => a.InvoiceId == invoiceId))
+            throw new InvalidOperationException("This invoice is already allocated for this payment");
+
+        var allocated = payment.PaymentAllocations.Sum(a => a.Amount);
+        var remaining = payment.Amount - allocated;
+        if (amount > remaining)
+            throw new InvalidOperationException($"Allocation exceeds remaining amount. Remaining={remaining}");
+
+        var alloc = new Domain.Entities.PaymentAllocation
+        {
+            PaymentId = paymentId,
+            InvoiceId = invoiceId,
+            Amount = amount
+        };
+
+        _db.PaymentAllocations.Add(alloc);
+        payment.UpdatedAt = DateTime.UtcNow;
+
+        await _audit.WriteAsync(
+            action: "PAYMENT_ALLOCATION_ADDED",
+            entity: "PaymentAllocation",
+            entityId: "(new)",
+            summary: $"PaymentId={paymentId} -> InvoiceId={invoiceId} Amount={amount}",
+            data: new { paymentId, invoiceId, amount },
+            actor: actor
+        );
+
+        await RecalcInvoiceStatusAsync(invoiceId);
+        await _db.SaveChangesAsync();
+
+        return alloc.Id;
+    }
+
+    public async Task DeleteAllocationAsync(long paymentId, long allocationId, AuditActor actor)
+    {
+        if (paymentId <= 0) throw new InvalidOperationException("PaymentId is required");
+        if (allocationId <= 0) throw new InvalidOperationException("AllocationId is required");
+
+        var alloc = await _db.PaymentAllocations
+            .FirstOrDefaultAsync(a => a.Id == allocationId && a.PaymentId == paymentId)
+            ?? throw new InvalidOperationException("Allocation not found");
+
+        var invoiceId = alloc.InvoiceId;
+        var amount = alloc.Amount;
+
+        _db.PaymentAllocations.Remove(alloc);
+
+        var payment = await _db.Payments.FirstOrDefaultAsync(p => p.Id == paymentId);
+        if (payment is not null) payment.UpdatedAt = DateTime.UtcNow;
+
+        await _audit.WriteAsync(
+            action: "PAYMENT_ALLOCATION_DELETED",
+            entity: "PaymentAllocation",
+            entityId: allocationId.ToString(),
+            summary: $"AllocationId={allocationId} deleted. PaymentId={paymentId} InvoiceId={invoiceId} Amount={amount}",
+            data: new { allocationId, paymentId, invoiceId, amount },
+            actor: actor
+        );
+
+        await RecalcInvoiceStatusAsync(invoiceId);
         await _db.SaveChangesAsync();
     }
 

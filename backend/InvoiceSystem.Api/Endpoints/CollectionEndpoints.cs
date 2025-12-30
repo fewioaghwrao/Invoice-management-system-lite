@@ -9,7 +9,9 @@ public static class CollectionEndpoints
     public static IEndpointRouteBuilder MapCollectionEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/collections")
-            .WithTags("Collections");
+            .WithTags("Collections")
+            .RequireAuthorization("AdminOnly");
+
 
         group.MapGet("/{invoiceId:long}/snapshot",
             async (long invoiceId, [FromServices] ICollectionService svc) =>

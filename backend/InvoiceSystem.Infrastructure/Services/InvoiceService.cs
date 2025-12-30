@@ -559,6 +559,27 @@ public class InvoiceService : IInvoiceService
     }
 
 
+    public async Task<long?> GetOwnerMemberIdAsync(long invoiceId)
+    {
+        return await _db.Invoices
+            .AsNoTracking()
+            .Where(x => x.Id == invoiceId)
+            .Select(x => (long?)x.MemberId)
+            .FirstOrDefaultAsync();
+    }
+
+
+    public async Task<long?> GetIdByInvoiceNumberAsync(string invoiceNumber)
+    {
+        var num = (invoiceNumber ?? "").Trim();
+        return await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.InvoiceNumber == num)
+            .Select(i => (long?)i.Id)
+            .FirstOrDefaultAsync();
+    }
+
+
     // --------------------------
     // private mapping helpers
     // --------------------------
@@ -607,6 +628,102 @@ public class InvoiceService : IInvoiceService
         return document.GeneratePdf();
     }
 
+    public async Task<InvoiceDetailDto?> GetDetailByNumberAsync(string invoiceNumber)
+    {
+        if (string.IsNullOrWhiteSpace(invoiceNumber)) return null;
+
+        var num = invoiceNumber.Trim();
+
+        var invoice = await _db.Invoices
+            .Include(i => i.Member)
+            .Include(i => i.Status)
+            .Include(i => i.Lines)
+            .Include(i => i.PaymentAllocations)
+                .ThenInclude(pa => pa.Payment)
+            .Include(i => i.ReminderHistories)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.InvoiceNumber == num);
+
+        if (invoice is null) return null;
+
+        var paidAmount = invoice.PaymentAllocations.Sum(x => x.Amount);
+        var remaining = invoice.TotalAmount - paidAmount;
+
+        return new InvoiceDetailDto
+        {
+            Id = invoice.Id,
+            MemberId = invoice.MemberId,
+            MemberName = invoice.Member.Name,
+
+            InvoiceNumber = invoice.InvoiceNumber,
+            InvoiceDate = invoice.InvoiceDate,
+            DueDate = invoice.DueDate,
+
+            TotalAmount = invoice.TotalAmount,
+            PaidAmount = paidAmount,
+            RemainingAmount = remaining,
+
+            StatusId = invoice.StatusId,
+            StatusName = invoice.Status.Name,
+
+            PdfPath = invoice.PdfPath,
+            Remarks = invoice.Remarks,
+            CreatedAt = invoice.CreatedAt,
+
+            Lines = invoice.Lines
+                .OrderBy(x => x.LineNo)
+                .Select(x => new InvoiceLineDto
+                {
+                    Id = x.Id,
+                    LineNo = x.LineNo,
+                    Name = x.Name,
+                    Qty = x.Qty,
+                    UnitPrice = x.UnitPrice
+                })
+                .ToList(),
+
+            Allocations = invoice.PaymentAllocations
+                .OrderByDescending(a => a.Payment.PaymentDate)
+                .ThenByDescending(a => a.PaymentId)
+                .Select(a => new InvoicePaymentAllocationDto
+                {
+                    PaymentId = a.PaymentId,
+                    PaymentDate = a.Payment.PaymentDate,
+                    AllocatedAmount = a.Amount,
+                    PayerName = a.Payment.PayerName,
+                    Method = a.Payment.Method,
+                    ImportBatchId = a.Payment.ImportBatchId
+                })
+                .ToList(),
+
+            Reminders = invoice.ReminderHistories
+                .OrderByDescending(r => r.RemindedAt)
+                .ThenByDescending(r => r.Id)
+                .Select(r => new InvoiceReminderHistoryDto
+                {
+                    Id = r.Id,
+                    RemindedAt = r.RemindedAt,
+                    Method = r.Method,
+                    Note = r.Note
+                })
+                .ToList()
+        };
+    }
+
+    public async Task<long?> GetOwnerMemberIdByNumberAsync(string invoiceNumber)
+    {
+        if (string.IsNullOrWhiteSpace(invoiceNumber)) return null;
+
+        var num = invoiceNumber.Trim();
+
+        return await _db.Invoices
+            .AsNoTracking()
+            .Where(x => x.InvoiceNumber == num)
+            .Select(x => (long?)x.MemberId)
+            .FirstOrDefaultAsync();
+    }
+
+
     // =========================
     // PDF Document
     // =========================
@@ -640,8 +757,10 @@ public class InvoiceService : IInvoiceService
                 page.Size(PageSizes.A4);
                 page.Margin(28);
                 page.PageColor(Colors.White);
-                page.DefaultTextStyle(x => x.FontSize(10));
-
+                page.DefaultTextStyle(x => x
+                    .FontFamily("Noto Sans JP")
+                    .FontSize(10)
+                );
                 page.Header().Element(ComposeHeader);
                 page.Content().Element(ComposeContent);
                 page.Footer().AlignCenter().Text(t =>

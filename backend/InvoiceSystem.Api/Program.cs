@@ -14,10 +14,53 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using System.Text;
+using Microsoft.OpenApi.Models;
+using QuestPDF.Drawing;
+using QuestPDF.Infrastructure;
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
+// ★起動時にフォント登録（必須）
+var fontRegularPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "NotoSansJP-Regular.ttf");
+var fontBoldPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "NotoSansJP-Bold.ttf");
+
+FontManager.RegisterFont(File.OpenRead(fontRegularPath));
+FontManager.RegisterFont(File.OpenRead(fontBoldPath));
+
 var builder = WebApplication.CreateBuilder(args);
+
+// ================================
+// PDF用 日本語フォント登録（重要）
+// ================================
+RegisterPdfFonts();
+
+static void RegisterPdfFonts()
+{
+    var baseDir = AppContext.BaseDirectory;
+
+    var regularPath = Path.Combine(baseDir, "Assets", "Fonts", "NotoSansJP-Regular.ttf");
+    var boldPath = Path.Combine(baseDir, "Assets", "Fonts", "NotoSansJP-Bold.ttf");
+
+    if (File.Exists(regularPath))
+    {
+        FontManager.RegisterFont(File.OpenRead(regularPath));
+        Console.WriteLine($"[PDF] Font registered: {regularPath}");
+    }
+    else
+    {
+        Console.WriteLine($"[PDF] Font NOT found: {regularPath}");
+    }
+
+    if (File.Exists(boldPath))
+    {
+        FontManager.RegisterFont(File.OpenRead(boldPath));
+        Console.WriteLine($"[PDF] Font registered: {boldPath}");
+    }
+    else
+    {
+        Console.WriteLine($"[PDF] Font NOT found: {boldPath} (optional)");
+    }
+}
 
 // CORS
 var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
@@ -52,7 +95,41 @@ builder.Services.AddCors(options =>
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "InvoiceSystem.Api",
+        Version = "v1"
+    });
+
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Bearer {token}"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 
 // DbContext (Postgres + Heroku DATABASE_URL 対応)
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -122,6 +199,12 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("MemberOnly", p => p.RequireRole("Member"));
 });
 
+// Audit Logger
+builder.Services.AddScoped<IAuditLogger, AuditLogger>();
+
+// Admin Operation Log Service
+builder.Services.AddScoped<IAdminOperationLogService, AdminOperationLogService>();
+
 var app = builder.Build();
 
 // 起動時：Migrate + Seed
@@ -169,6 +252,8 @@ app.MapAuthEndpoints();
 app.MapSalesEndpoints();
 app.MapAdminEndpoints();
 app.MapMyAccountEndpoints();
+app.MapAdminOperationLogEndpoints();
+
 
 app.MapGet("/health", () => "OK");
 
@@ -310,11 +395,11 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
     var stPartial = MustGetStatus(context, "PARTIAL");
     var stPaid = MustGetStatus(context, "PAID");
     var stOverdue = MustGetStatus(context, "OVERDUE");
-    var stDunning = MustGetStatus(context, "DUNNING"); // 今回は作るだけで未使用でもOK
+    var stDunning = MustGetStatus(context, "DUNNING"); // 今回は作るだけで未使用
 
     // -----------------------------
-    // Helper: Invoice + Lines (idempotent by InvoiceNumber) ※あなたの既存のままでOK
-    // Helper: Payment (idempotent by MemberId + PaymentDate + Amount) ※既存のままでOK
+    // Helper: Invoice + Lines (idempotent by InvoiceNumber)
+    // Helper: Payment (idempotent by MemberId + PaymentDate + Amount) 
     // Helper: Allocation ※既存のままでOK
     // -----------------------------
     Invoice UpsertInvoice(
@@ -640,6 +725,77 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
     }
 
     context.SaveChanges();
+
+    // ==========================================================
+    // ⑤ AuditLog（管理者トップ表示用：直近5件）
+    //    2026-01-07〜08（UTC）
+    // ==========================================================
+
+    // すでに AuditLog が入っているなら何もしない（二重防止）
+    if (!context.AuditLogs.Any())
+    {
+        var t1 = new DateTime(2026, 1, 7, 9, 30, 0, DateTimeKind.Utc);
+        var t2 = new DateTime(2026, 1, 7, 11, 15, 0, DateTimeKind.Utc);
+        var t3 = new DateTime(2026, 1, 8, 9, 10, 0, DateTimeKind.Utc);
+        var t4 = new DateTime(2026, 1, 8, 10, 45, 0, DateTimeKind.Utc);
+        var t5 = new DateTime(2026, 1, 8, 14, 20, 0, DateTimeKind.Utc);
+
+        context.AuditLogs.AddRange(
+            new AuditLog
+            {
+                ActorUserId = admin.Id,
+                ActorRole = "Admin",
+                Action = "PAYMENT_CREATED",
+                Entity = "PAYMENT",
+                EntityId = "2026-01-M1-001",
+                Summary = "入金を登録しました（手動登録）",
+                CreatedAt = t1
+            },
+            new AuditLog
+            {
+                ActorUserId = admin.Id,
+                ActorRole = "Admin",
+                Action = "PAYMENT_ALLOCATION_ADDED",
+                Entity = "INVOICE",
+                EntityId = "INV-2025-12-FIX-M1-001",
+                Summary = "請求書に入金を割り当てました",
+                CreatedAt = t2
+            },
+            new AuditLog
+            {
+                ActorUserId = admin.Id,
+                ActorRole = "Admin",
+                Action = "PAYMENT_ALLOCATIONS_REPLACED",
+                Entity = "PAYMENT",
+                EntityId = "2026-01-M2-001",
+                Summary = "入金割当を保存しました（再割当）",
+                CreatedAt = t3
+            },
+            new AuditLog
+            {
+                ActorUserId = admin.Id,
+                ActorRole = "Admin",
+                Action = "DUNNING_LOG_CREATED",
+                Entity = "INVOICE",
+                EntityId = "INV-2025-11-FIX-M4-002-DUNNING",
+                Summary = "催促履歴を追加しました",
+                CreatedAt = t4
+            },
+            new AuditLog
+            {
+                ActorUserId = admin.Id,
+                ActorRole = "Admin",
+                Action = "INVOICE_STATUS_UPDATED",
+                Entity = "INVOICE",
+                EntityId = "INV-2025-11-FIX-M3-001",
+                Summary = "期限超過のためステータスを更新しました",
+                CreatedAt = t5
+            }
+        );
+
+        context.SaveChanges();
+    }
+
 }
 
 

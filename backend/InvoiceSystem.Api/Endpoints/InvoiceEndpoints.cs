@@ -3,6 +3,8 @@ using InvoiceSystem.Application.Dtos.Invoices;
 using InvoiceSystem.Application.Queries.Invoices;
 using InvoiceSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 namespace InvoiceSystem.Api.Endpoints;
 
@@ -11,26 +13,24 @@ public static class InvoiceEndpoints
     public static IEndpointRouteBuilder MapInvoiceEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/invoices")
-            .WithTags("Invoices");
+            .WithTags("Invoices")
+            .RequireAuthorization(); // ★ログイン必須
 
+        // ---------------------------
+        // AdminOnly（全件操作になり得るもの）
+        // ---------------------------
 
-         // 請求書作成（ヘッダ＋明細）
-        group.MapPost("/", async(
-         [FromBody] UpdateInvoiceRequestDto req,
-        IInvoiceService service) =>
-        { 
-            var result = await service.CreateWithLinesAsync(req);
-                 return Results.Created($"/api/invoices/{result.Id}", result);
-             });
-
-        // 請求書詳細取得
-        group.MapGet("/{id:long}", async (long id, IInvoiceService service) =>
+        // 請求書作成（ヘッダ＋明細）※Adminのみ推奨
+        group.MapPost("/", async (
+            [FromBody] UpdateInvoiceRequestDto req,
+            IInvoiceService service) =>
         {
-            var invoice = await service.GetDetailByIdAsync(id);
-            return invoice is null ? Results.NotFound() : Results.Ok(invoice);
-        });
+            var result = await service.CreateWithLinesAsync(req);
+            return Results.Created($"/api/invoices/{result.Id}", result);
+        })
+        .RequireAuthorization("AdminOnly");
 
-        // 請求書検索
+        // 請求書検索（会員に開けると全員分検索できるので Admin のみ）
         group.MapGet("/", async (
             [AsParameters] InvoiceSearchRequest request,
             IInvoiceService service) =>
@@ -42,15 +42,36 @@ public static class InvoiceEndpoints
                 FromInvoiceDate = request.FromInvoiceDate,
                 ToInvoiceDate = request.ToInvoiceDate,
                 StatusId = request.StatusId,
-                Page = request.Page ?? 1,   // ← ここで 1 を補完
-                PageSize = request.PageSize ?? 50,  // ← ここで 50 を補完
+                Page = request.Page ?? 1,
+                PageSize = request.PageSize ?? 50,
             };
 
             var list = await service.SearchAsync(query);
             return Results.Ok(list);
-        });
+        })
+        .RequireAuthorization("AdminOnly");
 
-        // ステータス更新（入金状況・督促など）
+        // 請求書詳細取得（invoiceNumber版）
+        group.MapGet("/by-number/{invoiceNumber}", async (
+            HttpContext ctx,
+            string invoiceNumber,
+            IInvoiceService service) =>
+        {
+            // ① invoiceNumber -> invoiceId を解決
+            var invoiceId = await service.GetIdByInvoiceNumberAsync(invoiceNumber);
+            if (invoiceId is null) return Results.NotFound();
+
+            // ② 既存のガード（OwnerOrAdmin）を使い回す
+            var guard = await EnsureOwnerOrAdminAsync(ctx, invoiceId.Value, service);
+            if (guard is not null) return guard;
+
+            // ③ 詳細取得
+            var invoice = await service.GetDetailByIdAsync(invoiceId.Value);
+            return invoice is null ? Results.NotFound() : Results.Ok(invoice);
+        })
+                .RequireAuthorization("AdminOnly");
+
+        // ステータス更新（入金状況・督促など）※Adminのみ推奨
         group.MapPut("/{id:long}/status", async (
             long id,
             [FromBody] UpdateInvoiceStatusRequest request,
@@ -64,9 +85,10 @@ public static class InvoiceEndpoints
 
             await service.UpdateStatusAsync(command);
             return Results.NoContent();
-        });
+        })
+        .RequireAuthorization("AdminOnly");
 
-        // 請求書削除（※入金割当がある場合は 409）
+        // 請求書削除（※入金割当がある場合は 409）※Adminのみ推奨
         group.MapDelete("/{id:long}", async (long id, IInvoiceService service) =>
         {
             try
@@ -76,36 +98,84 @@ public static class InvoiceEndpoints
             }
             catch (InvalidOperationException ex)
             {
-                // 例：入金割当があるので削除できない
                 return Results.Problem(ex.Message, statusCode: StatusCodes.Status409Conflict);
             }
+        })
+        .RequireAuthorization("AdminOnly");
+
+        // ---------------------------
+        // OwnerOrAdmin（個別リソース）
+        // ---------------------------
+
+        // 請求書詳細取得（Admin or 所有者）
+        group.MapGet("/{id:long}", async (HttpContext ctx, long id, IInvoiceService service) =>
+        {
+            var guard = await EnsureOwnerOrAdminAsync(ctx, id, service);
+            if (guard is not null) return guard;
+
+            var invoice = await service.GetDetailByIdAsync(id);
+            return invoice is null ? Results.NotFound() : Results.Ok(invoice);
         });
 
         // 請求書 更新（ヘッダ＋明細）
+        // ※会員に更新を許可しないなら、この endpoint も AdminOnly にしてOK
         group.MapPut("/{id:long}", async (
+            HttpContext ctx,
             long id,
             [FromBody] UpdateInvoiceRequestDto req,
             IInvoiceService service) =>
         {
-            await service.UpdateAsync(id, req);   // ← InvoiceService に追加した UpdateAsync を呼ぶ
+            var guard = await EnsureOwnerOrAdminAsync(ctx, id, service);
+            if (guard is not null) return guard;
+
+            await service.UpdateAsync(id, req);
             return Results.NoContent();
         });
 
-        // 請求書PDF取得
+        // 請求書PDF取得（Admin or 所有者）
         group.MapGet("/{id:long}/pdf", async (
+            HttpContext ctx,
             long id,
             IInvoiceService service) =>
         {
+            var guard = await EnsureOwnerOrAdminAsync(ctx, id, service);
+            if (guard is not null) return guard;
+
             var pdfBytes = await service.GeneratePdfAsync(id);
-
-            // 仮のファイル名（本番は請求書番号などから生成してOK）
             var fileName = $"invoice-{id}.pdf";
-
-            // 中身はダミーでも、ContentType は application/pdf にしておく
             return Results.File(pdfBytes, "application/pdf", fileName);
         });
 
         return app;
+    }
+
+    // =========================
+    // Authorization helpers
+    // =========================
+
+    private static bool IsAdmin(HttpContext ctx) => ctx.User.IsInRole("Admin");
+
+    private static long? GetMyMemberId(HttpContext ctx)
+    {
+        // AuthEndpoints で sub = user.Id を入れている
+        var s = ctx.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        return long.TryParse(s, out var id) ? id : null;
+    }
+
+    private static async Task<IResult?> EnsureOwnerOrAdminAsync(
+        HttpContext ctx,
+        long invoiceId,
+        IInvoiceService service)
+    {
+        if (IsAdmin(ctx)) return null;
+
+        var me = GetMyMemberId(ctx);
+        if (me is null) return Results.Unauthorized();
+
+        var ownerId = await service.GetOwnerMemberIdAsync(invoiceId);
+        if (ownerId is null) return Results.NotFound();
+
+        return ownerId.Value == me.Value ? null : Results.Forbid();
     }
 
     /// <summary>
@@ -121,8 +191,8 @@ public static class InvoiceEndpoints
 
         public long? StatusId { get; set; }
 
-        public int? Page { get; set; }      // ← nullable
-        public int? PageSize { get; set; }  // ← nullable
+        public int? Page { get; set; }
+        public int? PageSize { get; set; }
     }
 
     /// <summary>

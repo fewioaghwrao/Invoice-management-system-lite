@@ -16,7 +16,8 @@ namespace InvoiceSystem.Api.Endpoints
         public static IEndpointRouteBuilder MapMemberEndpoints(this IEndpointRouteBuilder app)
         {
             var group = app.MapGroup("/api/members")
-                .WithTags("Members");
+                .WithTags("Members")
+                .RequireAuthorization("AdminOnly");
 
             // 会員検索 + 一覧
             group.MapGet("/", async (

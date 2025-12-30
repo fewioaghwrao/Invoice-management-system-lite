@@ -1,5 +1,6 @@
-﻿// Api/Common/HttpContextExtensions.cs
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using InvoiceSystem.Domain.Enums;
 using InvoiceSystem.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,21 +10,30 @@ public static class HttpContextExtensions
 {
     public static async Task<long> GetMemberIdAsync(this HttpContext http, AppDbContext db)
     {
-        var email = http.User?.FindFirstValue("email")
-                 ?? http.User?.FindFirstValue(ClaimTypes.Email);
+        if (http.User?.Identity?.IsAuthenticated != true)
+            throw new UnauthorizedAccessException("Not authenticated");
 
-        if (string.IsNullOrWhiteSpace(email))
-            throw new UnauthorizedAccessException("User email not found");
+        // ★ JWT の sub = user.Id
+        var sub = http.User.FindFirstValue(JwtRegisteredClaimNames.Sub)
+               ?? http.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        var memberId = await db.Members
-            .Where(m => m.Email == email && m.IsActive)
-            .Select(m => (long?)m.Id)
+        if (!long.TryParse(sub, out var memberId))
+            throw new UnauthorizedAccessException("User id (sub) not found");
+
+        // ★ 退会/無効（Disabled）を弾く（退会後トークン対策）
+        var member = await db.Members
+            .AsNoTracking()
+            .Where(m => m.Id == memberId)
+            .Select(m => new { m.IsActive, m.Role })
             .FirstOrDefaultAsync();
 
-        if (memberId == null)
-            throw new UnauthorizedAccessException("MemberId not found");
+        if (member is null)
+            throw new UnauthorizedAccessException("Member not found");
 
-        return memberId.Value;
+        if (!member.IsActive || member.Role == MemberRole.Disabled)
+            throw new UnauthorizedAccessException("Member is disabled");
+
+        return memberId;
     }
 }
 

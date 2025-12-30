@@ -1,4 +1,6 @@
-﻿using InvoiceSystem.Application.Dtos.Payments;
+﻿using InvoiceSystem.Api.Common;
+using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Application.Dtos.Payments;
 using InvoiceSystem.Application.Queries.Payments;
 using InvoiceSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +12,8 @@ public static class PaymentEndpoints
     public static IEndpointRouteBuilder MapPaymentEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/payments")
-            .WithTags("Payments");
+            .WithTags("Payments")
+            .RequireAuthorization("AdminOnly");
 
         // 入金一覧（検索/ページング/サマリー）
         group.MapGet("", async (
@@ -28,7 +31,6 @@ public static class PaymentEndpoints
                 ? "all"
                 : request.Status.Trim().ToUpperInvariant();
 
-            // フロントが "unallocated" 等で送るならここで寄せる
             status = status switch
             {
                 "UNALLOCATED" => "UNALLOCATED",
@@ -41,7 +43,7 @@ public static class PaymentEndpoints
             var query = new PaymentSearchQuery
             {
                 Year = request.Year ?? DateTime.Today.Year,
-                Month = month,                 // null=all
+                Month = month,
                 Keyword = request.Q ?? "",
                 Status = status == "ALL" ? "all" : status,
                 Page = request.Page ?? 1,
@@ -61,8 +63,8 @@ public static class PaymentEndpoints
 
         // 入金登録（手動）
         group.MapPost("", async (
-    [FromBody] CreatePaymentRequestDto request,
-    IPaymentService service) =>
+            [FromBody] CreatePaymentRequestDto request,
+            IPaymentService service) =>
         {
             if (request.MemberId <= 0) return Results.BadRequest("MemberId is required.");
             if (request.Amount <= 0) return Results.BadRequest("Amount must be > 0.");
@@ -72,42 +74,69 @@ public static class PaymentEndpoints
             return Results.Created($"/api/payments/{id}", new { id });
         });
 
-        // 割当追加（1件）
+        // =========================
+        // ★ 割当追加（1件）: actorを渡す
+        // =========================
         group.MapPost("/{id:long}/allocations", async (
             long id,
-   [FromBody] AllocationLine request,
-            IPaymentService service) =>
+            [FromBody] AllocationLine request,
+            IPaymentService service,
+            HttpContext http) =>
         {
             if (request.InvoiceId <= 0) return Results.BadRequest("InvoiceId is required.");
             if (request.Amount <= 0) return Results.BadRequest("Amount must be > 0.");
 
-            var allocId = await service.AddAllocationAsync(id, request.InvoiceId, request.Amount);
+            var actor = AuditActorFactory.FromHttp(http);
+
+            var allocId = await service.AddAllocationAsync(
+                paymentId: id,
+                invoiceId: request.InvoiceId,
+                amount: request.Amount,
+                actor: actor);
+
             return Results.Created($"/api/payments/{id}", new { allocationId = allocId });
         });
 
-        // 割当削除（1件）
+        // =========================
+        // ★ 割当削除（1件）: actorを渡す
+        // =========================
         group.MapDelete("/{id:long}/allocations/{allocId:long}", async (
             long id,
             long allocId,
-            IPaymentService service) =>
+            IPaymentService service,
+            HttpContext http) =>
         {
-            await service.DeleteAllocationAsync(id, allocId);
+            var actor = AuditActorFactory.FromHttp(http);
+
+            await service.DeleteAllocationAsync(
+                paymentId: id,
+                allocationId: allocId,
+                actor: actor);
+
             return Results.NoContent();
         });
 
-
-        // 割当保存（InvoiceId版）
+        // =========================
+        // ★ 割当保存（InvoiceId版）: actorを渡す
+        // =========================
         group.MapPut("/{id:long}/allocations", async (
             long id,
             [FromBody] SavePaymentAllocationsRequest request,
-            IPaymentService service) =>
+            IPaymentService service,
+            HttpContext http) =>
         {
             var lines = (request.Lines ?? new List<AllocationLine>())
                 .Where(x => x.Amount > 0)
                 .Select(x => new SaveAllocationLine(x.InvoiceId, x.Amount))
                 .ToList();
 
-            await service.SaveAllocationsAsync(id, lines);
+            var actor = AuditActorFactory.FromHttp(http);
+
+            await service.SaveAllocationsAsync(
+                paymentId: id,
+                lines: lines,
+                actor: actor);
+
             return Results.NoContent();
         });
 
@@ -117,10 +146,7 @@ public static class PaymentEndpoints
     public class PaymentSearchRequest
     {
         public int? Year { get; set; }
-
-        // ★ month=all を受けるため string にする
         public string? Month { get; set; }   // "all" or "1".."12"
-
         public string? Q { get; set; }       // keyword
         public string? Status { get; set; }  // all/unallocated/partial/allocated
         public int? Page { get; set; }
