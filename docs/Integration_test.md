@@ -54,8 +54,8 @@
 - 管理者向け KPI・一覧・グラフが正常に表示されることを確認  
 - Network 上でエラー（401 / 403 / 500）が発生していないことを確認
 
-📸 スクリーンショット  
-`docs/evidence/dashboard-admin.png`
+📸 スクリーンショット（Heroku / Admin）
+![Admin Dashboard](./screenshots/dashboard-admin.png)
 
 ---
 
@@ -66,15 +66,15 @@
 - `/dashboards/member` にアクセス
 
 **期待**
-- 会員向けダッシュボードが表示される
+- 会員向けダッシュボードが表示される  
 - 管理者向け情報は表示されない
 
 **結果**
 - 会員向け機能（自分の請求書／入金確認）が表示されることを確認  
 - 管理者専用 UI が表示されないことを確認
 
-📸 スクリーンショット  
-`docs/evidence/dashboard-member.png`
+📸 スクリーンショット（Heroku / Member）
+![Member Dashboard](./screenshots/dashboard-member.png)
 
 ---
 
@@ -100,14 +100,14 @@
 ### 5. 通信状態の確認（Network）
 
 **確認内容**
-- 保護画面アクセス時の通信ステータス
+- 保護画面アクセス時の通信ステータス  
 - 不要な 401 / 403 / 500 が発生していないこと
 
 **結果**
 - 必要な API のみが 200 で応答していることを確認
 
-📸 スクリーンショット  
-`docs/evidence/network-member.png`
+📸 スクリーンショット（Network）
+![Network Evidence](./screenshots/network-member.png)
 
 ---
 
@@ -131,3 +131,4 @@
 
 以上の結果より、  
 本アプリケーションは **ポートフォリオ用途として十分な結合品質**を満たしていると判断します。
+
