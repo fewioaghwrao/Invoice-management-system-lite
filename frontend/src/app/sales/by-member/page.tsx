@@ -109,18 +109,26 @@ export default async function SalesByMemberPage({
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-4 flex justify-between">
-          <h1 className="text-lg font-semibold">売上集計（顧客別）</h1>
-          <div className="flex gap-3">
-            <CurrentUserBadge />
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
+<header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+  <div className="mx-auto max-w-6xl px-4 py-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        <h1 className="text-lg font-semibold text-slate-50 truncate">
+          売上集計（顧客別）
+        </h1>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+        <CurrentUserBadge />
+        <LogoutButton />
+      </div>
+    </div>
+  </div>
+</header>
+
       
       <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">
-<div className="flex flex-wrap justify-end gap-2">
+<div className="grid gap-2 sm:flex sm:justify-end sm:gap-2">
   <CsvExportButton
     exportPath="/api/sales/by-member/export"
     fileNamePrefix="sales_by_member"
@@ -128,19 +136,13 @@ export default async function SalesByMemberPage({
   />
 
   <Link
-    href={`/sales?${buildQuery({
-      year,
-      month,
-      keyword,
-      page: 1,
-      pageSize,
-    })}`}
-    className="inline-flex items-center gap-2 rounded-lg border border-slate-700
-               bg-slate-900 px-3 py-2 text-xs text-slate-200
-               hover:bg-slate-800"
+    href={`/sales?${buildQuery({ year, month, keyword, page: 1, pageSize })}`}
+    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg
+               border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
   >
     ← 請求書ベースに戻る
   </Link>
+
 </div>
         {/* サマリー */}
         <section className="grid gap-3 md:grid-cols-4">
@@ -152,6 +154,7 @@ export default async function SalesByMemberPage({
 
         {/* 一覧 */}
         <section className="rounded-xl border border-slate-800 bg-slate-900/80 overflow-x-auto">
+            <div className="min-w-[560px]">
           <table className="min-w-full text-xs">
             <thead className="bg-slate-900">
               <tr className="text-slate-400">
@@ -189,6 +192,7 @@ export default async function SalesByMemberPage({
               )}
             </tbody>
           </table>
+          </div>
         </section>
 
         {/* ページネーション */}
@@ -261,7 +265,7 @@ function SummaryCard({
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-4">
       <p className="text-[11px] text-slate-400">{label}</p>
-      <p className={`mt-2 text-lg font-semibold ${colorClass}`}>{value}</p>
+<p className={`mt-2 text-lg font-semibold break-words ${colorClass}`}>{value}</p>
     </div>
   );
 }

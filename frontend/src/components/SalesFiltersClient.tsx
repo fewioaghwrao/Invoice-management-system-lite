@@ -32,91 +32,94 @@ export default function SalesFiltersClient(props: {
     router.push(`/sales?${q}`);
   };
 
-  return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-      <div className="flex flex-wrap items-end gap-3">
-        {/* 年 */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-slate-400">年</label>
-          <select
-            defaultValue={String(props.year)}
-            className="h-9 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
-            onChange={(e) => push({ year: e.target.value })}
-          >
-            {[props.currentYear - 1, props.currentYear, props.currentYear + 1].map((y) => (
-              <option key={y} value={String(y)}>
-                {y}年
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* 月 */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-slate-400">月</label>
-          <select
-            defaultValue={String(props.month)}
-            className="h-9 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
-            onChange={(e) => push({ month: e.target.value })}
-          >
-            <option value="all">すべて</option>
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
-              <option key={m} value={String(m)}>
-                {m}月
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* ステータス */}
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-slate-400">ステータス</label>
-          <select
-            defaultValue={String(props.status).toLowerCase()}
-            className="h-9 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
-            onChange={(e) => push({ status: e.target.value })}
-          >
-            <option value="all">すべて</option>
-            <option value="unpaid">未入金</option>
-            <option value="partial">一部入金</option>
-            <option value="paid">入金済</option>
-          </select>
-        </div>
-
-        {/* 検索 */}
-        <form
-          className="flex items-end gap-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            push({ q: String(fd.get("q") ?? "") });
-          }}
+return (
+  <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
+    <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-end">
+      {/* 年 */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] text-slate-400">年</label>
+        <select
+          defaultValue={String(props.year)}
+          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          onChange={(e) => push({ year: e.target.value })}
         >
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-slate-400">検索（請求書ID / 顧客名）</label>
-            <input
-              name="q"
-              defaultValue={props.keyword}
-              className="h-9 w-72 max-w-[70vw] rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
-              placeholder="例: INV-002 / クライアントA"
-            />
-          </div>
+          {[props.currentYear - 1, props.currentYear, props.currentYear + 1].map((y) => (
+            <option key={y} value={String(y)}>
+              {y}年
+            </option>
+          ))}
+        </select>
+      </div>
 
+      {/* 月 */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] text-slate-400">月</label>
+        <select
+          defaultValue={String(props.month)}
+          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          onChange={(e) => push({ month: e.target.value })}
+        >
+          <option value="all">すべて</option>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+            <option key={m} value={String(m)}>
+              {m}月
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* ステータス */}
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] text-slate-400">ステータス</label>
+        <select
+          defaultValue={String(props.status).toLowerCase()}
+          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          onChange={(e) => push({ status: e.target.value })}
+        >
+          <option value="all">すべて</option>
+          <option value="unpaid">未入金</option>
+          <option value="partial">一部入金</option>
+          <option value="paid">入金済</option>
+        </select>
+      </div>
+
+      {/* 検索 */}
+      <form
+        className="grid gap-2 sm:flex sm:items-end sm:gap-2 sm:ml-auto"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const fd = new FormData(e.currentTarget);
+          push({ q: String(fd.get("q") ?? "") });
+        }}
+      >
+        <div className="flex flex-col gap-1">
+          <label className="text-[11px] text-slate-400">検索（請求書ID / 顧客名）</label>
+          <input
+            name="q"
+            defaultValue={props.keyword}
+            className="h-9 w-full sm:w-72 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
+            placeholder="例: INV-002 / クライアントA"
+          />
+        </div>
+
+        <div className="flex gap-2">
           <button
             type="submit"
-            className="h-9 rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
+            className="h-9 flex-1 sm:flex-none rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
           >
             検索
           </button>
 
           <Link
             href={`/sales?year=${props.year}&month=all&status=all&page=1`}
-            className="h-9 inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
+            className="h-9 flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
           >
             リセット
           </Link>
-        </form>
-      </div>
-    </section>
-  );
+        </div>
+      </form>
+    </div>
+  </section>
+);
+
 }

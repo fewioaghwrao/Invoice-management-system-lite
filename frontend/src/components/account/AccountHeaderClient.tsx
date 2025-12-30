@@ -48,11 +48,11 @@ export default function AccountHeaderClient() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
+       <div className="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
           {/* メイン画面へ戻る（レスポンシブ） */}
           <Link
             href="/dashboards/member"
-            className="inline-flex h-9 items-center rounded-lg border border-slate-700 bg-slate-900/50 px-2 sm:px-3 text-xs font-medium text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/60"
+            className="inline-flex h-9 w-full sm:w-auto items-center justify-center rounded-lg border border-slate-700 bg-slate-900/50 px-2 sm:px-3 text-xs font-medium text-slate-200 hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/60"
           >
             <span className="sm:hidden">← 戻る</span>
             <span className="hidden sm:inline">← メイン画面へ</span>

@@ -97,7 +97,7 @@ export default function CsvExportButton({
         type="button"
         onClick={() => setOpen(true)}
         disabled={loading}
-        className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60"
+        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60"
       >
         {loading ? "出力中…" : label}
       </button>

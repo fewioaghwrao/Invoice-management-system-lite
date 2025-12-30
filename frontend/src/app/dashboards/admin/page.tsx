@@ -59,6 +59,16 @@ type ApiAdminSummaryDto = {
   unpaidTop5: ApiUnpaidInvoiceDto[];
 };
 
+type ApiAdminOperationLogDto = {
+  id: number;
+  at: string;          // ISO
+  actorUserId: number;
+  action: string;
+  entity: string;
+  entityId?: string | null;
+  summary: string;
+};
+
 type WorstCustomer = {
   memberId: number;
   memberName: string;
@@ -108,6 +118,31 @@ const unpaidInvoices: UnpaidInvoice[] = (dto.unpaidTop5 ?? []).map((x) => ({
   };
 }
 
+async function getRecentOperationLogs(limit = 5): Promise<ApiAdminOperationLogDto[]> {
+  return apiGetServer<ApiAdminOperationLogDto[]>(
+    `/api/admin/operation-logs/recent?limit=${limit}`
+  );
+}
+
+// 画面表示用（任意：Actionコードを日本語に寄せる）
+function formatActionLabel(code: string): string {
+  const x = (code ?? "").toUpperCase();
+  return x === "PAYMENT_ALLOCATION_ADDED" ? "割当追加"
+    : x === "PAYMENT_ALLOCATION_DELETED" ? "割当削除"
+    : x === "PAYMENT_ALLOCATIONS_REPLACED" ? "割当保存（置換）"
+    : x === "PAYMENT_ALLOCATIONS_CLEARED" ? "割当クリア"
+    : code;
+}
+
+function formatTarget(entity: string, entityId?: string | null): string {
+  const e = (entity ?? "").toUpperCase();
+  const label = e === "PAYMENT" ? "入金"
+    : e === "INVOICE" ? "請求書"
+    : e === "MEMBER" ? "会員"
+    : entity;
+  return entityId ? `${label} #${entityId}` : label;
+}
+
 // ★ year を引数で受け取る（実API）
 async function getAdminSummary(year: number): Promise<AdminSummary> {
   const dto = await apiGetServer<ApiAdminSummaryDto>(`/api/admin/summary?year=${year}`);
@@ -142,6 +177,9 @@ export default async function AdminDashboardPage({
   const summary = await getAdminSummary(selectedYear);
   const worstTop5 = await getWorstTop5(selectedYear);
 
+  const recentLogs = await getRecentOperationLogs(5);
+
+
   const maxMonthly = Math.max(...summary.monthlySales.map((m) => m.amount || 0), 1);
 
   return (
@@ -150,32 +188,46 @@ export default async function AdminDashboardPage({
 
       <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-50">
-              請求・入金ステータスダッシュボード（管理者）
-            </h1>
-            <p className="mt-1 text-xs text-slate-400">
-              売上・未入金・請求書／入金の状況を一目で確認できる管理コンソールです。
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* ★集計年度バッジ */}
-            <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400">年度</span>
-  <Link href={`/dashboards/admin?year=${selectedYear - 1}`} className="text-xs text-slate-300 hover:text-sky-300">
-    ← {selectedYear - 1}
-  </Link>
-  <span className="inline-flex items-center rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs font-medium text-slate-100">
-    {selectedYear} 年
-  </span>
-  <Link href={`/dashboards/admin?year=${selectedYear + 1}`} className="text-xs text-slate-300 hover:text-sky-300">
-    {selectedYear + 1} →
-  </Link>
+<div className="min-w-0">
+  <h1 className="text-lg font-semibold text-slate-50 truncate">
+    請求・入金ステータスダッシュボード（管理者）
+  </h1>
+  <p className="mt-1 text-xs text-slate-400 line-clamp-2 sm:line-clamp-none">
+    売上・未入金・請求書／入金の状況を一目で確認できる管理コンソールです。
+  </p>
 </div>
-            <CurrentUserBadge />
-            <LogoutButton />
-          </div>
+
+{/* 右側：スマホは縦、sm以上は横 */}
+<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+  {/* 年度切替：スマホは左右ボタン + 中央年 */}
+  <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 sm:justify-start sm:gap-2 sm:px-0 sm:py-0 sm:border-0 sm:bg-transparent">
+    <Link
+      href={`/dashboards/admin?year=${selectedYear - 1}`}
+      className="text-xs text-slate-300 hover:text-sky-300"
+      aria-label="前年へ"
+    >
+      ← {selectedYear - 1}
+    </Link>
+
+    <span className="mx-2 inline-flex items-center rounded-full border border-slate-700 bg-slate-900/60 px-3 py-1 text-xs font-medium text-slate-100 sm:mx-0">
+      {selectedYear} 年
+    </span>
+
+    <Link
+      href={`/dashboards/admin?year=${selectedYear + 1}`}
+      className="text-xs text-slate-300 hover:text-sky-300"
+      aria-label="翌年へ"
+    >
+      {selectedYear + 1} →
+    </Link>
+  </div>
+
+  {/* バッジ類：スマホは折り返し */}
+  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:gap-3">
+    <CurrentUserBadge />
+    <LogoutButton />
+  </div>
+</div>
         </div>
       </header>
 
@@ -251,7 +303,7 @@ export default async function AdminDashboardPage({
             </div>
 
             <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
-              <table className="min-w-full text-xs">
+              <table className="hidden sm:table min-w-full text-xs">
                 <thead className="bg-slate-900/90">
                   <tr className="text-left text-[11px] text-slate-400">
                     <th className="px-4 py-2 font-medium">請求番号</th>
@@ -289,6 +341,45 @@ export default async function AdminDashboardPage({
                   )}
                 </tbody>
               </table>
+                {/* スマホだけカード */}
+  <div className="sm:hidden divide-y divide-slate-800/80">
+    {summary.unpaidInvoices.map((inv) => (
+      <Link
+        key={inv.invoiceId}
+        href={`/invoices/${inv.invoiceId}`}
+        className="block px-4 py-3 hover:bg-slate-800/40"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-100 truncate">
+              {inv.invoiceNumber}
+            </p>
+            <p className="mt-1 text-xs text-slate-300 truncate">
+              {inv.clientName}
+            </p>
+          </div>
+
+          <div className="shrink-0 text-right">
+            <p className="text-sm font-semibold text-slate-100">
+              {formatCurrency(inv.amount)}
+            </p>
+
+            {inv.isOverdue && (
+              <span className="mt-1 inline-flex items-center rounded-full border border-amber-400/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-200">
+                期限超過
+              </span>
+            )}
+          </div>
+        </div>
+      </Link>
+    ))}
+
+    {summary.unpaidInvoices.length === 0 && (
+      <div className="px-4 py-6 text-center text-slate-400 text-[11px]">
+        現在、未入金の請求書はありません。
+      </div>
+    )}
+  </div>
             </div>
           </div>
 
@@ -372,6 +463,91 @@ export default async function AdminDashboardPage({
             </table>
           </div>
         </section>
+
+<section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
+  <div className="flex items-center justify-between mb-3">
+    <h2 className="text-sm font-semibold text-slate-100">
+      最近の操作（直近5件）
+    </h2>
+    <p className="text-[11px] text-slate-400">
+      管理者の操作履歴を簡易表示しています。
+    </p>
+  </div>
+
+  <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
+  <table className="hidden sm:table min-w-full text-xs">
+      <thead className="bg-slate-900/90">
+        <tr className="text-left text-[11px] text-slate-400">
+          <th className="px-4 py-2 font-medium">日時</th>
+          <th className="px-4 py-2 font-medium">操作</th>
+          <th className="px-4 py-2 font-medium">対象</th>
+          <th className="px-4 py-2 font-medium">内容</th>
+          <th className="px-4 py-2 font-medium text-right">actor</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {recentLogs.map((x) => (
+          <tr key={x.id} className="border-t border-slate-800/80 hover:bg-slate-800/70">
+            <td className="px-4 py-2 text-slate-200">
+              {new Date(x.at).toLocaleString("ja-JP")}
+            </td>
+            <td className="px-4 py-2 text-slate-100">
+              {formatActionLabel(x.action)}
+            </td>
+            <td className="px-4 py-2 text-slate-200">
+              {formatTarget(x.entity, x.entityId)}
+            </td>
+            <td className="px-4 py-2 text-slate-200">
+              {x.summary || "-"}
+            </td>
+            <td className="px-4 py-2 text-right text-slate-400">
+              {x.actorUserId}
+            </td>
+          </tr>
+        ))}
+
+        {recentLogs.length === 0 && (
+          <tr>
+            <td colSpan={5} className="px-4 py-6 text-center text-slate-400 text-[11px]">
+              最近の操作ログはありません。
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+      <div className="sm:hidden divide-y divide-slate-800/80">
+    {recentLogs.map((x) => (
+      <div key={x.id} className="px-4 py-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-slate-400">
+              {new Date(x.at).toLocaleString("ja-JP")}
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-100">
+              {formatActionLabel(x.action)}
+            </p>
+            <p className="mt-1 text-xs text-slate-300 truncate">
+              {formatTarget(x.entity, x.entityId)}
+            </p>
+          </div>
+          <p className="shrink-0 text-[11px] text-slate-500">actor: {x.actorUserId}</p>
+        </div>
+
+        <p className="mt-2 text-xs text-slate-200">
+          {x.summary || "-"}
+        </p>
+      </div>
+    ))}
+
+    {recentLogs.length === 0 && (
+      <div className="px-4 py-6 text-center text-slate-400 text-[11px]">
+        最近の操作ログはありません。
+      </div>
+    )}
+  </div>
+  </div>
+</section>
 
 {/* 下段：請求書一覧 / 会員一覧 / 売上一覧 へのナビカード */}
 <section className="grid gap-6 md:grid-cols-3">

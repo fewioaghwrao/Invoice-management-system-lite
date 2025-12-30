@@ -73,12 +73,14 @@ export default function PaymentNewClient() {
         const base = getApiBase();
         // MemberEndpoints 仕様：RoleId=2(Customer), IsActive=true
         // API 側が MapGet("/") の場合もあるので、末尾 / を付けておく
-        const url = `${base}/api/members/?RoleId=2&IsActive=true&Page=1&PageSize=200`;
+const url = `/api/members?RoleId=2&IsActive=true&Page=1&PageSize=200`;
 
-        const res = await fetch(url, {
-          method: "GET",
-          headers: { Accept: "application/json" },
-        });
+const res = await fetch(url, {
+  method: "GET",
+  cache: "no-store",
+  headers: { Accept: "application/json" },
+});
+
 
         if (!res.ok) {
           const text = await res.text();
@@ -177,12 +179,12 @@ export default function PaymentNewClient() {
         method: method.trim() ? method.trim() : null,
       };
 
-      // ★ ここが重要：相対 /api/payments ではなく、必ず base 付きで叩く
-      const res = await fetch(`${base}/api/payments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify(req),
-      });
+const res = await fetch(`/api/payments`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Accept: "application/json" },
+  body: JSON.stringify(req),
+});
+
 
       if (!res.ok) {
         const text = await res.text();

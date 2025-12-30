@@ -67,10 +67,10 @@ export default async function MemberDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3">
-            <CurrentUserBadge />
-            <LogoutButton />
-          </div>
+<div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+  <CurrentUserBadge />
+  <LogoutButton />
+</div>
         </div>
       </header>
 
@@ -80,7 +80,7 @@ export default async function MemberDashboardPage() {
           <h2 className="text-sm font-semibold text-slate-100">
             できること（会員向け）
           </h2>
-          <p className="mt-2 text-xs text-slate-400 leading-relaxed">
+        <p className="mt-2 text-xs sm:text-sm text-slate-300/90 leading-relaxed">
             請求書の一覧・支払期限・入金ステータスを確認し、未入金の把握ができます。
             <span className="hidden sm:inline">
               {" "}
@@ -130,9 +130,9 @@ export default async function MemberDashboardPage() {
                 <p className="text-[11px] text-slate-500">
                   ※ {x.badge.tone === "planned" ? "段階的に拡張予定" : "動作確認済み"}
                 </p>
-                <span className="text-xs text-slate-400 group-hover:text-slate-200">
-                  開く →
-                </span>
+<span className="text-[11px] rounded-full border border-slate-700 bg-slate-950/40 px-2 py-1 text-slate-300 group-hover:text-slate-100">
+  開く →
+</span>
               </div>
             </Link>
           ))}

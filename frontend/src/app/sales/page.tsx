@@ -193,13 +193,20 @@ const result = await getSalesList({
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-              <Link href="/dashboards/admin" className="text-xs text-slate-300 hover:text-slate-100">
-                ← 管理者トップへ
-              </Link>
-              <CurrentUserBadge />
-              <LogoutButton />
-            </div>
+<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+  <Link
+    href="/dashboards/admin"
+    className="text-xs text-slate-300 hover:text-slate-100"
+  >
+    ← 管理者トップへ
+  </Link>
+
+  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+    <CurrentUserBadge />
+    <LogoutButton />
+  </div>
+</div>
+
           </div>
         </div>
       </header>
@@ -213,29 +220,17 @@ const result = await getSalesList({
           keyword={result.keyword}
         />
           
-<div className="flex flex-wrap justify-end gap-2">
-  <CsvExportButton
-    estimatedCount={result.totalCount}
-    memberName={result.memberName}
-  />
-
+<div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:items-center">
+  <CsvExportButton estimatedCount={result.totalCount} memberName={result.memberName} />
   <Link
-    href={`/sales/by-member?${buildByMemberQuery({
-      year,
-      month,
-      keyword,
-      page: 1,
-      pageSize,
-    })}`}
-    className="inline-flex items-center gap-2 rounded-lg border border-slate-700
-               bg-slate-900 px-3 py-2 text-xs text-slate-200
+    href={`/sales/by-member?${buildByMemberQuery({ year, month, keyword, page: 1, pageSize })}`}
+    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg
+               border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200
                hover:bg-slate-800"
   >
     顧客別に集計を見る →
   </Link>
 </div>
-
-
           
 {memberId && result.memberName && (
   <div className="text-xs text-slate-300">

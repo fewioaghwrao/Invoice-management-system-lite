@@ -65,8 +65,6 @@ export default function MemberFormClient(props: {
   const [disabling, setDisabling] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-
   const onChange = (patch: Partial<MemberFormValue>) => {
     setForm((p) => ({ ...p, ...patch }));
   };
@@ -111,25 +109,19 @@ export default function MemberFormClient(props: {
 
     setSaving(true);
     try {
-      const url = `${apiBase}/api/members/${form.id}`;
-
-      // ★ Role / IsActive を送ると「変更可能」に見えるので、
-      // ここでは編集対象だけ送る（デモ破壊防止）
-      const res = await fetch(url, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: form.name,
-          email: form.email,
-          postalCode: form.postalCode,
-          address: form.address,
-          phone: form.phone,
-
-          // もしC#側が必須なら固定で送る（今回は「ロック」なので初期値維持）
-          roleId: form.role,
-          isActive: form.isActive,
-        }),
-      });
+const res = await fetch(`/bff/members/${form.id}`, {
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    name: form.name,
+    email: form.email,
+    postalCode: form.postalCode,
+    address: form.address,
+    phone: form.phone,
+    roleId: form.role,
+    isActive: form.isActive,
+  }),
+});
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");
@@ -162,8 +154,10 @@ export default function MemberFormClient(props: {
 
     setDisabling(true);
     try {
-      const url = `${apiBase}/api/members/${form.id}/disable`;
-      const res = await fetch(url, { method: "PUT" });
+    const res = await fetch(`/bff/members/${form.id}/disable`, { method: "PUT" });
+
+
+
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");

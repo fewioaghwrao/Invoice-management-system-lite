@@ -50,7 +50,7 @@ export default function AccountNavClient() {
   const pathname = usePathname();
 
   return (
-    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible">
+    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 [-webkit-overflow-scrolling:touch] snap-x">
       {NAV.map((item) => {
         const active = isActive(pathname, item);
 
@@ -58,12 +58,12 @@ export default function AccountNavClient() {
           <Link
             key={item.href}
             href={item.href}
-            className={className(active)}
+            className={`${className(active)} snap-start`}
             aria-current={active ? "page" : undefined}
           >
             {item.title}
             {item.sub ? (
-              <span className="ml-2 text-[11px] text-slate-400">{item.sub}</span>
+<span className="ml-2 hidden sm:inline text-[11px] text-slate-400">{item.sub}</span>
             ) : null}
           </Link>
         );

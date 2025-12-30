@@ -2,6 +2,9 @@
 import Link from "next/link";
 import CurrentUserBadge from "@/components/CurrentUserBadge";
 import LogoutButton from "@/components/LogoutButton";
+import { cookies } from "next/headers";
+
+export const dynamic = "force-dynamic";
 
 type PaymentStatus = "UNALLOCATED" | "PARTIAL" | "ALLOCATED";
 
@@ -12,7 +15,7 @@ type PaymentRow = {
   payerName: string;
   amount: number;
   allocatedAmount: number;
-  invoiceIds: string[];    // InvoiceNumber の配列（INV-001等）
+  invoices: { id: number; invoiceNumber: string }[];    // InvoiceNumber の配列（INV-001等）
   status: PaymentStatus;
 };
 
@@ -39,7 +42,7 @@ type PaymentListItemDto = {
   payerName: string | null;
   amount: number;
   allocatedAmount: number;
-  invoiceIds: string[]; // InvoiceNumber
+  invoices: { id: number; invoiceNumber: string }[]; // InvoiceNumber
   status: string; // "UNALLOCATED" | "PARTIAL" | "ALLOCATED"
 };
 
@@ -153,10 +156,24 @@ async function getPayments(params: {
 
   const url = `${apiBase}/api/payments?${sp.toString()}`;
 
+  const cookieStore = await cookies();               // ★ await 必須
+  const token = cookieStore.get("token")?.value;     // ★ token cookie
+
+  if (!token) {
+  // ここに来たら「Authorization が実質付いてない」確定
+  throw new Error(
+    `token cookie missing. cookies=${cookieStore.getAll().map(x => x.name).join(",")}`
+  );
+}
+console.log("[payments] token exists:", Boolean(token), token?.slice(0, 16));
+console.log("[payments] fetching:", url);
   const res = await fetch(url, {
     method: "GET",
     // 開発中はキャッシュでハマるので no-store 推奨
     cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,              
+    },
   });
 
   if (!res.ok) {
@@ -171,14 +188,14 @@ async function getPayments(params: {
     const status: PaymentStatus = st === "all" ? "UNALLOCATED" : st; // dtoはallにならない想定
 
     return {
-      id: toDisplayPaymentId(p.id),
-      paymentId: p.id,
-      paidAt: p.paymentDate,
-      payerName: p.payerName ?? "",
-      amount: p.amount,
-      allocatedAmount: p.allocatedAmount,
-      invoiceIds: p.invoiceIds ?? [],
-      status,
+  id: toDisplayPaymentId(p.id),
+  paymentId: p.id,
+  paidAt: p.paymentDate,
+  payerName: p.payerName ?? "",
+  amount: p.amount,
+  allocatedAmount: p.allocatedAmount,
+  invoices: p.invoices ?? [], 
+  status,
     };
   });
 
@@ -237,32 +254,42 @@ export default async function PaymentsPage({
     <div className="min-h-screen bg-slate-950 text-slate-50">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#10b981_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
 
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <h1 className="text-lg font-semibold">入金一覧</h1>
-            <p className="mt-1 text-xs text-slate-400">
-              入金明細を一覧で確認し、請求書への割当状況（未割当/一部/完了）を把握できます。
-            </p>
-          </div>
+<header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+  <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* 左：タイトル */}
+      <div className="min-w-0">
+        <h1 className="text-lg font-semibold">入金一覧</h1>
+        <p className="mt-1 text-xs text-slate-400">
+          入金明細を一覧で確認し、請求書への割当状況（未割当/一部/完了）を把握できます。
+        </p>
+      </div>
 
-          <div className="flex items-center gap-3">
-            <Link href="/dashboards/admin" className="text-xs text-slate-300 hover:text-slate-100">
-              ← 管理者トップへ
-            </Link>
+      {/* 右：操作群 */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+        <Link
+          href="/dashboards/admin"
+          className="text-xs text-slate-300 hover:text-slate-100"
+        >
+          ← 管理者トップへ
+        </Link>
 
-            <Link
-              href="/payments/new"
-              className="inline-flex h-9 shrink-0 items-center justify-center whitespace-nowrap rounded-lg bg-emerald-600 px-4 text-xs font-medium leading-none text-slate-50 hover:bg-emerald-500"
-            >
-              + 入金登録
-            </Link>
+        <Link
+          href="/payments/new"
+          className="inline-flex h-9 w-full sm:w-auto items-center justify-center whitespace-nowrap rounded-lg bg-emerald-600 px-4 text-xs font-medium leading-none text-slate-50 hover:bg-emerald-500"
+        >
+          + 入金登録
+        </Link>
 
-            <CurrentUserBadge />
-            <LogoutButton />
-          </div>
+        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:justify-end">
+          <CurrentUserBadge />
+          <LogoutButton />
         </div>
-      </header>
+      </div>
+    </div>
+  </div>
+</header>
+
 
       <main className="relative z-10 mx-auto max-w-6xl px-6 py-8 space-y-6">
         {/* 検索・絞り込み（GET） */}
@@ -315,7 +342,7 @@ export default async function PaymentsPage({
                 name="q"
                 defaultValue={result.keyword}
                 placeholder="例: 123 / クライアントC / INV-004"
-                className="h-9 w-80 max-w-[70vw] rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
+                className="h-9 w-full md:w-80 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
               />
             </div>
 
@@ -395,21 +422,22 @@ export default async function PaymentsPage({
                       <td className="px-4 py-2 text-right text-emerald-200">{formatCurrency(p.amount)}</td>
                       <td className="px-4 py-2 text-right">{formatCurrency(p.allocatedAmount)}</td>
                       <td className="px-4 py-2 text-right text-amber-200">{formatCurrency(unallocated)}</td>
-                      <td className="px-4 py-2">
-                        {p.invoiceIds.length === 0 ? (
-                          <span className="text-[11px] text-slate-500">—</span>
-                        ) : (
-                          p.invoiceIds.map((invNo) => (
-                            <Link
-                              key={invNo}
-                              href={`/invoices/${encodeURIComponent(invNo)}`}
-                              className="mr-2 text-sky-300 hover:text-sky-200"
-                            >
-                              {invNo}
-                            </Link>
-                          ))
-                        )}
-                      </td>
+<td className="px-4 py-2">
+  {p.invoices.length === 0 ? (
+    <span className="text-[11px] text-slate-500">—</span>
+  ) : (
+    p.invoices.map((inv) => (
+      <Link
+        key={inv.id}
+        href={`/invoices/${inv.id}`}            
+        className="mr-2 text-sky-300 hover:text-sky-200"
+      >
+        {inv.invoiceNumber}                    
+      </Link>
+    ))
+  )}
+</td>
+
                       <td className="px-4 py-2 text-right">
                         <Link
                           href={`/payments/${p.paymentId}`}
@@ -442,9 +470,9 @@ export default async function PaymentsPage({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-100">{p.id}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {formatDate(p.paidAt)} / {p.payerName}
-                      </p>
+<p className="mt-1 text-[11px] text-slate-400 truncate">
+  {formatDate(p.paidAt)} / {p.payerName}
+</p>
                     </div>
                     <span className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(p.status)}`}>
                       {statusLabel(p.status)}
@@ -469,19 +497,15 @@ export default async function PaymentsPage({
                   <div className="mt-3">
                     <p className="text-[11px] text-slate-400">請求書</p>
                     <div className="mt-1 flex flex-wrap gap-2">
-                      {p.invoiceIds.length === 0 ? (
-                        <span className="text-[11px] text-slate-500">—</span>
-                      ) : (
-                        p.invoiceIds.map((invNo) => (
-                          <Link
-                            key={invNo}
-                            href={`/invoices/${encodeURIComponent(invNo)}`}
-                            className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-sky-300"
-                          >
-                            {invNo}
-                          </Link>
-                        ))
-                      )}
+{p.invoices.map((inv) => (
+  <Link
+    key={inv.id}
+    href={`/invoices/${inv.id}`}
+    className="max-w-full truncate whitespace-nowrap rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-[11px] text-sky-300"
+  >
+    {inv.invoiceNumber}
+  </Link>
+))}
                     </div>
                   </div>
 

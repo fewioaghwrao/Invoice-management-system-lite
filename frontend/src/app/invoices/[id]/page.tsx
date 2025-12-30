@@ -37,7 +37,8 @@ function ymd(iso?: string | null) {
 // ★API：請求書詳細
 async function getInvoiceDetail(id: string): Promise<InvoiceDetailDto> {
   // id は route param なので string -> number に変換してもOKだけど、URLはstringのまま使える
-  return apiGetServer<InvoiceDetailDto>(`/api/invoices/${id}`);
+  // return apiGetServer<InvoiceDetailDto>(`/api/invoices/${id}`);
+    return apiGetServer<InvoiceDetailDto>(`/api/invoices/${encodeURIComponent(id)}`);
 }
 
 export default async function InvoiceDetailPage({

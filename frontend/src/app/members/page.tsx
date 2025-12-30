@@ -4,6 +4,8 @@ import { apiGetServer } from "@/lib/api.server";
 import type { MemberListItemDto } from "@/types/member";
 import { DeactivateMemberButton } from "./DeactivateMemberButton";
 
+export const dynamic = "force-dynamic";
+
 const PAGE_SIZE = 5;
 
 // URL の searchParams で受け取る型
@@ -28,11 +30,17 @@ function buildQueryString(params: Record<string, string | undefined>) {
 async function fetchMembers(resolvedSearch: SearchParams) {
   const page = resolvedSearch.page ? Number(resolvedSearch.page) || 1 : 1;
 
-  // C# の MemberSearchRequest / MemberSearchQuery に合わせて PascalCase で送る
+  const isActive =
+    resolvedSearch.isActive === "true"
+      ? true
+      : resolvedSearch.isActive === "false"
+      ? false
+      : undefined;
+
   const members = await apiGetServer<MemberListItemDto[]>("/api/members", {
-    Keyword: resolvedSearch.keyword,
-    Role: resolvedSearch.role ? Number(resolvedSearch.role) : undefined,
-    IsActive: resolvedSearch.isActive,
+    Keyword: resolvedSearch.keyword || undefined,
+    RoleId: resolvedSearch.role ? Number(resolvedSearch.role) : undefined,
+    IsActive: isActive,
     Page: page,
     PageSize: PAGE_SIZE,
   });
@@ -40,6 +48,7 @@ async function fetchMembers(resolvedSearch: SearchParams) {
   const hasNextPage = members.length === PAGE_SIZE;
   return { members, page, hasNextPage };
 }
+
 
 function roleLabel(role: number) {
   if (role === 1) return "管理者";
