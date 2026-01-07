@@ -1,5 +1,8 @@
 # Invoice Management System (Lite)
 
+[![CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml)
+
+
 ## 概要
 **実務で使われる請求・入金管理業務において発生しがちな課題を整理し、  
 管理者／会員の権限分離・入金ステータス管理・集計業務までを再現した業務向けWebアプリです。**
