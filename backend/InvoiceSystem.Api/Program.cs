@@ -12,11 +12,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Npgsql;
-using System.Text;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using QuestPDF.Drawing;
 using QuestPDF.Infrastructure;
+using System.Text;
 
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
@@ -91,8 +91,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-
-
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 
@@ -129,7 +127,6 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
-
 
 // DbContext (Postgres + Heroku DATABASE_URL 対応)
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -207,7 +204,10 @@ builder.Services.AddScoped<IAdminOperationLogService, AdminOperationLogService>(
 
 var app = builder.Build();
 
+
+// ===============================
 // 起動時：Migrate + Seed
+// ===============================
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -220,13 +220,24 @@ using (var scope = app.Services.CreateScope())
     // ① スキーマ作成（全環境でOK）
     context.Database.Migrate();
 
-    // ② マスタ（全環境OK）
+    // ② マスタ（全環境OK・冪等）
     SeedInvoiceStatuses(context);
 
-    // ③ デモデータ（Development もしくは明示許可した時）
+    // ③ デモデータ（Development または明示許可）
+    //    ★多重起動（WebApplicationFactory）でも 1回だけ実行されるようロックを取る
     if (app.Environment.IsDevelopment() || seedDemo)
     {
-        SeedDemoData(context, hasher);
+        EnsureSeedLockTable(context);
+
+        // Seedの内容を大きく変えたら v2 に上げる（1回だけ実行される単位を管理できる）
+        if (TryAcquireSeedLock(context, "demo-seed-v1"))
+        {
+            SeedDemoData(context, hasher);
+        }
+        else
+        {
+            Console.WriteLine("[Seed] demo-seed-v1 already applied. Skip.");
+        }
     }
 }
 
@@ -256,7 +267,6 @@ app.MapAdminEndpoints();
 app.MapMyAccountEndpoints();
 app.MapAdminOperationLogEndpoints();
 
-
 app.MapGet("/health", () => "OK");
 
 app.Run();
@@ -284,6 +294,7 @@ static string ToNpgsqlConnectionString(string databaseUrl)
 
 static void SeedInvoiceStatuses(AppDbContext context)
 {
+    // Postgres: ON CONFLICT で Code をキーに Upsert（完全に冪等）
     context.Database.ExecuteSqlRaw(@"
         INSERT INTO ""InvoiceStatuses"" (""Code"", ""Name"", ""IsOverdue"", ""IsClosed"", ""SortOrder"")
         VALUES
@@ -301,7 +312,26 @@ static void SeedInvoiceStatuses(AppDbContext context)
     ");
 }
 
+static void EnsureSeedLockTable(AppDbContext context)
+{
+    context.Database.ExecuteSqlRaw(@"
+        CREATE TABLE IF NOT EXISTS ""__SeedLocks"" (
+            ""Key"" text PRIMARY KEY,
+            ""CreatedAt"" timestamptz NOT NULL DEFAULT now()
+        );
+    ");
+}
 
+static bool TryAcquireSeedLock(AppDbContext context, string key)
+{
+    // 初回だけ 1 行挿入できる。2回目以降は 0 でスキップされる
+    var rows = context.Database.ExecuteSqlRaw(@"
+        INSERT INTO ""__SeedLocks"" (""Key"") VALUES ({0})
+        ON CONFLICT (""Key"") DO NOTHING;
+    ", key);
+
+    return rows == 1;
+}
 
 static InvoiceStatus MustGetStatus(AppDbContext context, string code)
 {
@@ -386,8 +416,8 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
     // -----------------------------
     // Helper: Invoice + Lines (idempotent by InvoiceNumber)
-    // Helper: Payment (idempotent by MemberId + PaymentDate + Amount) 
-    // Helper: Allocation ※既存のままでOK
+    // Helper: Payment (idempotent by MemberId + PaymentDate + Amount)
+    // Helper: Allocation
     // -----------------------------
     Invoice UpsertInvoice(
         Member m,
@@ -523,112 +553,91 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
         return baseUtc.AddMinutes(minutes);
     }
 
-
     // ==========================================================
     // ① 2025年11月（完全固定：過去・完結 + overdue）
     // ==========================================================
-    // 会員1：入金済み（1回）
     {
         var y = 2025; var m = 11;
         var inv = UpsertInvoice(member1, $"INV-{y}-{m:00}-FIX-M1-001", Utc(y, m, 5), Utc(y, m, 30),
             (1, $"月額利用料（{y}/{m:00}）", 1, 120000m));
-
         var p = UpsertPayment(member1, PayAt(y, m, 20, 1, 1, 1), 120000m);
         EnsureAllocation(p, inv, 120000m);
     }
 
-    // 会員2：分割入金（2回で完了）
     {
         var y = 2025; var m = 11;
         var inv = UpsertInvoice(member2, $"INV-{y}-{m:00}-FIX-M2-001", Utc(y, m, 7), Utc(y, m, 30),
             (1, $"月額利用料（{y}/{m:00}）", 1, 200000m));
-
         var p1 = UpsertPayment(member2, PayAt(y, m, 15, 2, 1, 1), 100000m);
         var p2 = UpsertPayment(member2, PayAt(y, m, 28, 2, 1, 2), 100000m);
         EnsureAllocation(p1, inv, 100000m);
         EnsureAllocation(p2, inv, 100000m);
     }
 
-    // 会員3：未入金（期限超過＝OVERDUEの見せ場）
     {
         var y = 2025; var m = 11;
         _ = UpsertInvoice(member3, $"INV-{y}-{m:00}-FIX-M3-001", Utc(y, m, 10), Utc(y, m, 25),
             (1, $"月額利用料（{y}/{m:00}）", 1, 80000m));
-        // 入金なし
     }
 
-    // 会員4：入金済み
     {
         var y = 2025; var m = 11;
         var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-001", Utc(y, m, 12), Utc(y, m, 30),
             (1, $"月額利用料（{y}/{m:00}）", 1, 50000m));
-
         var p = UpsertPayment(member4, PayAt(y, m, 29, 4, 1, 1), 50000m);
-
         EnsureAllocation(p, inv, 50000m);
     }
-    // （追加）会員4：催促中（DUNNING）
+
     {
         var y = 2025; var m = 11;
         var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-002-DUNNING", Utc(y, m, 2), Utc(y, m, 10),
             (1, $"月額利用料（{y}/{m:00}）", 1, 50000m));
-
-        // 入金なし・ステータスは明示で DUNNING
         inv.StatusId = stDunning.Id;
         inv.UpdatedAt = now;
         context.SaveChanges();
     }
 
     // ==========================================================
-    // ②// ② 2025年12月（完全固定：説明用サンプル（UNPAID/PARTIAL/PAID）
+    // ② 2025年12月（固定：説明用サンプル）
     // ==========================================================
-    // 会員1：一部入金（PARTIAL）
     {
         var y = 2025; var m = 12;
         var inv = UpsertInvoice(member1, $"INV-{y}-{m:00}-FIX-M1-001", Utc(y, m, 1), Utc(y, m, 31),
             (1, $"月額利用料（{y}/{m:00}）", 1, 150000m));
-
         var p = UpsertPayment(member1, PayAt(y, m, 10, 1, 1, 1), 50000m);
         EnsureAllocation(p, inv, 50000m);
     }
 
-    // 会員2：未入金（期限未来）
     {
         var y = 2025; var m = 12;
         _ = UpsertInvoice(member2, $"INV-{y}-{m:00}-FIX-M2-001", Utc(y, m, 3), Utc(y, m, 28),
             (1, $"月額利用料（{y}/{m:00}）", 1, 90000m));
     }
 
-    // 会員3：入金済み
     {
         var y = 2025; var m = 12;
         var inv = UpsertInvoice(member3, $"INV-{y}-{m:00}-FIX-M3-001", Utc(y, m, 5), Utc(y, m, 25),
             (1, $"月額利用料（{y}/{m:00}）", 1, 60000m));
-
         var p = UpsertPayment(member3, PayAt(y, m, 20, 3, 1, 1), 60000m);
         EnsureAllocation(p, inv, 60000m);
     }
 
-    // 会員4：分割予定（1回目のみ＝PARTIAL）
     {
         var y = 2025; var m = 12;
         var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-001", Utc(y, m, 8), Utc(y, m, 31),
             (1, $"月額利用料（{y}/{m:00}）", 1, 100000m));
-
         var p1 = UpsertPayment(member4, PayAt(y, m, 18, 4, 1, 1), 40000m);
         EnsureAllocation(p1, inv, 40000m);
     }
 
     // ==========================================================
     // ③ 2026年（1年分）: 毎月 会員1〜4 各1枚（=48件）
-    //    状態が偏らない固定ルール
     // ==========================================================
     for (int month = 1; month <= 12; month++)
     {
         int y = 2026;
         int m = month;
 
-        // 会員1：偶数月は入金済み、奇数月は未入金
         {
             var inv = UpsertInvoice(member1, $"INV-{y}-{m:00}-M1-001", Utc(y, m, 5), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 120000m));
@@ -640,7 +649,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
             }
         }
 
-        // 会員2：毎月分割2回で完了
         {
             var inv = UpsertInvoice(member2, $"INV-{y}-{m:00}-M2-001", Utc(y, m, 6), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 200000m));
@@ -651,7 +659,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
             EnsureAllocation(p2, inv, 100000m);
         }
 
-        // 会員3：四半期末(3,6,9,12)は未入金、他は一部入金（PARTIAL）
         {
             var inv = UpsertInvoice(member3, $"INV-{y}-{m:00}-M3-001", Utc(y, m, 7), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 80000m));
@@ -664,7 +671,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
             }
         }
 
-        // 会員4：毎月入金済み
         {
             var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-M4-001", Utc(y, m, 8), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 50000m));
@@ -676,7 +682,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
     // ==========================================================
     // ④ Status 再計算（UNPAID / PARTIAL / PAID / OVERDUE）
-    //    ★ここが一番重要：OVERDUE を“使う”
     // ==========================================================
     var targets = context.Invoices
         .Include(i => i.Status)
@@ -689,7 +694,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
     foreach (var inv in targets)
     {
-        // ★催促中は固定表示したいので再計算で上書きしない
         if (inv.Status?.Code == "DUNNING")
             continue;
 
@@ -715,10 +719,7 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
     // ==========================================================
     // ⑤ AuditLog（管理者トップ表示用：直近5件）
-    //    2026-01-07〜08（UTC）
     // ==========================================================
-
-    // すでに AuditLog が入っているなら何もしない（二重防止）
     if (!context.AuditLogs.Any())
     {
         var t1 = new DateTime(2026, 1, 7, 9, 30, 0, DateTimeKind.Utc);
@@ -782,7 +783,6 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
         context.SaveChanges();
     }
-
 }
 
 public partial class Program { }
