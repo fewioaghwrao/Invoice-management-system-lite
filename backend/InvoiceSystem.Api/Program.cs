@@ -208,23 +208,26 @@ builder.Services.AddScoped<IAdminOperationLogService, AdminOperationLogService>(
 var app = builder.Build();
 
 // 起動時：Migrate + Seed
-using (var scope = app.Services.CreateScope())
+if (!app.Environment.IsEnvironment("Testing"))
 {
-    var services = scope.ServiceProvider;
-    var context = services.GetRequiredService<AppDbContext>();
-    var hasher = services.GetRequiredService<IPasswordHasher<Member>>();
-    // ② デモデータ（Development もしくは明示許可した時）
-    var seedDemo = Environment.GetEnvironmentVariable("SEED_DEMO_DATA") == "true";
-
-    context.Database.Migrate();
-
-    // ① マスタ（全環境OK）
-    SeedInvoiceStatuses(context);
-
-    // ② デモデータ（Development のみ）
-    if (app.Environment.IsDevelopment() || seedDemo)
+    using (var scope = app.Services.CreateScope())
     {
-        SeedDemoData(context, hasher);
+        var services = scope.ServiceProvider;
+        var context = services.GetRequiredService<AppDbContext>();
+        var hasher = services.GetRequiredService<IPasswordHasher<Member>>();
+        // ② デモデータ（Development もしくは明示許可した時）
+        var seedDemo = Environment.GetEnvironmentVariable("SEED_DEMO_DATA") == "true";
+
+        context.Database.Migrate();
+
+        // ① マスタ（全環境OK）
+        SeedInvoiceStatuses(context);
+
+        // ② デモデータ（Development のみ）
+        if (app.Environment.IsDevelopment() || seedDemo)
+        {
+            SeedDemoData(context, hasher);
+        }
     }
 }
 
