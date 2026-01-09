@@ -306,12 +306,12 @@ CI の定義は以下に記載しています。
 ### 認可（Authorization）に関するテストについて
 
 本システムでは、管理者 / 会員の権限分離が業務上重要であるため、  
-バックエンド API に対して **認可（403 Forbidden）を検証する Integration Test** を実装しています。
+バックエンド API に対して **認可（403 Forbidden / 404 NotFound）を検証する Integration Test** を実装しています。
 
 - ASP.NET Core の `WebApplicationFactory` を用いて API を起動
 - テスト環境専用の設定（`appsettings.Testing.json`）を使用
 - JWT はログイン API を経由せず、テスト内で **ロール（Admin / Member）を切り替えて生成**
-- 実データベースには依存せず、CI 上で安定して再現可能な構成
+- テスト専用の PostgreSQL（GitHub Actions 上で起動）を使用し、本番データには依存しない形で CI 上でも安定して再現可能な構成
 
 これにより、
 - 誤ったロールで管理者 API にアクセスした場合に **必ず 403 が返ること**
@@ -369,6 +369,8 @@ invoice-management-system-lite/
 ## 補足
 - 本アプリは 学習目的ではなく、業務アプリ設計の再現 を目的としています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
+- CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
+
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。
 
