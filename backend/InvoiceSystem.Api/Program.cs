@@ -284,38 +284,23 @@ static string ToNpgsqlConnectionString(string databaseUrl)
 
 static void SeedInvoiceStatuses(AppDbContext context)
 {
-    void Upsert(string code, string name, bool isOverdue, bool isClosed, int sort)
-    {
-        var st = context.InvoiceStatuses.SingleOrDefault(x => x.Code == code);
-        if (st == null)
-        {
-            context.InvoiceStatuses.Add(new InvoiceStatus
-            {
-                Code = code,
-                Name = name,
-                IsOverdue = isOverdue,
-                IsClosed = isClosed,
-                SortOrder = sort
-            });
-        }
-        else
-        {
-            // 既存があっても不足/変更を補正する（安全）
-            st.Name = name;
-            st.IsOverdue = isOverdue;
-            st.IsClosed = isClosed;
-            st.SortOrder = sort;
-        }
-    }
-
-    Upsert("UNPAID", "未入金", false, false, 1);
-    Upsert("PARTIAL", "一部入金", false, false, 2);
-    Upsert("PAID", "入金済み", false, true, 3);
-    Upsert("OVERDUE", "期限超過", true, false, 4);
-    Upsert("DUNNING", "催促中", true, false, 5);
-
-    context.SaveChanges();
+    context.Database.ExecuteSqlRaw(@"
+        INSERT INTO ""InvoiceStatuses"" (""Code"", ""Name"", ""IsOverdue"", ""IsClosed"", ""SortOrder"")
+        VALUES
+            ('UNPAID',  '未入金',   FALSE, FALSE, 1),
+            ('PARTIAL', '一部入金', FALSE, FALSE, 2),
+            ('PAID',    '入金済み', FALSE, TRUE,  3),
+            ('OVERDUE', '期限超過', TRUE,  FALSE, 4),
+            ('DUNNING', '催促中',   TRUE,  FALSE, 5)
+        ON CONFLICT (""Code"") DO UPDATE
+        SET
+            ""Name"" = EXCLUDED.""Name"",
+            ""IsOverdue"" = EXCLUDED.""IsOverdue"",
+            ""IsClosed"" = EXCLUDED.""IsClosed"",
+            ""SortOrder"" = EXCLUDED.""SortOrder"";
+    ");
 }
+
 
 
 static InvoiceStatus MustGetStatus(AppDbContext context, string code)
