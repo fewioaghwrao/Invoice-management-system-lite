@@ -200,10 +200,14 @@ public class PaymentService : IPaymentService
             _db.PaymentAllocations.RemoveRange(payment.PaymentAllocations);
             payment.UpdatedAt = DateTime.UtcNow;
 
+            // ★(1) 割当削除を先にDBへ反映（RecalcはDB集計するため）
+            await _db.SaveChangesAsync();
+
             // ★ クリアした請求書を再計算
             foreach (var invId in beforeInvoiceIds)
                 await RecalcInvoiceStatusAsync(invId);
 
+            // ★(3) ステータス更新を保存
             await _db.SaveChangesAsync();
             return;
         }
@@ -240,6 +244,9 @@ public class PaymentService : IPaymentService
 
         payment.UpdatedAt = DateTime.UtcNow;
 
+        // ★(1) 割当追加/置換を先にDBへ反映（RecalcはDB集計するため）
+        await _db.SaveChangesAsync();
+
         // ★ 変更対象の請求書（前後 union）
         var affected = beforeInvoiceIds
             .Concat(invoiceIds)
@@ -249,6 +256,7 @@ public class PaymentService : IPaymentService
         foreach (var invId in affected)
             await RecalcInvoiceStatusAsync(invId);
 
+        // ★(2) ステータス更新を保存
         await _db.SaveChangesAsync();
     }
     public async Task<long> CreateAsync(CreatePaymentRequestDto req)
@@ -367,7 +375,7 @@ public class PaymentService : IPaymentService
             .OrderBy(x => x.InvoiceId)
             .ToList();
 
-        // 入力バリデーション（あなたの既存）
+        // 入力バリデーション
         if (lines.Count == 0)
         {
             _db.PaymentAllocations.RemoveRange(payment.PaymentAllocations);
@@ -382,10 +390,15 @@ public class PaymentService : IPaymentService
                 actor: actor
             );
 
+            // ★(1) 先に割当削除をDBへ反映
+            await _db.SaveChangesAsync();
+
+
             var beforeInvoiceIds = before.Select(x => x.InvoiceId).Distinct().ToList();
             foreach (var invId in beforeInvoiceIds)
                 await RecalcInvoiceStatusAsync(invId);
 
+            // ★(2) ステータス更新を保存
             await _db.SaveChangesAsync();
             return;
         }
@@ -434,6 +447,10 @@ public class PaymentService : IPaymentService
             actor: actor
         );
 
+
+        // ★(1) 先に割当置換をDBへ反映
+        await _db.SaveChangesAsync();
+
         var affected = before.Select(x => x.InvoiceId)
             .Concat(invoiceIds)
             .Distinct()
@@ -442,6 +459,8 @@ public class PaymentService : IPaymentService
         foreach (var invId in affected)
             await RecalcInvoiceStatusAsync(invId);
 
+
+        // ★(2) ステータス更新を保存
         await _db.SaveChangesAsync();
     }
 
