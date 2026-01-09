@@ -798,6 +798,8 @@ static void SeedDemoData(AppDbContext context, IPasswordHasher<Member> hasher)
 
 }
 
+public partial class Program { }
+
 
 
 

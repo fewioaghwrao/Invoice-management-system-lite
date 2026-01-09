@@ -34,9 +34,7 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - run: dotnet restore backend/InvoiceSystem.Api/InvoiceSystem.Api.csproj
-      - run: dotnet build backend/InvoiceSystem.Api/InvoiceSystem.Api.csproj -c Release --no-restore
-      - run: dotnet test backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release
-
-
+      - run: dotnet restore backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
+      - run: dotnet build   backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-restore
+      - run: dotnet test    backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-build
 

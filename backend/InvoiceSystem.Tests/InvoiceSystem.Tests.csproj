@@ -7,10 +7,13 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+
+	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.22" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -22,6 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
+	<ProjectReference Include="..\InvoiceSystem.Api\InvoiceSystem.Api.csproj" />
     <ProjectReference Include="..\InvoiceSystem.Application\InvoiceSystem.Application.csproj" />
     <ProjectReference Include="..\InvoiceSystem.Domain\InvoiceSystem.Domain.csproj" />
     <ProjectReference Include="..\InvoiceSystem.Infrastructure\InvoiceSystem.Infrastructure.csproj" />
