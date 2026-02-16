@@ -46,14 +46,27 @@
 
 ---
 
-## デモURL
+## デモURL（環境別）
 
-- **フロントエンド（操作画面）**  
-  https://invoice-naoki-app-front-b97fea6c721d.herokuapp.com/auth/login
+> 本システムは **同一コードベース**を  
+> - Heroku（本番相当・結合テスト環境）
+> - Azure（Microsoft スタック検証環境）
+>  
+> の2環境にデプロイしています。
 
-- **バックエンド API**  
-  https://invoice-naoki-app-api-333afef82093.herokuapp.com  
-  Health Check: https://invoice-naoki-app-api-333afef82093.herokuapp.com/health
+### Heroku（本番相当・結合テスト環境）
+| 区分 | URL |
+|---|---|
+| フロントエンド | https://invoice-naoki-app-front-b97fea6c721d.herokuapp.com/auth/login |
+| バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
+| Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
+
+### Azure（App Service / Azure SQL）
+| 区分 | URL |
+|---|---|
+| フロントエンド | https://invoice-system-front-d8hzbteyhse0b8bj.japaneast-01.azurewebsites.net/auth/login |
+| バックエンド API |　https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net|
+| Health Check | https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net/health|
 
 ---
 
@@ -224,10 +237,57 @@
 - PostgreSQL  
   - ローカル：Docker  
   - 本番：Heroku Postgres（マネージドDB）
+- Azure SQL Database（SQL Server）
+  - Azure 環境用 DB
 
-### Infrastructure
+### Infrastructure（環境別）
+
+#### Heroku（本番相当・結合テスト環境）
 - Frontend：Heroku
 - Backend：Heroku
+- Database：Heroku Postgres（Managed）
+- 用途：
+  - 本番相当の結合テスト
+  - 認可・PDF出力・日本語表示などの検証
+
+#### Azure（Microsoft スタック検証環境）
+- Frontend：Azure App Service（Next.js）
+- Backend：Azure App Service（ASP.NET Core）
+- Database：Azure SQL Database（SQL Server）
+- 用途：
+  - .NET × Azure 構成の検証
+  - Azure App Service + Azure SQL の実務構成再現
+
+---
+
+## デプロイ / 環境（Azure）
+
+### Frontend（Azure App Service）
+- Runtime：Node.js
+- Framework：Next.js（App Router）
+- 環境変数：
+  - NEXT_PUBLIC_API_BASE_URL = Azure Backend API のベースURL
+
+### Backend（Azure App Service）
+- Runtime：.NET 8（ASP.NET Core）
+- 認証：JWT
+- データベース接続：
+  - Azure SQL Database（SQL Server）
+  - ConnectionStrings は App Service の Application Settings で管理
+
+### Database（Azure SQL Database）
+- 種別：Azure SQL Database（Single Database）
+- ORM：Entity Framework Core
+- マイグレーション管理：
+  - EF Core Migrations によるスキーマ差分管理
+  - 環境ごとに DB を分離（Local / Heroku / Azure）
+
+### その他
+- CORS：
+  - Azure Frontend の URL を許可
+- Health Check：
+  - GET /health により App Service 健康状態を確認
+
 
 ---
 
@@ -370,6 +430,7 @@ invoice-management-system-lite/
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
 - CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
+- Heroku（PostgreSQL）と Azure（Azure SQL）の両環境で動作確認を行い、DB差異を吸収できる設計であることを確認しています。
 
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。
