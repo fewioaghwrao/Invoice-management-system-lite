@@ -65,7 +65,7 @@
 | 区分 | URL |
 |---|---|
 | フロントエンド | https://invoice-system-front-d8hzbteyhse0b8bj.japaneast-01.azurewebsites.net/auth/login |
-| バックエンド API |　https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net|
+| バックエンド API | https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net|
 | Health Check | https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net/health|
 
 ---
