@@ -13,8 +13,15 @@ obj/
 *.user
 *.suo
 
+# Local development settings (do not commit)
+appsettings.Development.json
+
 # OS / Editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+
+# Visual Studio
+.vs/
+**/.vs/
