@@ -15,6 +15,7 @@ obj/
 
 # Local development settings (do not commit)
 appsettings.Development.json
+**/appsettings.Development.json
 
 # OS / Editor
 .DS_Store
