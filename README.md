@@ -245,6 +245,25 @@ Microsoft スタック環境でのフロントエンド運用を検証してい�
 ※ Azure 環境ではフロントエンド検証を目的としており、  
 バックエンド API / DB は Heroku 側を利用しています。
 
+## Azure と Heroku を併用している理由
+
+本システムでは、クラウド環境の役割を分けることで
+開発・検証・コストのバランスを取りながら運用できる構成としています。
+
+### Heroku（バックエンド / データベース）
+Heroku はアプリケーションとデータベースを一体で管理できる PaaS であり、
+以下の理由から **API と DB を配置する本番相当環境**として採用しています。
+
+- ASP.NET Core API を簡潔にデプロイできる
+- PostgreSQL（Heroku Postgres）をマネージドで利用できる
+- ローカル環境（Docker PostgreSQL）との互換性が高い
+- アプリケーションと DB を同一プラットフォームで統合管理できる
+
+そのため、本システムでは  
+**API + DB を Heroku 上に配置し、本番相当環境として結合テストを実施しています。**
+
+---
+
 ### Infrastructure（環境別）
 
 #### Heroku（本番相当・結合テスト環境）
@@ -263,25 +282,6 @@ Microsoft スタック環境でのフロントエンド運用を検証してい�
 用途：
 - Next.js を Azure App Service 上で動作させる検証
 - Azure 環境でのフロントエンド運用確認
-
----
-
-## Azure と Heroku を併用している理由
-
-本システムでは、クラウド環境の役割を分けることで
-開発・検証・コストのバランスを取りながら運用できる構成としています。
-
-### Heroku（バックエンド / データベース）
-Heroku はアプリケーションとデータベースを一体で管理できる PaaS であり、
-以下の理由から **API と DB を配置する本番相当環境**として採用しています。
-
-- ASP.NET Core API を簡潔にデプロイできる
-- PostgreSQL（Heroku Postgres）をマネージドで利用できる
-- ローカル環境（Docker PostgreSQL）との互換性が高い
-- アプリケーションと DB を同一プラットフォームで統合管理できる
-
-そのため、本システムでは  
-**API + DB を Heroku 上に配置し、本番相当環境として結合テストを実施しています。**
 
 ---
 
@@ -315,33 +315,24 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 といった、実務でも一般的なアーキテクチャを再現しています。
 
-## デプロイ / 環境（Azure）
+## デプロイ / 環境（現状）
 
 ### Frontend（Azure App Service）
 - Runtime：Node.js
 - Framework：Next.js（App Router）
 - 環境変数：
-  - NEXT_PUBLIC_API_BASE_URL = Azure Backend API のベースURL
+  - NEXT_PUBLIC_API_BASE_URL = Heroku Backend API のベースURL
 
-### Backend API
+### Backend API（Heroku）
 - Runtime：ASP.NET Core (.NET 8)
 - 認証：JWT
-- ホスティング：Heroku
 - データベース：PostgreSQL（Heroku Postgres）
-
-### Database（Azure SQL Database）
-- 種別：Azure SQL Database（Single Database）
-- ORM：Entity Framework Core
-- マイグレーション管理：
-  - EF Core Migrations によるスキーマ差分管理
-  - 環境ごとに DB を分離（Local / Heroku / Azure）
 
 ### その他
 - CORS：
-  - Azure Frontend の URL を許可
+  - Heroku API 側で、Azure Frontend の URL を許可
 - Health Check：
-  - GET /health により App Service 健康状態を確認
-
+  - GET /health
 
 ---
 
@@ -484,7 +475,8 @@ invoice-management-system-lite/
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
 - CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
-- Heroku（PostgreSQL）と Azure（Azure SQL）の両環境で動作確認を行い、DB差異を吸収できる設計であることを確認しています。
+- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、Azure はフロントエンド（App Service）運用検証として利用しています。
+- Azure SQL / Azure App Service 構成も検証しましたが、常時稼働コストと運用の観点から、現状の公開デモは Backend API / DB を Heroku に統一しています（Azure はフロント運用検証として利用）。
 
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。
