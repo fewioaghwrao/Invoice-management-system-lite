@@ -61,12 +61,16 @@
 | バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
 | Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
 
-### Azure（App Service / Azure SQL）
+### Azure（UIホスティング検証環境）
+
+Azure App Service 上で **Next.js フロントエンドのみを配置**し、  
+Microsoft スタック環境でのフロントエンド運用を検証しています。
+
 | 区分 | URL |
 |---|---|
 | フロントエンド | https://invoice-system-front-d8hzbteyhse0b8bj.japaneast-01.azurewebsites.net/auth/login |
-| バックエンド API | https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net|
-| Health Check | https://invoice-system-dtdvfha0fpeqg8h3.japaneast-01.azurewebsites.net/health|
+| バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
+| Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
 
 ---
 
@@ -234,11 +238,12 @@
 - JWT認証
 
 ### Database
-- PostgreSQL  
-  - ローカル：Docker  
-  - 本番：Heroku Postgres（マネージドDB）
-- Azure SQL Database（SQL Server）
-  - Azure 環境用 DB
+- PostgreSQL
+  - ローカル：Docker
+  - 本番相当環境：Heroku Postgres（Managed）
+
+※ Azure 環境ではフロントエンド検証を目的としており、  
+バックエンド API / DB は Heroku 側を利用しています。
 
 ### Infrastructure（環境別）
 
@@ -252,13 +257,63 @@
 
 #### Azure（Microsoft スタック検証環境）
 - Frontend：Azure App Service（Next.js）
-- Backend：Azure App Service（ASP.NET Core）
-- Database：Azure SQL Database（SQL Server）
-- 用途：
-  - .NET × Azure 構成の検証
-  - Azure App Service + Azure SQL の実務構成再現
+- Backend API：Heroku（ASP.NET Core）
+- Database：Heroku Postgres
+
+用途：
+- Next.js を Azure App Service 上で動作させる検証
+- Azure 環境でのフロントエンド運用確認
 
 ---
+
+## Azure と Heroku を併用している理由
+
+本システムでは、クラウド環境の役割を分けることで
+開発・検証・コストのバランスを取りながら運用できる構成としています。
+
+### Heroku（バックエンド / データベース）
+Heroku はアプリケーションとデータベースを一体で管理できる PaaS であり、
+以下の理由から **API と DB を配置する本番相当環境**として採用しています。
+
+- ASP.NET Core API を簡潔にデプロイできる
+- PostgreSQL（Heroku Postgres）をマネージドで利用できる
+- ローカル環境（Docker PostgreSQL）との互換性が高い
+- アプリケーションと DB を同一プラットフォームで統合管理できる
+
+そのため、本システムでは  
+**API + DB を Heroku 上に配置し、本番相当環境として結合テストを実施しています。**
+
+---
+
+### Azure（フロントエンド）
+Azure では **Next.js フロントエンドのホスティング環境として App Service を利用**しています。
+
+これは以下の点を検証する目的があります。
+
+- Next.js アプリケーションの Azure App Service での運用
+- Node.js アプリケーションのクラウド配置
+- フロントエンドとバックエンドを分離した構成での API 通信
+- Microsoft 系クラウド環境での Web アプリ運用
+
+---
+
+### 役割分担
+
+本プロジェクトでは、以下の役割分担でクラウドを利用しています。
+
+| 役割 | サービス |
+|---|---|
+| フロントエンド | Azure App Service |
+| バックエンド API | Heroku |
+| データベース | Heroku Postgres |
+
+この構成により、
+
+- フロントエンド / バックエンド分離構成
+- REST API ベースの通信設計
+- クラウド環境をまたいだアプリケーション連携
+
+といった、実務でも一般的なアーキテクチャを再現しています。
 
 ## デプロイ / 環境（Azure）
 
@@ -268,12 +323,11 @@
 - 環境変数：
   - NEXT_PUBLIC_API_BASE_URL = Azure Backend API のベースURL
 
-### Backend（Azure App Service）
-- Runtime：.NET 8（ASP.NET Core）
+### Backend API
+- Runtime：ASP.NET Core (.NET 8)
 - 認証：JWT
-- データベース接続：
-  - Azure SQL Database（SQL Server）
-  - ConnectionStrings は App Service の Application Settings で管理
+- ホスティング：Heroku
+- データベース：PostgreSQL（Heroku Postgres）
 
 ### Database（Azure SQL Database）
 - 種別：Azure SQL Database（Single Database）
