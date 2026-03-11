@@ -63,12 +63,12 @@
 
 ### Azure（UIホスティング検証環境）
 
-Azure App Service 上で **Next.js フロントエンドのみを配置**し、  
+Azure Static Web Apps 上で **Next.js フロントエンドのみを配置**し、  
 Microsoft スタック環境でのフロントエンド運用を検証しています。
 
 | 区分 | URL |
 |---|---|
-| フロントエンド | https://invoice-system-front-d8hzbteyhse0b8bj.japaneast-01.azurewebsites.net/auth/login |
+| フロントエンド | https://gray-flower-0a4087900.2.azurestaticapps.net/auth/login |
 | バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
 | Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
 
@@ -275,23 +275,23 @@ Heroku はアプリケーションとデータベースを一体で管理でき�
   - 認可・PDF出力・日本語表示などの検証
 
 #### Azure（Microsoft スタック検証環境）
-- Frontend：Azure App Service（Next.js）
+- Frontend：Azure Static Web Apps（Next.js）
 - Backend API：Heroku（ASP.NET Core）
 - Database：Heroku Postgres
 
 用途：
-- Next.js を Azure App Service 上で動作させる検証
+- Next.js を Azure Static Web Apps 上で動作させる検証
 - Azure 環境でのフロントエンド運用確認
 
 ---
 
 ### Azure（フロントエンド）
-Azure では **Next.js フロントエンドのホスティング環境として App Service を利用**しています。
+Azure では **Next.js フロントエンドのホスティング環境として Static Web Apps を利用**しています。
 
 これは以下の点を検証する目的があります。
 
-- Next.js アプリケーションの Azure App Service での運用
-- Node.js アプリケーションのクラウド配置
+- Next.js アプリケーションの Azure Static Web Apps での運用
+- 静的・JAMstack 構成のクラウド配置
 - フロントエンドとバックエンドを分離した構成での API 通信
 - Microsoft 系クラウド環境での Web アプリ運用
 
@@ -303,7 +303,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 | 役割 | サービス |
 |---|---|
-| フロントエンド | Azure App Service |
+| フロントエンド | Azure Static Web Apps |
 | バックエンド API | Heroku |
 | データベース | Heroku Postgres |
 
@@ -317,7 +317,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 ## デプロイ / 環境（現状）
 
-### Frontend（Azure App Service）
+### Frontend（Azure Static Web Apps）
 - Runtime：Node.js
 - Framework：Next.js（App Router）
 - 環境変数：
@@ -475,8 +475,8 @@ invoice-management-system-lite/
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
 - CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
-- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、Azure はフロントエンド（App Service）運用検証として利用しています。
-- Azure SQL / Azure App Service 構成も検証しましたが、常時稼働コストと運用の観点から、現状の公開デモは Backend API / DB を Heroku に統一しています（Azure はフロント運用検証として利用）。
+- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、Azure はフロントエンド（Static Web Apps）運用検証として利用しています。
+- Azure SQL / Azure Static Web Apps 構成も検証しましたが、常時稼働コストと運用の観点から、現状の公開デモは Backend API / DB を Heroku に統一しています（Azure はフロント運用検証として利用）。
 
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。
