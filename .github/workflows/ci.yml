@@ -23,12 +23,12 @@ jobs:
       - run: npm ci
       - run: npm run lint
         continue-on-error: true
+      - run: npm test
       - run: npm run build
 
   backend:
     runs-on: ubuntu-latest
 
-    # ★Postgres をCI内に立てる（Integrationテスト用）
     services:
       postgres:
         image: postgres:16
@@ -44,7 +44,6 @@ jobs:
           --health-timeout 5s
           --health-retries 20
 
-    # ★Program.cs の分岐＆接続文字列に合わせて上書き
     env:
       ASPNETCORE_ENVIRONMENT: Testing
       SEED_DEMO_DATA: "true"
@@ -57,7 +56,6 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      # 任意：DBが起動済みになるまで少し待つ（healthcheckがあるので基本不要だが保険）
       - name: Wait for Postgres
         run: |
           for i in {1..30}; do
@@ -67,8 +65,7 @@ jobs:
           echo "Postgres is not ready"
           exit 1
 
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - run: dotnet restore backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
-      - run: dotnet build   backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-restore
-      - run: dotnet test    backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-build
-
-
+      - run: dotnet build backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-restore
+      - run: dotnet test backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj -c Release --no-build
