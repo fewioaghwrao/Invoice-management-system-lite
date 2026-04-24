@@ -471,6 +471,21 @@ invoice-management-system-lite/
 
 ---
 
+## 関連リポジトリ
+
+### WPF デスクトップクライアント
+
+- [InvoiceSystem.Wpf](https://github.com/fewioaghwrao/InvoiceSystem.Wpf)
+
+本リポジトリの ASP.NET Core Web API を利用する、C# / WPF 製のデスクトップクライアントです。  
+Web 版とは別に、管理者・会員向けの請求書確認、入金管理、会員管理、売上確認などを  
+デスクトップアプリとして操作できるように実装しています。
+
+WPF 版では、業務画面としての一覧性、表形式データの見やすさ、  
+Admin / Member ロール別の画面遷移、ダークテーマ UI、xUnit / GitHub Actions によるテスト実行を意識して構成しています。
+
+---
+
 ## 補足
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
