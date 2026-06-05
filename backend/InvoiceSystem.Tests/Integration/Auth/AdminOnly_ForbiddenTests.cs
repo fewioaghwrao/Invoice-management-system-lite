@@ -10,7 +10,7 @@ using System.Security.Claims;
 using System.Text;
 using Xunit;
 
-namespace InvoiceSystem.Tests.Integration.Authz;
+namespace InvoiceSystem.Tests.Integration.Auth;
 
 public class AdminOnly_ForbiddenTests
 {
@@ -57,11 +57,34 @@ public class AdminOnly_ForbiddenTests
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    private const string TestJwtKey =
+        "TEST_ONLY_SUPER_SECRET_KEY_32_BYTES_MIN!!";
+
+    private const string TestJwtIssuer = "InvoiceSystem";
+    private const string TestJwtAudience = "InvoiceSystemFrontend";
+
     private sealed class TestingFactory : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
+
+            builder.ConfigureAppConfiguration((context, config) =>
+            {
+                var connectionString =
+                    Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                    ?? "Host=localhost;Port=5432;Database=invoicesystem;Username=postgres;Password=postgres";
+
+                config.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["ConnectionStrings:DefaultConnection"] = connectionString,
+
+                    ["Jwt:Key"] = TestJwtKey,
+                    ["Jwt:Issuer"] = TestJwtIssuer,
+                    ["Jwt:Audience"] = TestJwtAudience,
+                    ["Jwt:ExpiresMinutes"] = "60"
+                });
+            });
         }
     }
 }
