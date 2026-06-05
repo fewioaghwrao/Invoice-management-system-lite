@@ -9,6 +9,8 @@
     <IsTestProject>true</IsTestProject>
 
 	  <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+
+	  <UserSecretsId>2636f8ac-070a-42a0-9f11-3e98f3933d13</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
