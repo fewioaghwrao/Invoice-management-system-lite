@@ -57,24 +57,27 @@ public class AdminOnly_ForbiddenTests
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
+    private const string TestJwtKey =
+        "TEST_ONLY_SUPER_SECRET_KEY_32_BYTES_MIN!!";
+
+    private const string TestJwtIssuer = "InvoiceSystem";
+    private const string TestJwtAudience = "InvoiceSystemFrontend";
+
     private sealed class TestingFactory : WebApplicationFactory<Program>
     {
-        private const string TestJwtKey =
-    "TEST_ONLY_SUPER_SECRET_KEY_32_BYTES_MIN!!";
-
-        private const string TestJwtIssuer = "InvoiceSystem";
-        private const string TestJwtAudience = "InvoiceSystemFrontend";
-
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
 
             builder.ConfigureAppConfiguration((context, config) =>
             {
+                var connectionString =
+                    Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+                    ?? "Host=localhost;Port=5432;Database=invoicesystem;Username=postgres;Password=postgres";
+
                 config.AddInMemoryCollection(new Dictionary<string, string?>
                 {
-                    ["ConnectionStrings:DefaultConnection"] =
-                        "Host=localhost;Port=5432;Database=invoicesystem;Username=postgres;Password=postgres",
+                    ["ConnectionStrings:DefaultConnection"] = connectionString,
 
                     ["Jwt:Key"] = TestJwtKey,
                     ["Jwt:Issuer"] = TestJwtIssuer,
