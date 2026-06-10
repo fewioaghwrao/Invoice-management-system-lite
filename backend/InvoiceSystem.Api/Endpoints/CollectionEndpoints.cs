@@ -1,6 +1,7 @@
 ﻿using InvoiceSystem.Application.Dtos.Collections;
 using InvoiceSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc; // ★これを追加（[FromServices] 用）
+using InvoiceSystem.Api.Common;
 
 namespace InvoiceSystem.Api.Endpoints;
 
@@ -29,12 +30,15 @@ public static class CollectionEndpoints
 
         group.MapPost("/{invoiceId:long}/logs",
             async (
+                HttpContext http,
                 long invoiceId,
-                [FromBody] CreateDunningLogRequestDto req,   // ★任意：明示したいなら付ける
+                [FromBody] CreateDunningLogRequestDto req,
                 [FromServices] ICollectionService svc
             ) =>
             {
-                var id = await svc.CreateLogAsync(invoiceId, req);
+                var actor = AuditActorFactory.FromHttp(http);
+
+                var id = await svc.CreateLogAsync(invoiceId, req, actor);
                 return Results.Ok(new { id });
             });
 

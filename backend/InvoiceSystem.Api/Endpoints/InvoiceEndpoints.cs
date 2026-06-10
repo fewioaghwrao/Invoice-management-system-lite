@@ -5,6 +5,7 @@ using InvoiceSystem.Application.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using InvoiceSystem.Api.Common;
 
 namespace InvoiceSystem.Api.Endpoints;
 
@@ -22,10 +23,13 @@ public static class InvoiceEndpoints
 
         // 請求書作成（ヘッダ＋明細）※Adminのみ推奨
         group.MapPost("/", async (
+            HttpContext http,
             [FromBody] UpdateInvoiceRequestDto req,
             IInvoiceService service) =>
         {
-            var result = await service.CreateWithLinesAsync(req);
+            var actor = AuditActorFactory.FromHttp(http);
+
+            var result = await service.CreateWithLinesAsync(req, actor);
             return Results.Created($"/api/invoices/{result.Id}", result);
         })
         .RequireAuthorization("AdminOnly");
@@ -89,11 +93,16 @@ public static class InvoiceEndpoints
         .RequireAuthorization("AdminOnly");
 
         // 請求書削除（※入金割当がある場合は 409）※Adminのみ推奨
-        group.MapDelete("/{id:long}", async (long id, IInvoiceService service) =>
+        group.MapDelete("/{id:long}", async (
+            HttpContext http,
+            long id,
+            IInvoiceService service) =>
         {
             try
             {
-                var deleted = await service.DeleteAsync(id);
+                var actor = AuditActorFactory.FromHttp(http);
+
+                var deleted = await service.DeleteAsync(id, actor);
                 return deleted ? Results.NoContent() : Results.NotFound();
             }
             catch (InvalidOperationException ex)
@@ -128,7 +137,9 @@ public static class InvoiceEndpoints
             var guard = await EnsureOwnerOrAdminAsync(ctx, id, service);
             if (guard is not null) return guard;
 
-            await service.UpdateAsync(id, req);
+            var actor = AuditActorFactory.FromHttp(ctx);
+
+            await service.UpdateAsync(id, req, actor);
             return Results.NoContent();
         });
 

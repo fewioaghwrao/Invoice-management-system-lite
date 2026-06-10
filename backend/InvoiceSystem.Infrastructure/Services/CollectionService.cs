@@ -1,4 +1,5 @@
-﻿using InvoiceSystem.Application.Dtos.Collections;
+﻿using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Application.Dtos.Collections;
 using InvoiceSystem.Application.Services;
 using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +9,12 @@ namespace InvoiceSystem.Infrastructure.Services
     public class CollectionService : ICollectionService
     {
         private readonly AppDbContext _db;
+        private readonly IAuditLogger _audit;
 
-        public CollectionService(AppDbContext db)
+        public CollectionService(AppDbContext db, IAuditLogger audit)
         {
             _db = db;
+            _audit = audit;
         }
 
         private static DateTime EnsureUtc(DateTime dt)
@@ -125,6 +128,34 @@ namespace InvoiceSystem.Infrastructure.Services
 
             await _db.SaveChangesAsync();
             return entity.Id;
+        }
+
+        public async Task<long> CreateLogAsync(
+    long invoiceId,
+    CreateDunningLogRequestDto req,
+    AuditActor actor)
+        {
+            var id = await CreateLogAsync(invoiceId, req);
+
+            await _audit.WriteAsync(
+                action: "DUNNING_LOG_CREATED",
+                entity: "Invoice",
+                entityId: invoiceId.ToString(),
+                summary: $"Dunning log was created for InvoiceId={invoiceId}.",
+                data: new
+                {
+                    invoiceId,
+                    reminderHistoryId = id,
+                    req.Channel,
+                    req.Tone,
+                    req.Title,
+                    req.Memo,
+                    req.NextActionDate,
+                    req.Subject
+                },
+                actor: actor);
+
+            return id;
         }
 
     }

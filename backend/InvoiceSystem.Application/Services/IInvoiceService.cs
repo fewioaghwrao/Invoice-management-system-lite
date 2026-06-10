@@ -1,6 +1,8 @@
 ﻿using InvoiceSystem.Application.Commands.Invoices;
 using InvoiceSystem.Application.Dtos.Invoices;
 using InvoiceSystem.Application.Queries.Invoices;
+using InvoiceSystem.Application.Common.Interfaces;
+
 
 namespace InvoiceSystem.Application.Services;
 
@@ -50,6 +52,10 @@ public interface IInvoiceService
     // ★追加：invoiceNumber で所有者取得（OwnerOrAdmin判定用）
     Task<long?> GetOwnerMemberIdByNumberAsync(string invoiceNumber);
     Task<long?> GetIdByInvoiceNumberAsync(string invoiceNumber);
+
+    Task<InvoiceDto> CreateWithLinesAsync(UpdateInvoiceRequestDto req, AuditActor actor);
+    Task UpdateAsync(long invoiceId, UpdateInvoiceRequestDto req, AuditActor actor);
+    Task<bool> DeleteAsync(long id, AuditActor actor);
 
 }
 
