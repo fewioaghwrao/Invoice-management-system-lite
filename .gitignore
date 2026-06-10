@@ -12,6 +12,8 @@ bin/
 obj/
 *.user
 *.suo
+logs/
+*.log
 
 # Local development settings (do not commit)
 appsettings.Development.json

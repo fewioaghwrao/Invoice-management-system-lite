@@ -17,19 +17,27 @@ using InvoiceSystem.Infrastructure.Pdf;
 using InvoiceSystem.Infrastructure.Data;
 using InvoiceSystem.Infrastructure.Database;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
 using System.Text.Json;
 using System.Text;
 
-
-
-//PDF生成ライブラリ QuestPDF のライセンスタイプを設定
+// PDF生成ライブラリ QuestPDF のライセンスタイプを設定
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 PdfFontRegistrar.Register();
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .Enrich.WithProcessId()
+        .Enrich.WithThreadId();
+});
 
 // CORS
 var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
@@ -51,7 +59,7 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            Console.WriteLine("[WARN] CORS_ORIGINS not set. Fallback to localhost only.");
+            Log.Warning("CORS_ORIGINS is not set. Fallback to localhost only.");
 
             policy.WithOrigins("http://localhost:3000")
                   .AllowAnyHeader()
@@ -96,6 +104,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 builder.Services.AddHealthChecks();
 
 // DbContext (Postgres + Heroku DATABASE_URL 対応)
@@ -164,71 +173,84 @@ builder.Services.AddScoped<IAdminOperationLogService, AdminOperationLogService>(
 
 var app = builder.Build();
 
-
-// ===============================
-// 起動時：Migrate + Seed
-// ===============================
-AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
-
-app.UseCors();
-
-var enableSwagger = builder.Configuration.GetValue<bool>("ENABLE_SWAGGER");
-
-if (app.Environment.IsDevelopment() || enableSwagger)
+try
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    Log.Information("Starting InvoiceSystem.Api");
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+    // ===============================
+    // 起動時：Migrate + Seed
+    // ===============================
+    AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
 
-app.UseAuthentication();
-app.UseAuthorization();
+    app.UseSerilogRequestLogging();
 
-app.MapMemberEndpoints();
-app.MapInvoiceEndpoints();
-app.MapPaymentEndpoints();
-app.MapCollectionEndpoints();
-app.MapAuthEndpoints();
-app.MapSalesEndpoints();
-app.MapAdminEndpoints();
-app.MapMyAccountEndpoints();
-app.MapAdminOperationLogEndpoints();
+    app.UseCors();
 
-app.MapHealthChecks("/health", new HealthCheckOptions
-{
-    ResponseWriter = async (context, report) =>
+    var enableSwagger = builder.Configuration.GetValue<bool>("ENABLE_SWAGGER");
+
+    if (app.Environment.IsDevelopment() || enableSwagger)
     {
-        context.Response.ContentType = "application/json; charset=utf-8";
-
-        var response = new
-        {
-            status = report.Status.ToString(),
-            totalDuration = report.TotalDuration.TotalMilliseconds,
-            checks = report.Entries.Select(x => new
-            {
-                name = x.Key,
-                status = x.Value.Status.ToString(),
-                duration = x.Value.Duration.TotalMilliseconds,
-                error = x.Value.Exception?.Message
-            })
-        };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        app.UseSwagger();
+        app.UseSwaggerUI();
     }
-});
 
-app.MapGet("/", () => Results.Text(
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseHttpsRedirection();
+    }
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapMemberEndpoints();
+    app.MapInvoiceEndpoints();
+    app.MapPaymentEndpoints();
+    app.MapCollectionEndpoints();
+    app.MapAuthEndpoints();
+    app.MapSalesEndpoints();
+    app.MapAdminEndpoints();
+    app.MapMyAccountEndpoints();
+    app.MapAdminOperationLogEndpoints();
+
+    app.MapHealthChecks("/health", new HealthCheckOptions
+    {
+        ResponseWriter = async (context, report) =>
+        {
+            context.Response.ContentType = "application/json; charset=utf-8";
+
+            var response = new
+            {
+                status = report.Status.ToString(),
+                totalDuration = report.TotalDuration.TotalMilliseconds,
+                checks = report.Entries.Select(x => new
+                {
+                    name = x.Key,
+                    status = x.Value.Status.ToString(),
+                    duration = x.Value.Duration.TotalMilliseconds,
+                    error = x.Value.Exception?.Message
+                })
+            };
+
+            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+        }
+    });
+
+    app.MapGet("/", () => Results.Text(
 @"Invoice System API
 
 - Swagger UI: /swagger
 - Health: /health
 ", "text/plain"));
 
-app.Run();
-
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "InvoiceSystem.Api terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 public partial class Program { }
