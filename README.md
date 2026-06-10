@@ -336,23 +336,36 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 ---
 
-## 設計資料（Architecture）
+## 設計資料（Documents）
 
-本システムの設計意図・全体構成については、以下のドキュメントにまとめています。
+本システムでは、要件定義から基本設計、詳細設計、ER図・画面遷移図までを整理し、
+請求・入金管理業務における要件・設計意図・実装仕様を段階的に確認できるようにしています。
 
-- [Architecture Overview（設計意図・全体構成）](./docs/architecture.md)
+### 設計書
+
+| ドキュメント                                            | 内容                                        |
+| ------------------------------------------------- | ----------------------------------------- |
+| [要件定義書](./docs/design/requirements-definition.md) | システム化の背景、業務要件、機能要件、非機能要件、対象範囲を整理          |
+| [基本設計書](./docs/design/basic-design.md)            | システム構成、機能設計、画面設計、データ設計概要、権限設計を整理          |
+| [詳細設計書](./docs/design/detail-design.md)           | API、DB、業務ロジック、PDF/CSV、認証・認可、テスト設計を実装寄りに整理 |
+| [Architecture Overview](./docs/architecture.md)   | 設計意図、全体構成、技術選定、Lite版としての方針を整理             |
+| [結合テスト結果](./docs/Integration_test.md)             | Heroku本番相当環境での画面・API・認証・権限制御の確認結果         |
+
+### 図・ダイアグラム
 
 あわせて、業務フローおよびデータ構造を以下の図で整理しています。
 
-### ER図（概要）
+#### ER図（概要）
+
 ![ER Diagram](./docs/diagram/er-diagram.drawio.png)
 
-### 管理者 画面遷移
+#### 管理者 画面遷移
+
 ![Admin State](./docs/diagram/admin-diagram.drawio.png)
 
-### 会員 画面遷移
-![Member State](./docs/diagram/member-diagram.drawio.png)
+#### 会員 画面遷移
 
+![Member State](./docs/diagram/member-diagram.drawio.png)
 
 ---
 
@@ -429,18 +442,28 @@ CI の定義は以下に記載しています。
 
 ```text
 invoice-management-system-lite/
-├─ frontend/   # Next.js
-├─ backend/    # ASP.NET Core
+├─ frontend/                      # Next.js フロントエンド
+├─ backend/                       # ASP.NET Core Backend API
 ├─ docs/
-│  └─ screenshots/
-│     ├─ A-admin-dashboard.png
-│     ├─ B-invoice-list.png
-│     ├─ C-invoice-detail.png
-│     ├─ D-payment-allocation.png
-│     └─ F-member-dashboard.png
-└─ README.md   # 本ドキュメント
-
+│  ├─ design/
+│  │  ├─ requirements-definition.md # 要件定義書
+│  │  ├─ basic-design.md            # 基本設計書
+│  │  └─ detail-design.md           # 詳細設計書
+│  ├─ diagram/
+│  │  ├─ er-diagram.drawio.png      # ER図
+│  │  ├─ admin-diagram.drawio.png   # 管理者画面遷移図
+│  │  └─ member-diagram.drawio.png  # 会員画面遷移図
+│  ├─ screenshots/
+│  │  ├─ A-admin-dashboard.png
+│  │  ├─ B-invoice-list.png
+│  │  ├─ C-invoice-detail.png
+│  │  ├─ D-payment-allocation.png
+│  │  └─ F-member-dashboard.png
+│  ├─ architecture.md              # 設計意図・全体構成
+│  └─ Integration_test.md          # 結合テスト結果
+└─ README.md                       # 本ドキュメント
 ```
+
 ---
 
 ## 自動テスト方針（今後の改善）
