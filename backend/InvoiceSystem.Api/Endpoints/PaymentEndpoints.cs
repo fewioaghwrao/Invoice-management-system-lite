@@ -64,13 +64,17 @@ public static class PaymentEndpoints
         // 入金登録（手動）
         group.MapPost("", async (
             [FromBody] CreatePaymentRequestDto request,
-            IPaymentService service) =>
+            IPaymentService service,
+            HttpContext http) =>
         {
             if (request.MemberId <= 0) return Results.BadRequest("MemberId is required.");
             if (request.Amount <= 0) return Results.BadRequest("Amount must be > 0.");
             if (request.PaymentDate == default) return Results.BadRequest("PaymentDate is required.");
 
-            var id = await service.CreateAsync(request);
+            var actor = AuditActorFactory.FromHttp(http);
+
+            var id = await service.CreateAsync(request, actor);
+
             return Results.Created($"/api/payments/{id}", new { id });
         });
 

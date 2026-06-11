@@ -224,7 +224,7 @@ public class InvoiceService : IInvoiceService
             action: "INVOICE_CREATED",
             entity: "Invoice",
             entityId: result.Id.ToString(),
-            summary: $"Invoice {result.InvoiceNumber} was created.",
+            summary: $"請求書 {result.InvoiceNumber} を作成しました。",
             data: new
             {
                 invoiceId = result.Id,
@@ -364,7 +364,7 @@ public class InvoiceService : IInvoiceService
                 action: "INVOICE_DELETED",
                 entity: "Invoice",
                 entityId: id.ToString(),
-                summary: $"Invoice {before?.InvoiceNumber ?? id.ToString()} was deleted.",
+                summary: $"請求書 {before?.InvoiceNumber ?? id.ToString()} を削除しました。",
                 data: new
                 {
                     before = before is null ? null : new
@@ -525,7 +525,7 @@ public class InvoiceService : IInvoiceService
             action: "INVOICE_UPDATED",
             entity: "Invoice",
             entityId: invoiceId.ToString(),
-            summary: $"Invoice {after?.InvoiceNumber ?? invoiceId.ToString()} was updated.",
+            summary: $"請求書 {after?.InvoiceNumber ?? invoiceId.ToString()} を更新しました。",
             data: new
             {
                 before = before is null ? null : new

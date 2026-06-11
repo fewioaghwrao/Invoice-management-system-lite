@@ -141,7 +141,7 @@ namespace InvoiceSystem.Infrastructure.Services
                 action: "DUNNING_LOG_CREATED",
                 entity: "Invoice",
                 entityId: invoiceId.ToString(),
-                summary: $"Dunning log was created for InvoiceId={invoiceId}.",
+                summary: $"請求書ID={invoiceId} に催促履歴を追加しました。",
                 data: new
                 {
                     invoiceId,

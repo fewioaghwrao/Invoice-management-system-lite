@@ -175,82 +175,91 @@ var app = builder.Build();
 
 try
 {
-    Log.Information("Starting InvoiceSystem.Api");
+Log.Information("Starting InvoiceSystem.Api");
 
-    // ===============================
-    // 起動時：Migrate + Seed
-    // ===============================
-    AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
+// ===============================
+// 起動時：Migrate + Seed
+// ※ Testing では WebApplicationFactory 側のDB設定を優先する
+// ===============================
+if (!app.Environment.IsEnvironment("Testing"))
+{
+AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
+}
 
-    app.UseSerilogRequestLogging();
+app.UseSerilogRequestLogging();
 
-    app.UseCors();
+app.UseCors();
 
-    var enableSwagger = builder.Configuration.GetValue<bool>("ENABLE_SWAGGER");
+var enableSwagger = builder.Configuration.GetValue<bool>("ENABLE_SWAGGER");
 
-    if (app.Environment.IsDevelopment() || enableSwagger)
-    {
-        app.UseSwagger();
-        app.UseSwaggerUI();
-    }
+if (app.Environment.IsDevelopment() || enableSwagger)
+{
+app.UseSwagger();
+app.UseSwaggerUI();
+}
 
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseHttpsRedirection();
-    }
+if (!app.Environment.IsDevelopment())
+{
+app.UseHttpsRedirection();
+}
 
-    app.UseAuthentication();
-    app.UseAuthorization();
+app.UseAuthentication();
+app.UseAuthorization();
 
-    app.MapMemberEndpoints();
-    app.MapInvoiceEndpoints();
-    app.MapPaymentEndpoints();
-    app.MapCollectionEndpoints();
-    app.MapAuthEndpoints();
-    app.MapSalesEndpoints();
-    app.MapAdminEndpoints();
-    app.MapMyAccountEndpoints();
-    app.MapAdminOperationLogEndpoints();
+app.MapMemberEndpoints();
+app.MapInvoiceEndpoints();
+app.MapPaymentEndpoints();
+app.MapCollectionEndpoints();
+app.MapAuthEndpoints();
+app.MapSalesEndpoints();
+app.MapAdminEndpoints();
+app.MapMyAccountEndpoints();
+app.MapAdminOperationLogEndpoints();
 
-    app.MapHealthChecks("/health", new HealthCheckOptions
-    {
-        ResponseWriter = async (context, report) =>
-        {
-            context.Response.ContentType = "application/json; charset=utf-8";
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+ResponseWriter = async (context, report) =>
+{
+context.Response.ContentType = "application/json; charset=utf-8";
 
-            var response = new
-            {
-                status = report.Status.ToString(),
-                totalDuration = report.TotalDuration.TotalMilliseconds,
-                checks = report.Entries.Select(x => new
-                {
-                    name = x.Key,
-                    status = x.Value.Status.ToString(),
-                    duration = x.Value.Duration.TotalMilliseconds,
-                    error = x.Value.Exception?.Message
-                })
-            };
+var response = new
+{
+status = report.Status.ToString(),
+totalDuration = report.TotalDuration.TotalMilliseconds,
+checks = report.Entries.Select(x => new
+{
+name = x.Key,
+status = x.Value.Status.ToString(),
+duration = x.Value.Duration.TotalMilliseconds,
+error = x.Value.Exception?.Message
+})
+};
 
-            await context.Response.WriteAsync(JsonSerializer.Serialize(response));
-        }
-    });
+await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+}
+});
 
-    app.MapGet("/", () => Results.Text(
+app.MapGet("/", () => Results.Text(
 @"Invoice System API
 
 - Swagger UI: /swagger
 - Health: /health
 ", "text/plain"));
 
-    app.Run();
+app.Run();
 }
 catch (Exception ex)
 {
-    Log.Fatal(ex, "InvoiceSystem.Api terminated unexpectedly");
+Log.Fatal(ex, "InvoiceSystem.Api terminated unexpectedly");
+
+if (app.Environment.IsEnvironment("Testing"))
+{
+throw;
+}
 }
 finally
 {
-    Log.CloseAndFlush();
+Log.CloseAndFlush();
 }
 
 public partial class Program { }

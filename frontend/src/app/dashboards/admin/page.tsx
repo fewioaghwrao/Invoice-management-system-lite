@@ -4,6 +4,10 @@ import CurrentUserBadge from "@/components/CurrentUserBadge";
 import LogoutButton from "@/components/LogoutButton";
 import MonthlySalesChartClient from "@/components/MonthlySalesChartClient";
 import { apiGetServer } from "@/lib/api.server";
+import {
+  formatOperationActionLabel,
+  formatOperationTarget,
+} from "@/lib/operationLogFormat";
 
 type UnpaidInvoice = {
   invoiceId: number;
@@ -124,24 +128,6 @@ async function getRecentOperationLogs(limit = 5): Promise<ApiAdminOperationLogDt
   );
 }
 
-// 画面表示用（任意：Actionコードを日本語に寄せる）
-function formatActionLabel(code: string): string {
-  const x = (code ?? "").toUpperCase();
-  return x === "PAYMENT_ALLOCATION_ADDED" ? "割当追加"
-    : x === "PAYMENT_ALLOCATION_DELETED" ? "割当削除"
-    : x === "PAYMENT_ALLOCATIONS_REPLACED" ? "割当保存（置換）"
-    : x === "PAYMENT_ALLOCATIONS_CLEARED" ? "割当クリア"
-    : code;
-}
-
-function formatTarget(entity: string, entityId?: string | null): string {
-  const e = (entity ?? "").toUpperCase();
-  const label = e === "PAYMENT" ? "入金"
-    : e === "INVOICE" ? "請求書"
-    : e === "MEMBER" ? "会員"
-    : entity;
-  return entityId ? `${label} #${entityId}` : label;
-}
 
 // ★ year を引数で受け取る（実API）
 async function getAdminSummary(year: number): Promise<AdminSummary> {
@@ -465,14 +451,24 @@ export default async function AdminDashboardPage({
         </section>
 
 <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-  <div className="flex items-center justify-between mb-3">
-    <h2 className="text-sm font-semibold text-slate-100">
-      最近の操作（直近5件）
-    </h2>
-    <p className="text-[11px] text-slate-400">
+<div className="flex items-center justify-between mb-3">
+  <h2 className="text-sm font-semibold text-slate-100">
+    最近の操作（直近5件）
+  </h2>
+
+  <div className="flex items-center gap-3">
+    <p className="hidden sm:block text-[11px] text-slate-400">
       管理者の操作履歴を簡易表示しています。
     </p>
+
+    <Link
+      href="/dashboards/admin/operation-logs"
+      className="text-[11px] text-sky-300 hover:text-sky-200"
+    >
+      すべて表示 →
+    </Link>
   </div>
+</div>
 
   <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
   <table className="hidden sm:table min-w-full text-xs">
@@ -493,10 +489,10 @@ export default async function AdminDashboardPage({
               {new Date(x.at).toLocaleString("ja-JP")}
             </td>
             <td className="px-4 py-2 text-slate-100">
-              {formatActionLabel(x.action)}
+              {formatOperationActionLabel(x.action)}
             </td>
             <td className="px-4 py-2 text-slate-200">
-              {formatTarget(x.entity, x.entityId)}
+              {formatOperationTarget(x.entity, x.entityId)}
             </td>
             <td className="px-4 py-2 text-slate-200">
               {x.summary || "-"}
@@ -525,10 +521,10 @@ export default async function AdminDashboardPage({
               {new Date(x.at).toLocaleString("ja-JP")}
             </p>
             <p className="mt-1 text-sm font-semibold text-slate-100">
-              {formatActionLabel(x.action)}
+              {formatOperationActionLabel(x.action)}
             </p>
             <p className="mt-1 text-xs text-slate-300 truncate">
-              {formatTarget(x.entity, x.entityId)}
+              {formatOperationTarget(x.entity, x.entityId)}
             </p>
           </div>
           <p className="shrink-0 text-[11px] text-slate-500">actor: {x.actorUserId}</p>

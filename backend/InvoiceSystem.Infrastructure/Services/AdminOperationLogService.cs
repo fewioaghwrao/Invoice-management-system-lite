@@ -34,5 +34,48 @@ public class AdminOperationLogService : IAdminOperationLogService
             .ToListAsync(ct);
 
     }
+    public async Task<AdminOperationLogListResultDto> SearchAsync(
+    int page,
+    int pageSize,
+    CancellationToken ct = default)
+    {
+        page = page <= 0 ? 1 : page;
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
+        var query = _db.AuditLogs
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .ThenByDescending(x => x.Id);
+
+        var totalCount = await query.CountAsync(ct);
+        var totalPages = totalCount == 0
+            ? 1
+            : (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        if (page > totalPages)
+            page = totalPages;
+
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(x => new AdminOperationLogDto(
+                x.Id,
+                x.CreatedAt,
+                x.ActorUserId,
+                x.Action,
+                x.Entity,
+                x.EntityId,
+                x.Summary ?? ""
+            ))
+            .ToListAsync(ct);
+
+        return new AdminOperationLogListResultDto(
+            Page: page,
+            PageSize: pageSize,
+            TotalCount: totalCount,
+            TotalPages: totalPages,
+            Items: items
+        );
+    }
 }
 
