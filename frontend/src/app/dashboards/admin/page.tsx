@@ -128,7 +128,6 @@ async function getRecentOperationLogs(limit = 5): Promise<ApiAdminOperationLogDt
   );
 }
 
-
 // ★ year を引数で受け取る（実API）
 async function getAdminSummary(year: number): Promise<AdminSummary> {
   const dto = await apiGetServer<ApiAdminSummaryDto>(`/api/admin/summary?year=${year}`);
