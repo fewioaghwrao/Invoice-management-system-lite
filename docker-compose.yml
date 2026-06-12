@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: invoice-system-postgres
+    environment:
+      POSTGRES_DB: invoicesystem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - invoice-system-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d invoicesystem"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/InvoiceSystem.Api/Dockerfile
+    container_name: invoice-system-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=invoicesystem;Username=postgres;Password=postgres
+      Jwt__Issuer: InvoiceSystem
+      Jwt__Audience: InvoiceSystem
+      Jwt__Key: local-development-secret-key-for-invoice-system-please-change
+      Jwt__ExpiresMinutes: 120
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    ports:
+      - "5000:8080"
+
+volumes:
+  invoice-system-postgres-data:
