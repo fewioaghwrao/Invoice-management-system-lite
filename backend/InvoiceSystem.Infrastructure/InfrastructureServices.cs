@@ -20,7 +20,8 @@ public static class InfrastructureServices
 
         services.AddScoped<IAdminSummaryService, AdminSummaryService>();
 
-        // 他にも Repository や PDF, メールサービスなどをここで登録していく
+        services.AddScoped<IReminderJobProcessor, ReminderJobProcessor>();
+        services.AddHostedService<ReminderJobWorker>();
 
         return services;
     }

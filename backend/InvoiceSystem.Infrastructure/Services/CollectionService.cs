@@ -77,9 +77,10 @@ namespace InvoiceSystem.Infrastructure.Services
 
         public async Task<long> CreateLogAsync(long invoiceId, CreateDunningLogRequestDto req)
         {
-            // invoice存在確認（Status も見るので Include）
+            // invoice存在確認（Status / Member も見る）
             var invoice = await _db.Invoices
                 .Include(x => x.Status)
+                .Include(x => x.Member)
                 .FirstOrDefaultAsync(x => x.Id == invoiceId);
 
             if (invoice is null) throw new KeyNotFoundException("Invoice not found");
@@ -103,6 +104,24 @@ namespace InvoiceSystem.Infrastructure.Services
             };
 
             _db.Add(entity);
+
+            // ② EMAILの場合のみ、非同期メール送信用ジョブを登録
+            if (req.Channel == "EMAIL")
+            {
+                if (string.IsNullOrWhiteSpace(invoice.Member.Email))
+                    throw new InvalidOperationException("Member email is not set.");
+
+                _db.ReminderJobs.Add(new ReminderJob
+                {
+                    InvoiceId = invoice.Id,
+                    ToEmail = invoice.Member.Email,
+                    Subject = req.Subject ?? entity.Title ?? "お支払い状況のご確認",
+                    Body = req.BodyText ?? entity.Note ?? "",
+                    Status = "Pending",
+                    RetryCount = 0,
+                    CreatedAt = now
+                });
+            }
 
             // ② ステータス更新：未入金/一部入金のときだけ DUNNING にする
             // すでに DUNNING の場合は何もしない

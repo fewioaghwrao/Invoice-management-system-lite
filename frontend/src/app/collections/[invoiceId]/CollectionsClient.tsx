@@ -183,7 +183,7 @@ export default function CollectionsClient({
     // ✅ confirm ポップアップ
     const ok = window.confirm(
       [
-        "督促を「実施済み」として記録します。よろしいですか？",
+        "督促処理を受け付けます。よろしいですか？",
         "",
         `請求書：${snap.invoiceNumber}`,
         `チャネル：${channelLabel(channel)}`,
@@ -219,8 +219,8 @@ export default function CollectionsClient({
       const l = await apiGetClient<DunningLog[]>(`/api/collections/${invoiceId}/logs`);
       setLogs(l);
 
-      // ✅ 成功ポップアップ（任意：欲しいなら）
-      alert("督促履歴に記録しました。");
+      // ✅ 成功ポップアップ
+      alert("督促処理を受け付けました。メール送信はバックグラウンドで処理されます。");
     } catch (e: any) {
       console.error("[Collections] record failed:", e);
       alert(e?.message ?? "記録に失敗しました");
@@ -329,7 +329,7 @@ export default function CollectionsClient({
                   saving ? "opacity-60 cursor-not-allowed" : "",
                 ].join(" ")}
               >
-                {saving ? "記録中…" : "送信完了として記録"}
+                {saving ? "受付中…" : "督促処理を受け付ける"}
               </button>
             </div>
           </div>

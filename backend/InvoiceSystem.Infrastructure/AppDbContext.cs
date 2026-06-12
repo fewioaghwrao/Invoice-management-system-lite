@@ -34,6 +34,9 @@ public class AppDbContext : DbContext, IAppDbContext
         NormalizeDateTimesToUtc();
         return base.SaveChangesAsync(cancellationToken);
     }
+
+    public DbSet<ReminderJob> ReminderJobs => Set<ReminderJob>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -188,6 +191,33 @@ public class AppDbContext : DbContext, IAppDbContext
             e.HasIndex(x => x.ActorUserId);
         });
 
+        modelBuilder.Entity<ReminderJob>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.ToEmail)
+                .HasMaxLength(256)
+                .IsRequired();
+
+            entity.Property(x => x.Subject)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.Property(x => x.Body)
+                .IsRequired();
+
+            entity.Property(x => x.Status)
+                .HasMaxLength(30)
+                .IsRequired();
+
+            entity.Property(x => x.ErrorMessage)
+                .HasMaxLength(2000);
+
+            entity.HasOne(x => x.Invoice)
+                .WithMany()
+                .HasForeignKey(x => x.InvoiceId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 
 public override int SaveChanges()
