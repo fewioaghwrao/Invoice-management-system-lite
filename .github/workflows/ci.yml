@@ -51,7 +51,7 @@ jobs:
 
     env:
       ASPNETCORE_ENVIRONMENT: Testing
-      SEED_DEMO_DATA: "false"
+      SEED_DEMO_DATA: "true"
       ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=invoices_test;Username=postgres;Password=postgres"
 
     steps:
