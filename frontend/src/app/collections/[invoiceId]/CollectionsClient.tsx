@@ -30,8 +30,8 @@ type DunningLog = {
   nextActionDate?: string; // ISO or yyyy-MM-dd
 };
 
-function formatCurrency(value: number): string {
-  return value.toLocaleString("ja-JP", {
+function formatCurrency(value?: number): string {
+  return (value ?? 0).toLocaleString("ja-JP", {
     style: "currency",
     currency: "JPY",
     maximumFractionDigits: 0,
@@ -152,10 +152,10 @@ export default function CollectionsClient({
     };
   }, [invoiceId]);
 
-  const remaining = useMemo(() => {
-    if (!snap) return 0;
-    return Math.max(0, snap.total - snap.paidTotal);
-  }, [snap]);
+const remaining = useMemo(() => {
+  if (!snap) return 0;
+  return Math.max(0, (snap.total ?? 0) - (snap.paidTotal ?? 0));
+}, [snap]);
 
   const tpl = useMemo(() => {
     if (!snap) return { subject: "", bodyText: "" };

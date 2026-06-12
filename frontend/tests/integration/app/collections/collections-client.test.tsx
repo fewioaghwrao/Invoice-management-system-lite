@@ -29,6 +29,8 @@ jest.mock("@/lib/api.client", () => ({
 const mockApiGetClient = apiGetClient as jest.MockedFunction<typeof apiGetClient>;
 const mockApiPostClient = apiPostClient as jest.MockedFunction<typeof apiPostClient>;
 
+const submitButtonName = "督促処理を受け付ける";
+
 function createSnapshot(overrides?: Partial<any>) {
   return {
     invoiceId: "1",
@@ -134,24 +136,24 @@ describe("CollectionsClient", () => {
 
     expect(await screen.findByText("督促（INV-001）")).toBeInTheDocument();
 
-expect(screen.getByRole("link", { name: "請求書一覧" })).toHaveAttribute(
-  "href",
-  "/invoices?year=2026&page=2"
-);
+    expect(screen.getByRole("link", { name: "請求書一覧" })).toHaveAttribute(
+      "href",
+      "/invoices?year=2026&page=2"
+    );
 
-expect(
-  screen.queryByRole("link", { name: "請求書一覧へ戻る" })
-).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("link", { name: "請求書一覧へ戻る" })
+    ).not.toBeInTheDocument();
 
-expect(screen.getByRole("link", { name: "INV-001" })).toHaveAttribute(
-  "href",
-  "/invoices/1?from=year%3D2026%26page%3D2"
-);
+    expect(screen.getByRole("link", { name: "INV-001" })).toHaveAttribute(
+      "href",
+      "/invoices/1?from=year%3D2026%26page%3D2"
+    );
 
-expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttribute(
-  "href",
-  "/invoices/1?from=year%3D2026%26page%3D2"
-);
+    expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttribute(
+      "href",
+      "/invoices/1?from=year%3D2026%26page%3D2"
+    );
   });
 
   it("履歴が0件のとき『履歴はまだありません。』を表示し、次回アクション日に支払期限を初期表示する", async () => {
@@ -273,7 +275,7 @@ expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttri
 
     expect(await screen.findByText("督促（INV-001）")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "送信完了として記録" }));
+    await user.click(screen.getByRole("button", { name: submitButtonName }));
 
     expect(window.alert).toHaveBeenCalledWith(
       "未回収残額が 0 円のため、督促の記録は不要です。"
@@ -293,12 +295,12 @@ expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttri
 
     expect(await screen.findByText("督促（INV-001）")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "送信完了として記録" }));
+    await user.click(screen.getByRole("button", { name: submitButtonName }));
 
     expect(window.confirm).toHaveBeenCalledTimes(1);
-    expect(String((window.confirm as jest.Mock).mock.calls[0][0])).toContain(
-      "督促を「実施済み」として記録します。よろしいですか？"
-    );
+expect(String((window.confirm as jest.Mock).mock.calls[0][0])).toContain(
+  "督促処理を受け付けます。よろしいですか？"
+);
     expect(String((window.confirm as jest.Mock).mock.calls[0][0])).toContain(
       "請求書：INV-001"
     );
@@ -334,7 +336,7 @@ expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttri
 
     expect(await screen.findByText("督促（INV-001）")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "送信完了として記録" }));
+    await user.click(screen.getByRole("button", { name: submitButtonName }));
 
     await waitFor(() => {
       expect(mockApiPostClient).toHaveBeenCalledTimes(1);
@@ -352,7 +354,9 @@ expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttri
       })
     );
 
-    expect(window.alert).toHaveBeenCalledWith("督促履歴に記録しました。");
+    expect(window.alert).toHaveBeenCalledWith(
+      "督促処理を受け付けました。メール送信はバックグラウンドで処理されます。"
+    );
     expect(await screen.findByText("初回督促（標準）")).toBeInTheDocument();
     expect(screen.getByText("テンプレ送付。")).toBeInTheDocument();
   });
@@ -389,7 +393,7 @@ expect(screen.getByRole("link", { name: "← 請求書詳細へ" })).toHaveAttri
     await user.clear(nextActionInput);
     await user.type(nextActionInput, "2026-03-30");
 
-    await user.click(screen.getByRole("button", { name: "送信完了として記録" }));
+    await user.click(screen.getByRole("button", { name: submitButtonName }));
 
     expect(String((window.confirm as jest.Mock).mock.calls[0][0])).toContain(
       "チャネル：電話"
