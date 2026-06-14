@@ -168,8 +168,11 @@ public static class InvoiceEndpoints
 
     private static long? GetMyMemberId(HttpContext ctx)
     {
-        // AuthEndpoints で sub = user.Id を入れている
-        var s = ctx.User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        var s =
+            ctx.User.FindFirstValue(JwtRegisteredClaimNames.Sub) ??
+            ctx.User.FindFirstValue(ClaimTypes.NameIdentifier) ??
+            ctx.User.FindFirstValue("sub");
+
         return long.TryParse(s, out var id) ? id : null;
     }
 

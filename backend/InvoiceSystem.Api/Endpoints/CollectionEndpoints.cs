@@ -1,6 +1,6 @@
 ﻿using InvoiceSystem.Application.Dtos.Collections;
 using InvoiceSystem.Application.Services;
-using Microsoft.AspNetCore.Mvc; // ★これを追加（[FromServices] 用）
+using Microsoft.AspNetCore.Mvc;
 using InvoiceSystem.Api.Common;
 
 namespace InvoiceSystem.Api.Endpoints;
