@@ -1,10 +1,17 @@
-﻿using System.Net;
+﻿using InvoiceSystem.Domain.Entities;
+using InvoiceSystem.Domain.Enums;
+using InvoiceSystem.Infrastructure;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
-using InvoiceSystem.Infrastructure;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
+using System.Security.Claims;
+using System.Text;
 using Xunit;
 
 namespace InvoiceSystem.Tests.Integration.MyAccount;
@@ -34,11 +41,8 @@ public class MyAccountEndpointTests : IClassFixture<WebApplicationFactory<Progra
     {
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -53,7 +57,9 @@ public class MyAccountEndpointTests : IClassFixture<WebApplicationFactory<Progra
     {
         var client = _factory.CreateClient();
 
-        var token = await RegisterAndLoginMemberAsync(client);
+        var memberId = await CreateActiveMemberAsync();
+
+        var token = CreateJwtToken(memberId, "Member");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -135,5 +141,65 @@ public class MyAccountEndpointTests : IClassFixture<WebApplicationFactory<Progra
     private sealed class LoginResponse
     {
         public string Token { get; set; } = "";
+    }
+
+    private string CreateJwtToken(long memberId, string role)
+    {
+        using var scope = _factory.Services.CreateScope();
+
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var jwtSection = config.GetSection("Jwt");
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSection["Key"]!)
+        );
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        );
+
+        var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, memberId.ToString()),
+        new Claim("memberId", memberId.ToString()),
+        new Claim(ClaimTypes.Role, role),
+        new Claim("role", role)
+    };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSection["Issuer"],
+            audience: jwtSection["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+    private async Task<long> CreateActiveMemberAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var member = new Member
+        {
+            Name = "Integration Test Member",
+            Email = $"member-{Guid.NewGuid():N}@example.com",
+            PasswordHash = "dummy",
+            IsActive = true,
+            IsEmailConfirmed = true,
+            PostalCode = "1000001",
+            Address = "Tokyo",
+            Phone = "09000000000",
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        db.Members.Add(member);
+        await db.SaveChangesAsync();
+
+        return member.Id;
     }
 }

@@ -5,6 +5,11 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using Xunit;
 
@@ -35,11 +40,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
     {
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "member@example.com",
-            "Member1234!"
-        );
+        var token = CreateJwtToken(memberId: 999, role: "Member");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -54,11 +55,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
     {
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -73,11 +70,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
     {
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -99,11 +92,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
     {
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -126,11 +115,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
         // Arrange
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -163,11 +148,7 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
         // Arrange
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(
-            client,
-            "admin@example.com",
-            "Admin1234!"
-        );
+        var token = CreateJwtToken(memberId: 1, role: "Admin");
 
         client.DefaultRequestHeaders.Authorization =
             new AuthenticationHeaderValue("Bearer", token);
@@ -197,25 +178,6 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
         Assert.Equal(HttpStatusCode.OK, res.StatusCode);
     }
 
-
-    private static async Task<string> LoginAndGetTokenAsync(
-        HttpClient client,
-        string email,
-        string password)
-    {
-        var res = await client.PostAsJsonAsync("/auth/login", new
-        {
-            email,
-            password
-        });
-
-        res.EnsureSuccessStatusCode();
-
-        var json = await res.Content.ReadFromJsonAsync<LoginResponse>();
-
-        return json!.Token;
-    }
-
     private sealed class LoginResponse
     {
         public string Token { get; set; } = "";
@@ -242,5 +204,39 @@ public class PaymentEndpointTests : IClassFixture<WebApplicationFactory<Program>
     private sealed class CreatePaymentResponse
     {
         public long Id { get; set; }
+    }
+    private string CreateJwtToken(long memberId, string role)
+    {
+        using var scope = _factory.Services.CreateScope();
+
+        var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+        var jwtSection = config.GetSection("Jwt");
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSection["Key"]!)
+        );
+
+        var credentials = new SigningCredentials(
+            key,
+            SecurityAlgorithms.HmacSha256
+        );
+
+        var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, memberId.ToString()),
+        new Claim("memberId", memberId.ToString()),
+        new Claim(ClaimTypes.Role, role),
+        new Claim("role", role)
+    };
+
+        var token = new JwtSecurityToken(
+            issuer: jwtSection["Issuer"],
+            audience: jwtSection["Audience"],
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }
