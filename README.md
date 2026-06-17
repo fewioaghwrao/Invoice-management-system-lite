@@ -165,6 +165,7 @@ Microsoft スタック環境でのフロントエンド運用を検証してい�
 - 入金状況の自動判定（未入金／一部入金／入金済み）
 - 月次・会員別の売上集計
 - CSVエクスポート
+- 操作ログ確認（請求・入金・催促履歴などの監査ログ）
 
 ### 会員
 - 自身の請求書一覧・詳細確認
@@ -188,6 +189,8 @@ Microsoft スタック環境でのフロントエンド運用を検証してい�
   - 入金データの登録および請求書への割当更新
 - CSVエクスポート  
   - 集計結果の取得
+- 操作ログ一覧
+  - 請求・入金・催促履歴などの監査ログ取得
 
 ### 会員機能
 - 会員用ダッシュボード  
@@ -472,7 +475,9 @@ invoice-management-system-lite/
 │  │  ├─ B-invoice-list.png
 │  │  ├─ C-invoice-detail.png
 │  │  ├─ D-payment-allocation.png
-│  │  └─ F-member-dashboard.png
+│  │  ├─ F-member-dashboard.png
+│  │  ├─ G-operation-log-list.png
+│  │  └─ H-logout-confirm.png
 │  ├─ architecture.md              # 設計意図・全体構成
 │  └─ Integration_test.md          # 結合テスト結果
 └─ README.md                       # 本ドキュメント
