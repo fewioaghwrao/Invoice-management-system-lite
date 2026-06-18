@@ -1,4 +1,5 @@
-﻿using InvoiceSystem.Application.Dtos.Collections;
+﻿using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Application.Dtos.Collections;
 using InvoiceSystem.Application.Services;
 using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -8,10 +9,12 @@ namespace InvoiceSystem.Infrastructure.Services
     public class CollectionService : ICollectionService
     {
         private readonly AppDbContext _db;
+        private readonly IAuditLogger _audit;
 
-        public CollectionService(AppDbContext db)
+        public CollectionService(AppDbContext db, IAuditLogger audit)
         {
             _db = db;
+            _audit = audit;
         }
 
         private static DateTime EnsureUtc(DateTime dt)
@@ -74,9 +77,10 @@ namespace InvoiceSystem.Infrastructure.Services
 
         public async Task<long> CreateLogAsync(long invoiceId, CreateDunningLogRequestDto req)
         {
-            // invoice存在確認（Status も見るので Include）
+            // invoice存在確認（Status / Member も見る）
             var invoice = await _db.Invoices
                 .Include(x => x.Status)
+                .Include(x => x.Member)
                 .FirstOrDefaultAsync(x => x.Id == invoiceId);
 
             if (invoice is null) throw new KeyNotFoundException("Invoice not found");
@@ -100,6 +104,24 @@ namespace InvoiceSystem.Infrastructure.Services
             };
 
             _db.Add(entity);
+
+            // ② EMAILの場合のみ、非同期メール送信用ジョブを登録
+            if (req.Channel == "EMAIL")
+            {
+                if (string.IsNullOrWhiteSpace(invoice.Member.Email))
+                    throw new InvalidOperationException("Member email is not set.");
+
+                _db.ReminderJobs.Add(new ReminderJob
+                {
+                    InvoiceId = invoice.Id,
+                    ToEmail = invoice.Member.Email,
+                    Subject = req.Subject ?? entity.Title ?? "お支払い状況のご確認",
+                    Body = req.BodyText ?? entity.Note ?? "",
+                    Status = "Pending",
+                    RetryCount = 0,
+                    CreatedAt = now
+                });
+            }
 
             // ② ステータス更新：未入金/一部入金のときだけ DUNNING にする
             // すでに DUNNING の場合は何もしない
@@ -125,6 +147,34 @@ namespace InvoiceSystem.Infrastructure.Services
 
             await _db.SaveChangesAsync();
             return entity.Id;
+        }
+
+        public async Task<long> CreateLogAsync(
+    long invoiceId,
+    CreateDunningLogRequestDto req,
+    AuditActor actor)
+        {
+            var id = await CreateLogAsync(invoiceId, req);
+
+            await _audit.WriteAsync(
+                action: "DUNNING_LOG_CREATED",
+                entity: "Invoice",
+                entityId: invoiceId.ToString(),
+                summary: $"請求書ID={invoiceId} に催促履歴を追加しました。",
+                data: new
+                {
+                    invoiceId,
+                    reminderHistoryId = id,
+                    req.Channel,
+                    req.Tone,
+                    req.Title,
+                    req.Memo,
+                    req.NextActionDate,
+                    req.Subject
+                },
+                actor: actor);
+
+            return id;
         }
 
     }

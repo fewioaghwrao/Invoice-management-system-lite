@@ -87,6 +87,36 @@ public class AdminOnly_ForbiddenTests
             });
         }
     }
+
+    [Fact]
+    public async Task NoToken_CannotAccess_AdminSummary_Returns401()
+    {
+        using var factory = new TestingFactory();
+        using var client = factory.CreateClient();
+
+        var res = await client.GetAsync("/api/admin/summary?year=2026");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task AdminToken_CanAccess_AdminSummary_Returns200()
+    {
+        using var factory = new TestingFactory();
+        using var client = factory.CreateClient();
+
+        var token = CreateJwt(
+            factory.Services.GetRequiredService<IConfiguration>(),
+            role: "Admin"
+        );
+
+        client.DefaultRequestHeaders.Authorization =
+            new AuthenticationHeaderValue("Bearer", token);
+
+        var res = await client.GetAsync("/api/admin/summary?year=2026");
+
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+    }
 }
 
 

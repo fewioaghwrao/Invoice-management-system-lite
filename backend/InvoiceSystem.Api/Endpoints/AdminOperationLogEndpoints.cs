@@ -10,7 +10,24 @@ public static class AdminOperationLogEndpoints
             .WithTags("Admin")
             .RequireAuthorization("AdminOnly");
 
+        // 操作ログ一覧（ページング）
+        // GET /api/admin/operation-logs?page=1&pageSize=10
+        group.MapGet("/operation-logs", async (
+            int? page,
+            int? pageSize,
+            IAdminOperationLogService service,
+            CancellationToken ct) =>
+        {
+            var result = await service.SearchAsync(
+                page: page ?? 1,
+                pageSize: pageSize ?? 10,
+                ct: ct);
+
+            return Results.Ok(result);
+        });
+
         // 直近ログ（デフォルト5件）
+        // GET /api/admin/operation-logs/recent?limit=5
         group.MapGet("/operation-logs/recent", async (
             int? limit,
             IAdminOperationLogService service,

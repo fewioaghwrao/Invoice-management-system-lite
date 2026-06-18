@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Testing;
+﻿using InvoiceSystem.Infrastructure.Data;
+using Microsoft.AspNetCore.Mvc.Testing;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -21,9 +22,15 @@ public class Invoice_NotFoundTests : IClassFixture<WebApplicationFactory<Program
     public async Task AdminToken_GetInvoiceById_NotExists_Returns404()
     {
         // Arrange
+        Environment.SetEnvironmentVariable("SEED_DEMO_DATA", "true");
+
         var client = _factory.CreateClient();
 
-        var token = await LoginAndGetTokenAsync(client,
+        // ★ ここを追加：テスト実行前に明示的にDemoSeedを適用する
+        AppDbInitializer.Initialize(_factory.Services, isDevelopment: false);
+
+        var token = await LoginAndGetTokenAsync(
+            client,
             email: "admin@example.com",
             password: "Admin1234!"
         );
@@ -40,12 +47,19 @@ public class Invoice_NotFoundTests : IClassFixture<WebApplicationFactory<Program
         Assert.Equal(HttpStatusCode.NotFound, res.StatusCode);
     }
 
-    private static async Task<string> LoginAndGetTokenAsync(HttpClient client, string email, string password)
+    private static async Task<string> LoginAndGetTokenAsync(
+        HttpClient client,
+        string email,
+        string password
+    )
     {
         var loginRes = await client.PostAsJsonAsync("/auth/login", new { email, password });
         var raw = await loginRes.Content.ReadAsStringAsync();
 
-        Assert.True(loginRes.IsSuccessStatusCode, $"Login failed. Status={(int)loginRes.StatusCode}. Body={raw}");
+        Assert.True(
+            loginRes.IsSuccessStatusCode,
+            $"Login failed. Status={(int)loginRes.StatusCode}. Body={raw}"
+        );
 
         var token = ExtractToken(raw);
         Assert.False(string.IsNullOrWhiteSpace(token), $"Token not found in login response: {raw}");
@@ -60,8 +74,11 @@ public class Invoice_NotFoundTests : IClassFixture<WebApplicationFactory<Program
             using var doc = JsonDocument.Parse(raw);
             var root = doc.RootElement;
 
-            // ルート直下
-            foreach (var key in new[] { "accessToken", "AccessToken", "token", "Token", "jwt", "Jwt", "access_token" })
+            foreach (var key in new[]
+                     {
+                         "accessToken", "AccessToken", "token", "Token",
+                         "jwt", "Jwt", "access_token"
+                     })
             {
                 if (root.ValueKind == JsonValueKind.Object &&
                     root.TryGetProperty(key, out var v) &&
@@ -71,17 +88,23 @@ public class Invoice_NotFoundTests : IClassFixture<WebApplicationFactory<Program
                 }
             }
 
-            // ネスト（data/result/payload）
             foreach (var containerKey in new[] { "data", "result", "payload" })
             {
                 if (root.ValueKind == JsonValueKind.Object &&
                     root.TryGetProperty(containerKey, out var nested) &&
                     nested.ValueKind == JsonValueKind.Object)
                 {
-                    foreach (var key in new[] { "accessToken", "AccessToken", "token", "Token", "jwt", "Jwt", "access_token" })
+                    foreach (var key in new[]
+                             {
+                                 "accessToken", "AccessToken", "token", "Token",
+                                 "jwt", "Jwt", "access_token"
+                             })
                     {
-                        if (nested.TryGetProperty(key, out var v) && v.ValueKind == JsonValueKind.String)
+                        if (nested.TryGetProperty(key, out var v) &&
+                            v.ValueKind == JsonValueKind.String)
+                        {
                             return v.GetString();
+                        }
                     }
                 }
             }
@@ -94,4 +117,3 @@ public class Invoice_NotFoundTests : IClassFixture<WebApplicationFactory<Program
         }
     }
 }
-

@@ -17,19 +17,27 @@ using InvoiceSystem.Infrastructure.Pdf;
 using InvoiceSystem.Infrastructure.Data;
 using InvoiceSystem.Infrastructure.Database;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Serilog;
 using System.Text.Json;
 using System.Text;
 
-
-
-//PDF生成ライブラリ QuestPDF のライセンスタイプを設定
+// PDF生成ライブラリ QuestPDF のライセンスタイプを設定
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 PdfFontRegistrar.Register();
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
+// Serilog
+builder.Host.UseSerilog((context, services, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .Enrich.WithMachineName()
+        .Enrich.WithProcessId()
+        .Enrich.WithThreadId();
+});
 
 // CORS
 var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS");
@@ -51,7 +59,7 @@ builder.Services.AddCors(options =>
         }
         else
         {
-            Console.WriteLine("[WARN] CORS_ORIGINS not set. Fallback to localhost only.");
+            Log.Warning("CORS_ORIGINS is not set. Fallback to localhost only.");
 
             policy.WithOrigins("http://localhost:3000")
                   .AllowAnyHeader()
@@ -96,6 +104,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+
 builder.Services.AddHealthChecks();
 
 // DbContext (Postgres + Heroku DATABASE_URL 対応)
@@ -164,11 +173,20 @@ builder.Services.AddScoped<IAdminOperationLogService, AdminOperationLogService>(
 
 var app = builder.Build();
 
+try
+{
+Log.Information("Starting InvoiceSystem.Api");
 
 // ===============================
 // 起動時：Migrate + Seed
+// ※ Testing では WebApplicationFactory 側のDB設定を優先する
 // ===============================
+if (!app.Environment.IsEnvironment("Testing"))
+{
 AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
+}
+
+app.UseSerilogRequestLogging();
 
 app.UseCors();
 
@@ -176,13 +194,13 @@ var enableSwagger = builder.Configuration.GetValue<bool>("ENABLE_SWAGGER");
 
 if (app.Environment.IsDevelopment() || enableSwagger)
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 }
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 }
 
 app.UseAuthentication();
@@ -200,25 +218,25 @@ app.MapAdminOperationLogEndpoints();
 
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
-    ResponseWriter = async (context, report) =>
-    {
-        context.Response.ContentType = "application/json; charset=utf-8";
+ResponseWriter = async (context, report) =>
+{
+context.Response.ContentType = "application/json; charset=utf-8";
 
-        var response = new
-        {
-            status = report.Status.ToString(),
-            totalDuration = report.TotalDuration.TotalMilliseconds,
-            checks = report.Entries.Select(x => new
-            {
-                name = x.Key,
-                status = x.Value.Status.ToString(),
-                duration = x.Value.Duration.TotalMilliseconds,
-                error = x.Value.Exception?.Message
-            })
-        };
+var response = new
+{
+status = report.Status.ToString(),
+totalDuration = report.TotalDuration.TotalMilliseconds,
+checks = report.Entries.Select(x => new
+{
+name = x.Key,
+status = x.Value.Status.ToString(),
+duration = x.Value.Duration.TotalMilliseconds,
+error = x.Value.Exception?.Message
+})
+};
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
-    }
+await context.Response.WriteAsync(JsonSerializer.Serialize(response));
+}
 });
 
 app.MapGet("/", () => Results.Text(
@@ -229,6 +247,19 @@ app.MapGet("/", () => Results.Text(
 ", "text/plain"));
 
 app.Run();
+}
+catch (Exception ex)
+{
+Log.Fatal(ex, "InvoiceSystem.Api terminated unexpectedly");
 
+if (app.Environment.IsEnvironment("Testing"))
+{
+throw;
+}
+}
+finally
+{
+Log.CloseAndFlush();
+}
 
 public partial class Program { }

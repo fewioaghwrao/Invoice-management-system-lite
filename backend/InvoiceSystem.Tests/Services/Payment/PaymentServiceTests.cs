@@ -9,9 +9,10 @@ using InvoiceSystem.Infrastructure;              // AppDbContext
 using InvoiceSystem.Infrastructure.Services;     // PaymentService
 using InvoiceSystem.Domain.Entities;             // Member/Invoice/Payment
 using InvoiceSystem.Application.Services;        // SaveAllocationLine
-using InvoiceSystem.Application.Common.Interfaces; // IAuditLogger, AuditActor
+using InvoiceSystem.Application.Common.Interfaces;
+using PaymentEntity = InvoiceSystem.Domain.Entities.Payment;
 
-namespace InvoiceSystem.Tests.Services
+namespace InvoiceSystem.Tests.Services.Payment
 {
     public class PaymentServiceTests
     {
@@ -75,7 +76,7 @@ namespace InvoiceSystem.Tests.Services
             db.Invoices.Add(invoice);
 
             // Payment
-            var payment = new Payment
+            var payment = new PaymentEntity
             {
                 MemberId = member.Id,
                 PaymentDate = DateTime.UtcNow,
@@ -141,7 +142,7 @@ namespace InvoiceSystem.Tests.Services
             };
             db.Invoices.Add(invoice);
 
-            var payment = new Payment
+            var payment = new PaymentEntity
             {
                 MemberId = member.Id,
                 PaymentDate = DateTime.UtcNow,
@@ -166,6 +167,180 @@ namespace InvoiceSystem.Tests.Services
             var inv = await db.Invoices.AsNoTracking().FirstAsync();
             Assert.Equal(4, inv.StatusId); // OVERDUE
         }
+
+
+        [Fact]
+        public async Task SaveAllocations_AllocatedSumExceedsPaymentAmount_Throws()
+        {
+            var (db, conn) = CreateDb();
+            await using var _ = conn;
+
+            var member = new Member
+            {
+                Name = "Taro",
+                Email = "taro@example.com",
+                PasswordHash = "dummy-hash",
+                IsActive = true,
+                Role = Domain.Enums.MemberRole.Customer,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Members.Add(member);
+            await db.SaveChangesAsync();
+
+            var invoice = new Invoice
+            {
+                MemberId = member.Id,
+                InvoiceNumber = "INV-EXCEED-001",
+                InvoiceDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(10),
+                TotalAmount = 2000m,
+                StatusId = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            var payment = new PaymentEntity
+            {
+                MemberId = member.Id,
+                PaymentDate = DateTime.UtcNow,
+                Amount = 1000m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Invoices.Add(invoice);
+            db.Payments.Add(payment);
+            await db.SaveChangesAsync();
+
+            var sut = CreateSut(db);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => sut.SaveAllocationsAsync(payment.Id, new[]
+                {
+            new SaveAllocationLine(invoice.Id, 1001m)
+                })
+            );
+
+            Assert.Equal("Allocated sum exceeds payment amount", ex.Message);
+        }
+
+        [Fact]
+        public async Task SaveAllocations_AmountZeroOrLess_Throws()
+        {
+            var (db, conn) = CreateDb();
+            await using var _ = conn;
+
+            var member = new Member
+            {
+                Name = "Taro",
+                Email = "taro@example.com",
+                PasswordHash = "dummy-hash",
+                IsActive = true,
+                Role = Domain.Enums.MemberRole.Customer,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Members.Add(member);
+            await db.SaveChangesAsync();
+
+            var invoice = new Invoice
+            {
+                MemberId = member.Id,
+                InvoiceNumber = "INV-ZERO-001",
+                InvoiceDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(10),
+                TotalAmount = 1000m,
+                StatusId = 1,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            var payment = new PaymentEntity
+            {
+                MemberId = member.Id,
+                PaymentDate = DateTime.UtcNow,
+                Amount = 1000m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Invoices.Add(invoice);
+            db.Payments.Add(payment);
+            await db.SaveChangesAsync();
+
+            var sut = CreateSut(db);
+
+            var ex = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => sut.SaveAllocationsAsync(payment.Id, new[]
+                {
+            new SaveAllocationLine(invoice.Id, 0m)
+                })
+            );
+
+            Assert.Equal("Amount must be > 0", ex.Message);
+        }
+
+        [Fact]
+        public async Task SaveAllocations_CancelledInvoice_DoesNotChangeStatus()
+        {
+            var (db, conn) = CreateDb();
+            await using var _ = conn;
+
+            var member = new Member
+            {
+                Name = "Taro",
+                Email = "taro@example.com",
+                PasswordHash = "dummy-hash",
+                IsActive = true,
+                Role = Domain.Enums.MemberRole.Customer,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Members.Add(member);
+            await db.SaveChangesAsync();
+
+            var invoice = new Invoice
+            {
+                MemberId = member.Id,
+                InvoiceNumber = "INV-CANCELLED-001",
+                InvoiceDate = DateTime.UtcNow,
+                DueDate = DateTime.UtcNow.AddDays(-10),
+                TotalAmount = 1000m,
+                StatusId = 5, // CANCELLED
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            var payment = new PaymentEntity
+            {
+                MemberId = member.Id,
+                PaymentDate = DateTime.UtcNow,
+                Amount = 1000m,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+            };
+
+            db.Invoices.Add(invoice);
+            db.Payments.Add(payment);
+            await db.SaveChangesAsync();
+
+            var sut = CreateSut(db);
+
+            await sut.SaveAllocationsAsync(payment.Id, new[]
+            {
+        new SaveAllocationLine(invoice.Id, 1000m)
+    });
+
+            var updated = await db.Invoices.AsNoTracking()
+                .FirstAsync(x => x.Id == invoice.Id);
+
+            Assert.Equal(5, updated.StatusId);
+        }
+
 
 
         // --------------------------

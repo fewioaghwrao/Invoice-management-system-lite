@@ -1,14 +1,15 @@
 ﻿using InvoiceSystem.Application.Commands.Invoices;
+using InvoiceSystem.Application.Common.Interfaces;
 using InvoiceSystem.Application.Dtos.Invoices;
 using InvoiceSystem.Application.Queries.Invoices;
 using InvoiceSystem.Application.Services;
 using InvoiceSystem.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System;
 using System.Text;
-using QuestPDF.Fluent;
 
 
 namespace InvoiceSystem.Infrastructure.Services;
@@ -16,10 +17,12 @@ namespace InvoiceSystem.Infrastructure.Services;
 public class InvoiceService : IInvoiceService
 {
     private readonly AppDbContext _db;
+    private readonly IAuditLogger _audit;
 
-    public InvoiceService(AppDbContext db)
+    public InvoiceService(AppDbContext db, IAuditLogger audit)
     {
         _db = db;
+        _audit = audit;
     }
 
     private static DateTime EnsureUtc(DateTime dt)
@@ -211,6 +214,43 @@ public class InvoiceService : IInvoiceService
         return ToInvoiceDto(invoice);
     }
 
+    public async Task<InvoiceDto> CreateWithLinesAsync(
+    UpdateInvoiceRequestDto req,
+    AuditActor actor)
+    {
+        var result = await CreateWithLinesAsync(req);
+
+        await _audit.WriteAsync(
+            action: "INVOICE_CREATED",
+            entity: "Invoice",
+            entityId: result.Id.ToString(),
+            summary: $"請求書 {result.InvoiceNumber} を作成しました。",
+            data: new
+            {
+                invoiceId = result.Id,
+                result.InvoiceNumber,
+                result.MemberId,
+                result.MemberName,
+                result.TotalAmount,
+                result.StatusId,
+                result.StatusName,
+                lineCount = req.Lines.Count,
+                lines = req.Lines
+                    .OrderBy(x => x.LineNo)
+                    .Select(x => new
+                    {
+                        x.LineNo,
+                        x.Name,
+                        x.Qty,
+                        x.UnitPrice,
+                        amount = x.Qty * x.UnitPrice
+                    })
+                    .ToList()
+            },
+            actor: actor);
+
+        return result;
+    }
 
     public async Task<InvoiceDetailDto?> GetDetailByIdAsync(long id)
 {
@@ -310,6 +350,38 @@ public class InvoiceService : IInvoiceService
         _db.Invoices.Remove(invoice);
         await _db.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<bool> DeleteAsync(long id, AuditActor actor)
+    {
+        var before = await GetDetailByIdAsync(id);
+
+        var deleted = await DeleteAsync(id);
+
+        if (deleted)
+        {
+            await _audit.WriteAsync(
+                action: "INVOICE_DELETED",
+                entity: "Invoice",
+                entityId: id.ToString(),
+                summary: $"請求書 {before?.InvoiceNumber ?? id.ToString()} を削除しました。",
+                data: new
+                {
+                    before = before is null ? null : new
+                    {
+                        before.Id,
+                        before.InvoiceNumber,
+                        before.MemberId,
+                        before.MemberName,
+                        before.TotalAmount,
+                        before.StatusId,
+                        before.StatusName
+                    }
+                },
+                actor: actor);
+        }
+
+        return deleted;
     }
 
     public async Task UpdateAsync(long invoiceId, UpdateInvoiceRequestDto req)
@@ -436,6 +508,56 @@ public class InvoiceService : IInvoiceService
         // 8. 保存
         // =========================
         await _db.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(
+    long invoiceId,
+    UpdateInvoiceRequestDto req,
+    AuditActor actor)
+    {
+        var before = await GetDetailByIdAsync(invoiceId);
+
+        await UpdateAsync(invoiceId, req);
+
+        var after = await GetDetailByIdAsync(invoiceId);
+
+        await _audit.WriteAsync(
+            action: "INVOICE_UPDATED",
+            entity: "Invoice",
+            entityId: invoiceId.ToString(),
+            summary: $"請求書 {after?.InvoiceNumber ?? invoiceId.ToString()} を更新しました。",
+            data: new
+            {
+                before = before is null ? null : new
+                {
+                    before.Id,
+                    before.InvoiceNumber,
+                    before.MemberId,
+                    before.MemberName,
+                    before.InvoiceDate,
+                    before.DueDate,
+                    before.TotalAmount,
+                    before.StatusId,
+                    before.StatusName,
+                    before.Remarks,
+                    lineCount = before.Lines.Count
+                },
+                after = after is null ? null : new
+                {
+                    after.Id,
+                    after.InvoiceNumber,
+                    after.MemberId,
+                    after.MemberName,
+                    after.InvoiceDate,
+                    after.DueDate,
+                    after.TotalAmount,
+                    after.StatusId,
+                    after.StatusName,
+                    after.Remarks,
+                    lineCount = after.Lines.Count
+                }
+            },
+            actor: actor);
     }
 
     public async Task<MyInvoiceListResultDto> SearchMyInvoicesAsync(MyInvoiceSearchQuery query)

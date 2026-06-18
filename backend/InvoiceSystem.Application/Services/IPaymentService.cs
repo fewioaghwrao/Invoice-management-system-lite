@@ -15,7 +15,7 @@ public interface IPaymentService
 
     Task<PaymentDetailDto?> GetByIdAsync(long id);
 
-    Task<long> CreateAsync(CreatePaymentRequestDto request);
+    Task<long> CreateAsync(CreatePaymentRequestDto request, AuditActor actor);
 
     Task<long> AddAllocationAsync(long paymentId, long invoiceId, decimal amount);
     Task DeleteAllocationAsync(long paymentId, long allocationId);

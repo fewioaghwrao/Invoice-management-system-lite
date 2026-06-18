@@ -259,7 +259,7 @@ public class PaymentService : IPaymentService
         // ★(2) ステータス更新を保存
         await _db.SaveChangesAsync();
     }
-    public async Task<long> CreateAsync(CreatePaymentRequestDto req)
+    public async Task<long> CreateAsync(CreatePaymentRequestDto req, AuditActor actor)
     {
         if (req.MemberId <= 0) throw new InvalidOperationException("MemberId is required");
         if (req.PaymentDate == default) throw new InvalidOperationException("PaymentDate is required");
@@ -279,11 +279,27 @@ public class PaymentService : IPaymentService
             Method = string.IsNullOrWhiteSpace(req.Method) ? null : req.Method.Trim(),
             CreatedAt = now,
             UpdatedAt = now,
-            // 手動登録なら ImportBatchId は null のままでOK
         };
 
         _db.Payments.Add(payment);
         await _db.SaveChangesAsync();
+
+        await _audit.WriteAsync(
+            action: "PAYMENT_CREATED",
+            entity: "Payment",
+            entityId: payment.Id.ToString(),
+            summary: $"会員ID={payment.MemberId} の入金 {payment.Amount:N0}円を登録しました。",
+            data: new
+            {
+                paymentId = payment.Id,
+                memberId = payment.MemberId,
+                paymentDate = payment.PaymentDate,
+                amount = payment.Amount,
+                payerName = payment.PayerName,
+                method = payment.Method
+            },
+            actor: actor
+        );
 
         return payment.Id;
     }
@@ -385,7 +401,7 @@ public class PaymentService : IPaymentService
                 action: "PAYMENT_ALLOCATIONS_CLEARED",
                 entity: "Payment",
                 entityId: paymentId.ToString(),
-                summary: $"PaymentId={paymentId} allocations cleared.",
+                summary: $"入金ID={paymentId} の請求書割当をクリアしました。",
                 data: new { paymentId, before },
                 actor: actor
             );
@@ -437,7 +453,7 @@ public class PaymentService : IPaymentService
             action: "PAYMENT_ALLOCATIONS_REPLACED",
             entity: "Payment",
             entityId: paymentId.ToString(),
-            summary: $"PaymentId={paymentId} allocations replaced.",
+            summary: $"入金ID={paymentId} の請求書割当を保存しました。",
             data: new
             {
                 paymentId,
@@ -500,7 +516,7 @@ public class PaymentService : IPaymentService
             action: "PAYMENT_ALLOCATION_ADDED",
             entity: "PaymentAllocation",
             entityId: "(new)",
-            summary: $"PaymentId={paymentId} -> InvoiceId={invoiceId} Amount={amount}",
+            summary: $"入金ID={paymentId} を請求書ID={invoiceId} に {amount:N0}円 割り当てました。",
             data: new { paymentId, invoiceId, amount },
             actor: actor
         );
@@ -532,7 +548,7 @@ public class PaymentService : IPaymentService
             action: "PAYMENT_ALLOCATION_DELETED",
             entity: "PaymentAllocation",
             entityId: allocationId.ToString(),
-            summary: $"AllocationId={allocationId} deleted. PaymentId={paymentId} InvoiceId={invoiceId} Amount={amount}",
+            summary: $"入金ID={paymentId} の請求書ID={invoiceId} への割当 {amount:N0}円 を削除しました。",
             data: new { allocationId, paymentId, invoiceId, amount },
             actor: actor
         );
