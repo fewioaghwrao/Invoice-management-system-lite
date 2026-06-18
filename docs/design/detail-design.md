@@ -177,6 +177,8 @@ Invoice Management System Lite
 | API通信                 | `frontend/src/lib/*.ts`, `frontend/src/hooks/*.ts`, `frontend/src/proxy.ts`                                             |
 | 図                     | `docs/diagram/er-diagram.drawio.png`, `docs/diagram/admin-diagram.drawio.png`, `docs/diagram/member-diagram.drawio.png` |
 | CI                    | `.github/workflows/ci.yml`                                                                                              |
+| バックエンド単体テスト | `backend/InvoiceSystem.Tests/Services/**/*.cs` |
+| バックエンド統合テスト | `backend/InvoiceSystem.Tests/Integration/**/*.cs` |
 
 ### 2.5 既存図の扱い
 
@@ -3703,22 +3705,32 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 
 ---
 
-### 9.2 バックエンド統合テスト
+### 9.2 バックエンド統合テスト設計
 
-バックエンド統合テストでは、`WebApplicationFactory<Program>` を利用して、ASP.NET Coreアプリケーションをテスト環境で起動し、HTTPクライアント経由でAPIを検証する。
+バックエンド統合テストでは、`WebApplicationFactory<Program>` を使用して ASP.NET Core アプリケーションをテスト環境で起動し、HTTPクライアント経由でAPIエンドポイントを検証する。
 
-主な検証対象は以下のとおりである。
+単体テストがサービスクラス単体の業務ロジックを確認するのに対し、統合テストでは、認証・認可、ルーティング、HTTPステータス、JWT、DBアクセス、エンドポイントとサービス層の接続が正しく機能することを確認する。
 
-| テスト対象     | 内容                                                |
-| --------- | ------------------------------------------------- |
-| 認可制御      | MemberロールでAdminOnly APIへアクセスした場合に403になること         |
-| NotFound  | 存在しない請求書IDを取得した場合に404になること                        |
-| JWT認証     | テスト用JWTまたはログインAPIで取得したJWTをAuthorizationヘッダに設定すること |
-| Testing環境 | `ASPNETCORE_ENVIRONMENT=Testing` を使用すること          |
+#### 9.2.1 統合テスト対象
+
+| テストクラス | 主な対象 | 主な確認内容 |
+| --- | --- | --- |
+| AdminOnly_ForbiddenTests | 管理者専用API | 401、403、Admin権限での200 |
+| AdminOperationLogsEndpointTests | 操作ログAPI | 未認証401、Member403、Admin200、recent取得 |
+| AuthEndpointTests | 認証API | ログイン成功、パスワード不一致401、メール未確認400 |
+| CollectionEndpointTests | 督促API | snapshot取得、履歴取得、履歴登録、AdminOnly制御 |
+| Invoice_NotFoundTests | 請求書詳細API | 存在しない請求書IDの404 |
+| InvoiceEndpointAuthorizationTests | 請求書API | 未認証401、所有者Member200、他Member403、Admin検索200 |
+| MemberEndpointTests | 会員API | 未認証401、Member403、Admin200、NotFound404 |
+| MyAccountEndpointTests | 自分の会員情報API | 未認証401、Admin403、Member200 |
+| PaymentEndpointTests | 入金API | 未認証401、Member403、Admin200、登録正常系201、バリデーション400 |
+| SalesEndpointTests | 売上API | 未認証401、Member403、Admin200、CSV出力 |
 
 ---
 
 ### 9.3 AdminOnly認可テスト
+
+本節では、バックエンド統合テストの代表例として、管理者専用APIに対する認可制御テストを示す。
 
 #### 9.3.1 テスト目的
 
@@ -3761,6 +3773,8 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 
 #### 9.4.1 テスト目的
 
+本節では、バックエンド統合テストの代表例として、存在しない請求書IDを指定した場合の NotFound 応答テストを示す。
+
 存在しない請求書IDを指定して請求書詳細APIへアクセスした場合に、`404 NotFound` が返却されることを確認する。
 
 #### 9.4.2 対象API
@@ -3801,13 +3815,32 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 
 ---
 
-### 9.5 バックエンドサービステスト
+### 9.5 バックエンド単体テスト設計
 
 バックエンドサービステストでは、API経由ではなくサービスクラスを直接呼び出し、業務ロジックの正しさを確認する。
 
-本システムでは、`PaymentService` を対象に、入金割当による請求ステータス再計算を検証する。
+本システムでは、PaymentService だけでなく、請求、入金、会員、認証、売上集計、督促、監査ログ、非同期ジョブ処理などのサービスクラスを対象に単体テストを実施する。
 
-#### 9.5.1 テストDB
+API経由ではなくサービスクラスを直接呼び出すことで、HTTP層に依存せず、業務ロジック、DB更新、集計処理、ステータス再計算、外部依存の差し替えが正しく機能することを確認する。
+
+#### 9.5.1 単体テスト対象
+
+| テスト対象 | 主な確認内容 |
+| --- | --- |
+| AdminSummaryService | 年次サマリー、月別集計、未回収金額、回収率、未回収TOP5 |
+| AdminOperationLogService | 操作ログの降順取得、取得件数制限、ページング、検索条件 |
+| AuditLogger | 監査ログ作成、Actor必須、DataJson、操作主体情報 |
+| PasswordResetService | 再設定トークン作成、メール送信、期限切れ、使用済みトークン |
+| MemberRegistrationService | 会員登録、メール確認トークン、重複メール、ロール設定 |
+| MemberService | 会員登録、検索、詳細取得、更新、無効化 |
+| InvoiceService | 請求書作成、明細行正規化、合計金額再計算、更新 |
+| PaymentService | 入金登録、入金割当、割当置換、請求ステータス再計算 |
+| CollectionService | 督促対象スナップショット、督促履歴取得、督促履歴登録 |
+| ReminderJobProcessor | Pendingジョブ処理、メール送信成功、失敗時リトライ、Failed化 |
+| ReminderJobWorker | BackgroundService起動、例外時の継続動作 |
+| SalesService | 売上一覧、会員別集計、入金済額、未回収額、CSV出力 |
+
+#### 9.5.2 テストDB
 
 サービステストでは、SQLite in-memory を使用する。
 
@@ -3821,17 +3854,17 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 
 SQLite in-memory を利用することで、実DBに依存せず高速に業務ロジックを検証する。
 
-#### 9.5.2 監査ログの差し替え
+#### 9.5.3 外部依存の差し替え
 
-`PaymentService` は監査ログ出力に依存するため、テストでは `NoopAuditLogger` を使用する。
+単体テストでは、メール送信、監査ログ、非同期ジョブ処理などの外部依存を Fake / Noop / Spy 実装に差し替える。
 
-`NoopAuditLogger` は `IAuditLogger` を実装し、`WriteAsync` では何も行わず正常終了する。
-
-これにより、監査ログの永続化に依存せず、入金割当ロジックのみを検証できる。
+これにより、外部サービスや実際のメール送信に依存せず、サービス単体の業務ロジックと副作用を検証する。
 
 ---
 
 ### 9.6 入金割当ステータス再計算テスト
+
+本節では、バックエンド単体テストの代表例として、PaymentService における入金割当と請求ステータス再計算のテスト内容を示す。
 
 #### 9.6.1 UNPAID → PARTIAL → PAID テスト
 
@@ -4230,6 +4263,8 @@ CIは以下のタイミングで実行する。
 ### 9.18 バックエンドCI
 
 バックエンドCIでは、.NET 8 と PostgreSQL 16 を使用する。
+`dotnet test` では、サービス単体テストとバックエンド統合テストの両方を実行する。
+統合テストでは、Testing環境の設定、JWT設定、PostgreSQLテストDB、テストデータSeedを使用してAPIの疎通を確認する。
 
 #### 9.18.1 PostgreSQLサービス
 
@@ -4279,8 +4314,8 @@ backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 
 | 層                        | テスト対象                             | 主な確認内容                            |
 | ------------------------ | --------------------------------- | --------------------------------- |
-| Backend API              | AdminOnly、Invoice詳細               | 403、404、JWT認証                     |
-| Backend Service          | PaymentService                    | 入金割当、ステータス再計算                     |
+| Backend API | Auth、Admin、OperationLogs、Invoices、Members、MyAccount、Payments、Sales、Collections | 401、403、404、200、201、400、JWT認証、ロール認可、所有者判定、CSVレスポンス |
+| Backend Service          | 各種Serviceクラス | 業務ロジック、DB更新、集計、検索、ステータス再計算、監査ログ、メール送信指示、非同期ジョブ処理 |
 | Frontend Hook            | useCurrentUser                    | localStorage読込                    |
 | Frontend Component       | CurrentUserBadge、LogoutButton     | 表示、ログアウト処理                        |
 | Frontend Auth Page       | Login、ForgotPassword              | 認証操作、エラー表示                        |
@@ -4310,7 +4345,10 @@ backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 | CIカバレッジ出力         | Jest / dotnet test のカバレッジレポートを追加            |
 | Lintの厳格化          | `continue-on-error` を解除し、Lint失敗時にCIを失敗させる   |
 | Docker Composeテスト | ローカルとCIのDB環境差異をさらに縮小                        |
-| PDF/CSV出力テスト      | Content-Type、ファイル名、BOM、PDF取得を追加             |
+| PDF出力テスト | Content-Type、ファイル名、PDF取得、権限制御を追加 |
+| CSV出力テスト拡張 | BOM、ヘッダー、明細行、検索条件反映を追加 |
+| サービス単体テスト拡張 | 請求書削除、会員無効化、入金登録正常系、監査ログ出力内容などのサービス単体テストを追加 |
+| 境界値テスト追加 | 金額0円、負数、割当超過、期限当日、ページサイズ上限などの境界値を追加 |
 
 ## 10. 今後の拡張余地・改善方針
 
