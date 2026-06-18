@@ -28,6 +28,11 @@
 - 売上集計 API
 - CSVエクスポート
 - 催促履歴管理
+- 認証・認可（JWT / Admin / Member）
+- メール確認・パスワード再設定
+- 管理者操作ログ（AuditLogs）
+- 督促ジョブの非同期処理
+- ヘルスチェック
 
 ---
 
@@ -44,7 +49,7 @@
 
 ## ドメイン設計のポイント
 
-- 請求ステータスは **入金合計から自動算出**
+- 入金割当の追加・削除・置換時に、割当済み金額から請求ステータスを再計算
 - 一部入金・複数請求への割当を考慮し  
   `PaymentAllocations` を中間テーブルとして設計
 - 催促履歴を独立テーブルとして保持し、業務ログを明確化
@@ -56,7 +61,7 @@
 ## データベース管理
 
 - EF Core Migrations による差分管理
-- 完成 SQL ファイルは管理しない方針
+- DBスキーマは完成SQLではなく、EF Core Migrations により管理する方針
 - 本番 DB はマネージド DB のバックアップ機構を利用
 
 ---
@@ -64,23 +69,43 @@
 ## 起動方法（ローカル）
 
 ```bash
+cd backend/InvoiceSystem.Api
 dotnet restore
 dotnet ef database update
 dotnet run
 ```
 
-※ フロントエンドと組み合わせた動作確認は
-   本番相当環境（Heroku）で実施しています。
+※ フロントエンドと組み合わせた動作確認は、
+   フロントエンド：Azure Static Web Apps、
+   バックエンドAPI：Heroku の本番相当環境で実施しています。
 
 ---
 
 ## 環境変数例
 
 ```bash
-ConnectionStrings__Default=Host=localhost;Database=invoice;...
-Jwt__Secret=xxxxxxxx
+ConnectionStrings__DefaultConnection=Host=localhost;Port=5432;Database=invoicesystem;Username=postgres;Password=postgres
+Jwt__Key=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Jwt__Issuer=InvoiceSystem
+Jwt__Audience=InvoiceSystemFrontend
+Jwt__ExpiresMinutes=60
 ```
 ---
+
+## テスト
+
+バックエンドでは xUnit を使用し、以下のテストを実施しています。
+
+- サービス層の単体テスト
+  - 請求書、入金、入金割当、売上集計、会員、認証、督促、監査ログ
+- API統合テスト
+  - 認証、認可、Admin / Member の権限分離
+  - 請求書、会員、入金、売上、督促、操作ログAPI
+
+CIでは GitHub Actions により `dotnet restore`、`dotnet build`、`dotnet test` を実行します。
+
+---
+
 ## 補足
 
 - 本 API は 実務向け業務アプリ設計の再現 を目的としています

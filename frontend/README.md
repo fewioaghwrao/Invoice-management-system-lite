@@ -14,7 +14,7 @@
 - TypeScript
 - Tailwind CSS
 - Fetch API（Backend API 連携）
-- JWT 認証（Cookie ベース）
+- JWT 認証
 - Jest
 - Testing Library
 
@@ -28,12 +28,19 @@
 - 請求書一覧 / 詳細
 - 入金登録・入金割当（部分入金対応）
 - 売上集計（CSV エクスポート）
+- 会員一覧 / 会員詳細・編集
+- 入金一覧 / 入金詳細
+- 督促履歴登録
+- 操作ログ一覧
 
 ### 会員
 
 - 会員用ダッシュボード
 - 自身の請求書一覧 / 詳細
+- 自身の請求書PDF取得
 - 入金状況確認
+- プロフィール確認・更新
+- 退会
 
 ※ 画面遷移の全体像は `/docs` 配下の状態遷移図を参照してください。
 
@@ -49,10 +56,24 @@
 
 ---
 
+## API連携
+
+API のベースURLは `NEXT_PUBLIC_API_BASE_URL` で切り替えます。
+
+フロントエンドは、認証状態やロールに応じて画面表示を制御しますが、最終的な認証・認可判定はバックエンド API 側で実施します。
+
+---
+
 ## 環境変数
+
 ```env
 NEXT_PUBLIC_API_BASE_URL=https://***.com
+NEXT_PUBLIC_SHOW_DEMO_LOGIN=true
 ```
+
+本番ではNEXT_PUBLIC_SHOW_DEMO_LOGINはfalseにする。
+
+---
 
 ## 起動方法（ローカル）
 ```bash
@@ -60,9 +81,23 @@ npm install
 npm run dev
 ```
 
+---
+
 ## テスト
 
-単体テストには Jest / Testing Library を使用しています。
+フロントエンドでは Jest / React Testing Library を使用し、主要画面・共通部品・認証関連処理を中心にテストを実施しています。
+
+主なテスト対象は以下です。
+
+- ログイン画面、パスワード再設定画面
+- 管理者ダッシュボード
+- 請求書一覧 / 詳細
+- 入金一覧 / 入金登録 / 入金詳細
+- 会員一覧
+- 督促画面
+- CurrentUserBadge、LogoutButton などの共通部品
+- useCurrentUser などの認証関連Hook
+
 ```bash
 npm test
 ```
