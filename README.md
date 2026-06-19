@@ -1,6 +1,7 @@
 # Invoice Management System (Lite)
 
 [![CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml)
+[![CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml)
 
 
 ## 概要
@@ -46,31 +47,20 @@
 
 ---
 
-## デモURL（環境別）
+## デモURL
 
-> 本システムは **同一コードベース**を  
-> - Heroku（本番相当・結合テスト環境）
-> - Azure（Microsoft スタック検証環境）
->  
-> の2環境にデプロイしています。
+本システムは、フロントエンドとバックエンドを分離して公開しています。
 
-### Heroku（本番相当・結合テスト環境）
-| 区分 | URL |
-|---|---|
-| フロントエンド | https://invoice-naoki-app-front-b97fea6c721d.herokuapp.com/auth/login |
-| バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
-| Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
+| 区分           | URL                                                                |
+| ------------ | ------------------------------------------------------------------ |
+| フロントエンド      | https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login |
+| バックエンド API   | https://invoice-app-api-b1a73aa4f113.herokuapp.com                 |
+| Health Check | https://invoice-app-api-b1a73aa4f113.herokuapp.com/health          |
+| Swagger      | https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger         |
 
-### Azure（UIホスティング検証環境）
-
-Azure Static Web Apps 上で **Next.js フロントエンドのみを配置**し、  
-Microsoft スタック環境でのフロントエンド運用を検証しています。
-
-| 区分 | URL |
-|---|---|
-| フロントエンド | https://gray-flower-0a4087900.2.azurestaticapps.net/auth/login |
-| バックエンド API | https://invoice-naoki-app-api-333afef82093.herokuapp.com |
-| Health Check | https://invoice-naoki-app-api-333afef82093.herokuapp.com/health |
+* Frontend：Azure Static Web Apps（Next.js）
+* Backend API：Heroku（ASP.NET Core）
+* Database：Heroku Postgres
 
 ---
 
@@ -219,14 +209,18 @@ Microsoft スタック環境でのフロントエンド運用を検証してい�
 
 ---
 
-## 動作確認・結合テスト（Heroku）
+## 動作確認・結合テスト（Azure Frontend × Heroku API）
 
-本番環境特有の問題（認可・PDF出力・文字化け等）を検証するため、
-ローカル完結ではなく Heroku 上での結合テストを重視しています。
+本番公開環境特有の問題（認証・認可・CORS・PDF出力・文字化け等）を検証するため、
+ローカル環境だけでなく、公開環境での結合テストを重視しています。
 
-本アプリケーションでは、  
-フロントエンド（Next.js）とバックエンド API（ASP.NET Core）を  
-**Heroku 上で統合した本番相当環境**にて結合テストを実施しています。
+本アプリケーションでは、
+
+* フロントエンド：Azure Static Web Apps（Next.js）
+* バックエンド API：Heroku（ASP.NET Core）
+* データベース：Heroku Postgres
+
+という構成で、クラウドサービスをまたいだ結合テストを実施しています。
 
 ### 実施内容（抜粋）
 - 管理者 / 会員のログインおよびロール判定
@@ -286,22 +280,16 @@ Heroku はアプリケーションとデータベースを一体で管理でき�
 
 ### Infrastructure（環境別）
 
-#### Heroku（本番相当・結合テスト環境）
-- Frontend：Heroku
-- Backend：Heroku
-- Database：Heroku Postgres（Managed）
-- 用途：
-  - 本番相当の結合テスト
-  - 認可・PDF出力・日本語表示などの検証
+#### 公開デモ環境
 
-#### Azure（Microsoft スタック検証環境）
-- Frontend：Azure Static Web Apps（Next.js）
-- Backend API：Heroku（ASP.NET Core）
+- Frontend：Azure Static Web Apps
+- Backend API：Heroku
 - Database：Heroku Postgres
-
-用途：
-- Next.js を Azure Static Web Apps 上で動作させる検証
-- Azure 環境でのフロントエンド運用確認
+- 用途：
+  - 公開デモ
+  - 認証・認可・CORSの確認
+  - PDF出力・日本語表示の確認
+  - フロントエンド／バックエンド分離構成の検証
 
 ---
 
@@ -337,16 +325,26 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 ## デプロイ / 環境（現状）
 
+## デプロイ / 環境（現状）
+
 ### Frontend（Azure Static Web Apps）
-- Runtime：Node.js
+
+- URL：
+  https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login
 - Framework：Next.js（App Router）
 - 環境変数：
-  - NEXT_PUBLIC_API_BASE_URL = Heroku Backend API のベースURL
+  - `NEXT_PUBLIC_API_BASE_URL=https://invoice-app-api-b1a73aa4f113.herokuapp.com`
 
 ### Backend API（Heroku）
-- Runtime：ASP.NET Core (.NET 8)
-- 認証：JWT
-- データベース：PostgreSQL（Heroku Postgres）
+
+- API：
+  https://invoice-app-api-b1a73aa4f113.herokuapp.com
+- Health Check：
+  https://invoice-app-api-b1a73aa4f113.herokuapp.com/health
+- Swagger：
+  https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger
+- Runtime：ASP.NET Core（.NET 8）
+- Database：Heroku Postgres
 
 ### その他
 - CORS：
