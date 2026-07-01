@@ -51,14 +51,15 @@
 
 本システムは、フロントエンドとバックエンドを分離して公開しています。
 
-| 区分           | URL                                                                |
-| ------------ | ------------------------------------------------------------------ |
-| フロントエンド      | https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login |
-| バックエンド API   | https://invoice-app-api-b1a73aa4f113.herokuapp.com                 |
-| Health Check | https://invoice-app-api-b1a73aa4f113.herokuapp.com/health          |
-| Swagger      | https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger         |
+| 区分                    | URL                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------- |
+| フロントエンド（Vercel） | https://invoice-management-system-lite-o7halmnaz-fewioaghwrao.vercel.app/auth/login       |
+| フロントエンド（Azure）  | https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login                        |
+| バックエンド API         | https://invoice-app-api-b1a73aa4f113.herokuapp.com                                        |
+| Health Check             | https://invoice-app-api-b1a73aa4f113.herokuapp.com/health                                 |
+| Swagger                  | https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger                                |
 
-* Frontend：Azure Static Web Apps（Next.js）
+* Frontend：Vercel / Azure Static Web Apps（Next.js）
 * Backend API：Heroku（ASP.NET Core）
 * Database：Heroku Postgres
 
@@ -282,7 +283,7 @@ Heroku はアプリケーションとデータベースを一体で管理でき�
 
 #### 公開デモ環境
 
-- Frontend：Azure Static Web Apps
+- Frontend：Vercel / Azure Static Web Apps
 - Backend API：Heroku
 - Database：Heroku Postgres
 - 用途：
@@ -311,7 +312,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 | 役割 | サービス |
 |---|---|
-| フロントエンド | Azure Static Web Apps |
+| フロントエンド | Vercel / Azure Static Web Apps |
 | バックエンド API | Heroku |
 | データベース | Heroku Postgres |
 
@@ -326,6 +327,15 @@ Azure では **Next.js フロントエンドのホスティング環境として
 ## デプロイ / 環境（現状）
 
 ## デプロイ / 環境（現状）
+
+### Frontend（Vercel）
+
+- URL：
+  https://invoice-management-system-lite-o7halmnaz-fewioaghwrao.vercel.app/auth/login
+- Framework：Next.js（App Router）
+- Root Directory：`frontend`
+- 環境変数：
+  - `NEXT_PUBLIC_API_BASE_URL=https://invoice-app-api-b1a73aa4f113.herokuapp.com`
 
 ### Frontend（Azure Static Web Apps）
 
@@ -525,7 +535,7 @@ Admin / Member ロール別の画面遷移、ダークテーマ UI、xUnit / Git
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
 - CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
-- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、Azure はフロントエンド（Static Web Apps）運用検証として利用しています。
+- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、フロントエンドは Vercel と Azure Static Web Apps で公開・運用検証しています。
 - Azure SQL / Azure Static Web Apps 構成も検証しましたが、常時稼働コストと運用の観点から、現状の公開デモは Backend API / DB を Heroku に統一しています（Azure はフロント運用検証として利用）。
 
   
