@@ -53,7 +53,7 @@
 
 | 区分                    | URL                                                                                       |
 | ----------------------- | ----------------------------------------------------------------------------------------- |
-| フロントエンド（Vercel） | https://invoice-management-system-lite-o7halmnaz-fewioaghwrao.vercel.app/auth/login       |
+| フロントエンド（Vercel） | https://invoice-management-system-lite.vercel.app/auth/login       |
 | フロントエンド（Azure）  | https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login                        |
 | バックエンド API         | https://invoice-app-api-b1a73aa4f113.herokuapp.com                                        |
 | Health Check             | https://invoice-app-api-b1a73aa4f113.herokuapp.com/health                                 |
@@ -329,7 +329,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 ### Frontend（Vercel）
 
 - URL：
-  https://invoice-management-system-lite-o7halmnaz-fewioaghwrao.vercel.app/auth/login
+  https://invoice-management-system-lite.vercel.app/auth/login
 - Framework：Next.js（App Router）
 - Root Directory：`frontend`
 - 環境変数：
