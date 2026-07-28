@@ -34,7 +34,6 @@ public static class PostgresConnectionStringFactory
             Password = userInfo.Length > 1 ? userInfo[1] : "",
             Database = uri.AbsolutePath.TrimStart('/'),
             SslMode = SslMode.Require,
-            TrustServerCertificate = true,
         }.ConnectionString;
     }
 }
