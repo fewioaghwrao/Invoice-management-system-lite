@@ -1,4 +1,4 @@
-﻿using InvoiceSystem.Api.Endpoints;
+using InvoiceSystem.Api.Endpoints;
 using InvoiceSystem.Application.Common.Interfaces;
 using InvoiceSystem.Application.Services;
 using InvoiceSystem.Application.Services.Auth;
@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using QuestPDF.Infrastructure;
 using InvoiceSystem.Infrastructure.Pdf;
 using InvoiceSystem.Infrastructure.Data;
@@ -71,15 +71,15 @@ builder.Services.AddCors(options =>
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(options =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
         Title = "InvoiceSystem.Api",
         Version = "v1"
     });
 
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
@@ -89,19 +89,9 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Bearer {token}"
     });
 
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
     });
 });
 
