@@ -551,7 +551,7 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | 項目 | 内容 |
 |---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
-| バックエンド | ASP.NET Core / .NET 8 / Minimal API |
+| バックエンド | ASP.NET Core / .NET 10 / Minimal API |
 | データベース | PostgreSQL |
 | ORM | Entity Framework Core |
 | 認証 | JWT |

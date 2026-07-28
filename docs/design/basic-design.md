@@ -134,7 +134,7 @@ Invoice Management System Lite
 | 区分 | 技術 | 主な責務 |
 |---|---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS | 画面表示、入力受付、画面遷移、API 呼び出し |
-| バックエンド API | ASP.NET Core / .NET 8 / Minimal API | 認証・認可、業務ロジック、データアクセス、PDF・CSV 生成 |
+| バックエンド API | ASP.NET Core / .NET 10 / Minimal API | 認証・認可、業務ロジック、データアクセス、PDF・CSV 生成 |
 | データベース | PostgreSQL | 会員、請求書、入金、入金割当、督促履歴、監査ログの保持 |
 | ORM | Entity Framework Core | エンティティと DB テーブルの対応、リレーション、制約管理 |
 | 認証方式 | JWT | ログイン後の認証、API アクセス制御 |

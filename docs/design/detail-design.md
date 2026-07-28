@@ -79,7 +79,7 @@ Invoice Management System Lite
 | 区分      | 技術                                  |
 | ------- | ----------------------------------- |
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
-| バックエンド  | ASP.NET Core / .NET 8 / Minimal API |
+| バックエンド  | ASP.NET Core / .NET 10 / Minimal API |
 | データアクセス | Entity Framework Core               |
 | データベース  | PostgreSQL                          |
 | 認証方式    | JWT                                 |

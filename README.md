@@ -240,6 +240,20 @@
 
 ---
 
+## .NET 10 移行
+
+バックエンドは、ASP.NET Core / Entity Framework Core を **.NET 8 から .NET 10へ更新**しています。
+
+- 全バックエンドプロジェクトの Target Framework を `net10.0` に統一
+- EF Core / Npgsql / ASP.NET Core 関連パッケージを.NET 10対応版へ更新
+- ソリューション形式を `.sln` から `.slnx` へ移行
+- GitHub Actions のバックエンドCIを.NET 10 SDKへ更新
+- Docker / Herokuコンテナのランタイムを.NET 10へ更新
+- Swagger / OpenAPI設定をMicrosoft.OpenApi 2.x対応形式へ変更
+- Npgsqlの旧`TrustServerCertificate`設定を削除
+
+---
+
 ## 技術スタック
 
 ### Frontend
@@ -248,9 +262,12 @@
 - Tailwind CSS
 
 ### Backend
-- ASP.NET Core (.NET 8)
-- Entity Framework Core
-- JWT認証
+- ASP.NET Core（.NET 10）
+- Entity Framework Core 10
+- PostgreSQL / Npgsql
+- JWT認証・ロールベース認可
+- OpenAPI / Swagger
+- Serilog
 
 ### Database
 - PostgreSQL
@@ -269,7 +286,8 @@
 Heroku はアプリケーションとデータベースを一体で管理できる PaaS であり、
 以下の理由から **API と DB を配置する本番相当環境**として採用しています。
 
-- ASP.NET Core API を簡潔にデプロイできる
+- ASP.NET Core API をコンテナとしてデプロイできる
+- `heroku.yml` と `Dockerfile.heroku` によりデプロイ構成をコード管理できる
 - PostgreSQL（Heroku Postgres）をマネージドで利用できる
 - ローカル環境（Docker PostgreSQL）との互換性が高い
 - アプリケーションと DB を同一プラットフォームで統合管理できる
@@ -351,7 +369,11 @@ Azure では **Next.js フロントエンドのホスティング環境として
   https://invoice-app-api-b1a73aa4f113.herokuapp.com/health
 - Swagger：
   https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger
-- Runtime：ASP.NET Core（.NET 8）
+- Runtime：ASP.NET Core（.NET 10）
+- Deployment：Heroku Container Stack
+- Build manifest：`heroku.yml`
+- Dockerfile：`Dockerfile.heroku`
+- Solution：`backend/InvoiceSystem.Api.slnx`
 - Database：Heroku Postgres
 
 ### その他
@@ -426,7 +448,8 @@ Azure では **Next.js フロントエンドのホスティング環境として
   - Jest / Testing Library によるテスト
   - ビルド確認（npm run build）
 - バックエンド（ASP.NET Core）
-  - restore / build / test の自動実行（.NET 8）
+  - .NET 10 SDK を使用
+  - `backend/InvoiceSystem.Api.slnx` を対象に restore / build / test を自動実行
   - 入金割当・請求ステータス再計算など、業務上重要なロジックについて単体テストを実装し CI 上で自動実行
 
 ### 設計方針
@@ -469,8 +492,18 @@ CI の定義は以下に記載しています。
 
 ```text
 invoice-management-system-lite/
-├─ frontend/                      # Next.js フロントエンド
-├─ backend/                       # ASP.NET Core Backend API
+├─ .github/
+│  └─ workflows/
+│     ├─ ci.yml                     # Frontend / Backend CI
+│     └─ azure-static-web-apps-*.yml
+├─ frontend/                        # Next.js フロントエンド
+├─ backend/
+│  ├─ InvoiceSystem.Api.slnx        # .NET 10 ソリューション
+│  ├─ InvoiceSystem.Api/            # Minimal API / 認証 / エンドポイント
+│  ├─ InvoiceSystem.Application/    # ユースケース・DTO・サービス定義
+│  ├─ InvoiceSystem.Domain/         # エンティティ・ドメインモデル
+│  ├─ InvoiceSystem.Infrastructure/ # EF Core・PostgreSQL・PDF・メール
+│  └─ InvoiceSystem.Tests/          # xUnit 単体・統合テスト
 ├─ docs/
 │  ├─ design/
 │  │  ├─ requirements-definition.md # 要件定義書
@@ -481,16 +514,12 @@ invoice-management-system-lite/
 │  │  ├─ admin-diagram.drawio.png   # 管理者画面遷移図
 │  │  └─ member-diagram.drawio.png  # 会員画面遷移図
 │  ├─ screenshots/
-│  │  ├─ A-admin-dashboard.png
-│  │  ├─ B-invoice-list.png
-│  │  ├─ C-invoice-detail.png
-│  │  ├─ D-payment-allocation.png
-│  │  ├─ F-member-dashboard.png
-│  │  ├─ G-operation-log-list.png
-│  │  └─ H-logout-confirm.png
-│  ├─ architecture.md              # 設計意図・全体構成
-│  └─ Integration_test.md          # 結合テスト結果
-└─ README.md                       # 本ドキュメント
+│  ├─ architecture.md
+│  └─ Integration_test.md
+├─ Dockerfile.heroku                # Heroku用 .NET 10 コンテナ
+├─ heroku.yml                       # Herokuビルドマニフェスト
+├─ docker-compose.yml               # ローカルPostgreSQL / API
+└─ README.md
 ```
 
 ---
