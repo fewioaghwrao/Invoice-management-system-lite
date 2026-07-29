@@ -1,6 +1,6 @@
 # Invoice System Client (WPF)
 
-![CI](https://github.com/fewioaghwrao/InvoiceSystem.Wpf/actions/workflows/dotnet-tests.yml/badge.svg)
+[![WPFtest](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml)
 
 C# / WPF で開発した、**Invoice Management System (Lite)** 向けのデスクトップクライアントです。  
 既存の **ASP.NET Core Web API** を利用し、**請求・入金・会員管理・売上確認** をデスクトップアプリとして操作できるようにした WPF 版クライアントです。
