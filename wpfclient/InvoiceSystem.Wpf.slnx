@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="InvoiceSystem.Wpf.Tests/InvoiceSystem.Wpf.Tests.csproj" />
+  <Project Path="InvoiceSystem.Wpf/InvoiceSystem.Wpf.csproj" />
+</Solution>

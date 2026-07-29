@@ -1,0 +1,509 @@
+﻿<Window x:Class="InvoiceSystem.Wpf.Views.PaymentDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="入金詳細（割当）"
+        Width="1400"
+        Height="920"
+        MinWidth="1280"
+        MinHeight="820"
+        WindowStartupLocation="CenterOwner"
+        Background="#020617">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="TextBoxStyleDark" TargetType="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Background" Value="#020617"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Background" Value="#10B981"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style x:Key="SecondaryButtonStyle" TargetType="Button">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style x:Key="GridStyle" TargetType="DataGrid">
+            <Setter Property="Background" Value="#020617"/>
+            <Setter Property="Foreground" Value="#E5E7EB"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="RowBackground" Value="#020617"/>
+            <Setter Property="AlternatingRowBackground" Value="#0F172A"/>
+            <Setter Property="GridLinesVisibility" Value="Horizontal"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+            <Setter Property="CanUserAddRows" Value="False"/>
+            <Setter Property="CanUserDeleteRows" Value="False"/>
+            <Setter Property="CanUserResizeRows" Value="False"/>
+            <Setter Property="AutoGenerateColumns" Value="False"/>
+            <Setter Property="SelectionMode" Value="Single"/>
+            <Setter Property="SelectionUnit" Value="FullRow"/>
+            <Setter Property="RowHeaderWidth" Value="0"/>
+        </Style>
+
+        <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Padding" Value="10,8"/>
+            <Setter Property="Height" Value="36"/>
+        </Style>
+
+        <Style x:Key="CellStyle" TargetType="DataGridCell">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#E5E7EB"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,6"/>
+        </Style>
+
+        <Style x:Key="RowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="#020617"/>
+            <Setter Property="Foreground" Value="#E5E7EB"/>
+            <Setter Property="Height" Value="40"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#132033"/>
+                </Trigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="#1D4ED8"/>
+                    <Setter Property="Foreground" Value="White"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020617" Offset="0.0"/>
+                <GradientStop Color="#0F172A" Offset="0.5"/>
+                <GradientStop Color="#111827" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="12"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="14"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <Border Grid.Row="0"
+                    CornerRadius="20"
+                    Padding="20"
+                    BorderBrush="#1E293B"
+                    BorderThickness="1"
+                    Background="#CC0F172A">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="入金詳細（割当）"
+                                   Foreground="White"
+                                   FontSize="24"
+                                   FontWeight="SemiBold"/>
+                        <TextBlock Text="入金を請求書へ割り当てます。"
+                                   Margin="0,8,0,0"
+                                   Foreground="#94A3B8"
+                                   FontSize="13"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="再読込"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="0,0,8,0"
+                                Click="ReloadButton_OnClick"/>
+                        <Button Content="閉じる"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="CloseButton_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Error -->
+            <Border Grid.Row="2"
+                    Background="#3F1D1D"
+                    BorderBrush="#7F1D1D"
+                    BorderThickness="1"
+                    CornerRadius="14"
+                    Padding="14"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="#FCA5A5"
+                           TextWrapping="Wrap"/>
+            </Border>
+
+            <!-- Summary -->
+            <Border Grid.Row="4"
+                    CornerRadius="18"
+                    Padding="16"
+                    BorderBrush="#1E293B"
+                    BorderThickness="1"
+                    Background="#CC0F172A">
+                <StackPanel>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="入金情報"
+                                       Foreground="White"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="{Binding PaymentIdText}"
+                                       Margin="0,6,0,0"
+                                       Foreground="#CBD5E1"/>
+                        </StackPanel>
+
+                        <Border Grid.Column="1"
+                                Padding="10,4"
+                                CornerRadius="999"
+                                Background="#0F172A"
+                                BorderBrush="#334155"
+                                BorderThickness="1">
+                            <TextBlock Text="{Binding StatusText}"
+                                       Foreground="#F8FAFC"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+                    </Grid>
+
+                    <UniformGrid Margin="0,14,0,0" Columns="3">
+                        <Border Margin="0,0,12,0"
+                                Padding="16"
+                                CornerRadius="16"
+                                Background="#0F172A"
+                                BorderBrush="#10B981"
+                                BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="入金額" Foreground="#CBD5E1" FontSize="12"/>
+                                <TextBlock Text="{Binding AmountText}"
+                                           Margin="0,10,0,0"
+                                           Foreground="#6EE7B7"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Margin="0,0,12,0"
+                                Padding="16"
+                                CornerRadius="16"
+                                Background="#0F172A"
+                                BorderBrush="#38BDF8"
+                                BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="割当合計" Foreground="#CBD5E1" FontSize="12"/>
+                                <TextBlock Text="{Binding AllocatedAmountText}"
+                                           Margin="0,10,0,0"
+                                           Foreground="#7DD3FC"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding InputAllocatedSumText, StringFormat=入力中合計: {0}}"
+                                           Margin="0,6,0,0"
+                                           Foreground="#94A3B8"
+                                           FontSize="11"/>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Padding="16"
+                                CornerRadius="16"
+                                Background="#0F172A"
+                                BorderBrush="#F59E0B"
+                                BorderThickness="1">
+                            <StackPanel>
+                                <TextBlock Text="未割当" Foreground="#CBD5E1" FontSize="12"/>
+                                <TextBlock Text="{Binding UnallocatedAmountText}"
+                                           Margin="0,10,0,0"
+                                           Foreground="#FCD34D"
+                                           FontSize="22"
+                                           FontWeight="SemiBold"/>
+                            </StackPanel>
+                        </Border>
+                    </UniformGrid>
+
+                    <Grid Margin="0,14,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="220"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="20"/>
+                            <ColumnDefinition Width="220"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="入金日" Style="{StaticResource FieldLabelStyle}"/>
+                            <Border Height="36" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                                <TextBlock Text="{Binding PaymentDateText}" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="10,0"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="入金名義" Style="{StaticResource FieldLabelStyle}"/>
+                            <Border Height="36" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                                <TextBlock Text="{Binding PayerName}" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="10,0"/>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="4">
+                            <TextBlock Text="入金方法" Style="{StaticResource FieldLabelStyle}"/>
+                            <Border Height="36" Background="#0F172A" BorderBrush="#334155" BorderThickness="1" CornerRadius="8">
+                                <TextBlock Text="{Binding Method}" Foreground="#E5E7EB" VerticalAlignment="Center" Margin="10,0"/>
+                            </Border>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- Main -->
+            <Grid Grid.Row="6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1.2*"/>
+                    <ColumnDefinition Width="14"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: allocation rows -->
+                <Border Grid.Column="0"
+                        CornerRadius="18"
+                        Padding="16"
+                        BorderBrush="#1E293B"
+                        BorderThickness="1"
+                        Background="#CC0F172A">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="割当行"
+                                           Foreground="White"
+                                           FontSize="15"
+                                           FontWeight="SemiBold"/>
+                                <TextBlock Text="候補から請求書を選択して割当金額を入力してください。"
+                                           Margin="0,4,0,0"
+                                           Foreground="#94A3B8"
+                                           FontSize="12"/>
+                            </StackPanel>
+
+                            <Button Grid.Column="1"
+                                    Content="+ 行追加"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    Click="AddRowButton_OnClick"/>
+                        </Grid>
+
+                        <DataGrid Grid.Row="2"
+                                  ItemsSource="{Binding AllocationRows}"
+                                  SelectedItem="{Binding SelectedAllocationRow}"
+                                  Style="{StaticResource GridStyle}"
+                                  ColumnHeaderStyle="{StaticResource HeaderStyle}"
+                                  CellStyle="{StaticResource CellStyle}"
+                                  RowStyle="{StaticResource RowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="請求書番号"
+                                                    Binding="{Binding InvoiceNumber}"
+                                                    Width="180"/>
+                                <DataGridTextColumn Header="会員名"
+                                                    Binding="{Binding MemberName}"
+                                                    Width="*"/>
+                                <DataGridTextColumn Header="割当金額"
+                                                    Binding="{Binding AmountText, UpdateSourceTrigger=PropertyChanged}"
+                                                    Width="140"/>
+                                <DataGridTemplateColumn Header="操作" Width="120">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="解除"
+                                                        Width="48"
+                                                        Margin="0,0,6,0"
+                                                        Click="ClearInvoiceButton_OnClick"/>
+                                                <Button Content="削除"
+                                                        Width="48"
+                                                        Click="RemoveRowButton_OnClick"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Border Grid.Row="4"
+                                Padding="12"
+                                CornerRadius="12"
+                                Background="#0F172A"
+                                BorderBrush="#334155"
+                                BorderThickness="1">
+                            <TextBlock Text="{Binding InputAllocatedSumText, StringFormat=入力中の割当合計: {0}}"
+                                       Foreground="#CBD5E1"/>
+                        </Border>
+                    </Grid>
+                </Border>
+
+                <!-- Right: candidate search -->
+                <Border Grid.Column="2"
+                        CornerRadius="18"
+                        Padding="16"
+                        BorderBrush="#1E293B"
+                        BorderThickness="1"
+                        Background="#CC0F172A">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="12"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel>
+                            <TextBlock Text="請求書候補検索"
+                                       Foreground="White"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"/>
+                            <TextBlock Text="請求書番号または会員名で検索して、選択行に反映します。"
+                                       Margin="0,4,0,0"
+                                       Foreground="#94A3B8"
+                                       FontSize="12"/>
+                        </StackPanel>
+
+                        <Grid Grid.Row="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0">
+                                <TextBlock Text="請求書番号" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SearchInvoiceNumber, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource TextBoxStyleDark}"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="会員名" Style="{StaticResource FieldLabelStyle}"/>
+                                <TextBox Text="{Binding SearchMemberName, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource TextBoxStyleDark}"/>
+                            </StackPanel>
+
+                            <Button Grid.Row="4"
+                                    Content="検索"
+                                    Style="{StaticResource PrimaryButtonStyle}"
+                                    Click="SearchCandidatesButton_OnClick"/>
+                        </Grid>
+
+                        <DataGrid Grid.Row="4"
+                                  ItemsSource="{Binding CandidateInvoices}"
+                                  SelectedItem="{Binding SelectedCandidate}"
+                                  Style="{StaticResource GridStyle}"
+                                  ColumnHeaderStyle="{StaticResource HeaderStyle}"
+                                  CellStyle="{StaticResource CellStyle}"
+                                  RowStyle="{StaticResource RowStyle}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="請求番号"
+                                                    Binding="{Binding InvoiceNumber}"
+                                                    Width="160"/>
+                                <DataGridTextColumn Header="会員"
+                                                    Binding="{Binding MemberName}"
+                                                    Width="*"/>
+                                <DataGridTextColumn Header="金額"
+                                                    Binding="{Binding TotalAmount, StringFormat={}{0:C0}}"
+                                                    Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Button Grid.Row="6"
+                                Content="選択中の割当行へ反映"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Click="ApplyCandidateButton_OnClick"/>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="8"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right">
+                <Button Content="戻る"
+                        Style="{StaticResource SecondaryButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="BackButton_OnClick"/>
+
+                <Button Content="割当を保存"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Click="SaveButton_OnClick"/>
+            </StackPanel>
+
+            <!-- Overlay -->
+            <Border Grid.RowSpan="9"
+                    Background="#66000000"
+                    Visibility="{Binding IsSaving, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Border Background="#0F172A"
+                            BorderBrush="#334155"
+                            BorderThickness="1"
+                            CornerRadius="16"
+                            Padding="24">
+                        <TextBlock Text="保存中です..."
+                                   Foreground="#E2E8F0"
+                                   FontSize="14"/>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

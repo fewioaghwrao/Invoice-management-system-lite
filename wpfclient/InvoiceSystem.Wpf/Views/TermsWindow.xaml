@@ -1,0 +1,218 @@
+﻿<Window x:Class="InvoiceSystem.Wpf.Views.TermsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="利用規約"
+        Height="720"
+        Width="860"
+        MinHeight="640"
+        MinWidth="760"
+        WindowStartupLocation="CenterOwner"
+        Background="#0B1120">
+
+    <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020617" Offset="0.0"/>
+                <GradientStop Color="#0F172A" Offset="0.35"/>
+                <GradientStop Color="#111827" Offset="0.7"/>
+                <GradientStop Color="#1E1B4B" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Ellipse Width="360"
+                 Height="360"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 Margin="-90,-70,0,0"
+                 IsHitTestVisible="False"
+                 Opacity="0.18">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#38BDF8" Offset="0"/>
+                    <GradientStop Color="#0038BDF8" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse Width="420"
+                 Height="420"
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,-120,-100"
+                 IsHitTestVisible="False"
+                 Opacity="0.16">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#6366F1" Offset="0"/>
+                    <GradientStop Color="#006366F1" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Grid Margin="28">
+            <Border MaxWidth="820"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    CornerRadius="26"
+                    Padding="0"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    Background="#CC0F172A">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="32"
+                                      ShadowDepth="0"
+                                      Opacity="0.30"
+                                      Color="#000000"/>
+                </Border.Effect>
+
+                <Grid Margin="30">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="18"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="20"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0">
+                        <Border HorizontalAlignment="Left"
+                                Background="#1E293B"
+                                CornerRadius="999"
+                                Padding="10,4">
+                            <TextBlock Text="Invoice System"
+                                       Foreground="#7DD3FC"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"/>
+                        </Border>
+
+                        <TextBlock Text="利用規約"
+                                   Margin="0,16,0,0"
+                                   Foreground="White"
+                                   FontSize="28"
+                                   FontWeight="SemiBold"/>
+
+                        <TextBlock Text="本アプリケーションの利用条件についてご確認ください。"
+                                   Margin="0,8,0,0"
+                                   Foreground="#94A3B8"
+                                   FontSize="13"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Border Grid.Row="2"
+                            CornerRadius="18"
+                            Padding="22"
+                            Background="#0F172A"
+                            BorderBrush="#334155"
+                            BorderThickness="1">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="本利用規約（以下「本規約」）は、本アプリケーション（以下「本アプリ」）の利用条件を定めるものです。"
+                                           Foreground="#CBD5E1"
+                                           FontSize="13"
+                                           TextWrapping="Wrap"/>
+
+                                <StackPanel Margin="0,18,0,0">
+                                    <TextBlock Text="第1条（目的）"
+                                               Foreground="White"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="本アプリは、ポートフォリオおよびデモンストレーションを目的として作成されたものであり、実際の商取引、請求、決済、契約行為を行うものではありません。"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,18,0,0">
+                                    <TextBlock Text="第2条（利用条件）"
+                                               Foreground="White"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="利用者は、本アプリがデモ目的で提供されていることを理解した上で利用するものとします。本アプリに入力された情報の正確性、保存性、継続性は保証されません。"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,18,0,0">
+                                    <TextBlock Text="第3条（禁止事項）"
+                                               Foreground="White"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="・実在する第三者の個人情報や機密情報を入力する行為"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="・本アプリを用いた実取引・実請求・実決済行為"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,4,0,0"
+                                               Text="・本アプリの運営・表示を妨害する行為"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,18,0,0">
+                                    <TextBlock Text="第4条（免責事項）"
+                                               Foreground="White"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="本アプリの利用により生じたいかなる損害についても、作成者は一切の責任を負いません。"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,18,0,0">
+                                    <TextBlock Text="第5条（規約の変更）"
+                                               Foreground="White"
+                                               FontSize="15"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Margin="0,8,0,0"
+                                               Text="本規約の内容は、予告なく変更される場合があります。"
+                                               Foreground="#CBD5E1"
+                                               FontSize="13"
+                                               TextWrapping="Wrap"/>
+                                </StackPanel>
+
+                                <TextBlock Margin="0,26,0,0"
+                                           Text="※ 本ページはポートフォリオ用の簡易利用規約です。"
+                                           Foreground="#64748B"
+                                           FontSize="11"
+                                           TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="140"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="#64748B"
+                                   FontSize="11"
+                                   Text="内容をご確認のうえ、画面を閉じてください。"/>
+
+                        <Button Grid.Column="1"
+                                Height="42"
+                                Content="閉じる"
+                                Click="CloseButton_OnClick"
+                                Background="#1E293B"
+                                Foreground="#E2E8F0"
+                                BorderBrush="#475569"
+                                BorderThickness="1"
+                                FontWeight="SemiBold"/>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

@@ -1,0 +1,278 @@
+﻿<Window x:Class="InvoiceSystem.Wpf.Views.MemberDetailWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="会員詳細"
+        Height="760"
+        Width="980"
+        WindowStartupLocation="CenterScreen"
+        Background="#020617">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+        </Style>
+
+        <Style x:Key="LabelTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+        </Style>
+
+        <Style x:Key="InputStyle" TargetType="TextBox">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Background" Value="#020617"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="ReadOnlyInputStyle" TargetType="TextBox" BasedOn="{StaticResource InputStyle}">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="IsReadOnly" Value="True"/>
+            <Setter Property="Focusable" Value="False"/>
+        </Style>
+
+        <Style x:Key="PrimaryButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="Background" Value="#059669" />
+            <Setter Property="BorderBrush" Value="#059669" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <Style x:Key="SubButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#E2E8F0" />
+            <Setter Property="Background" Value="#0F172A" />
+            <Setter Property="BorderBrush" Value="#475569" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+
+        <Style x:Key="DangerButtonStyle" TargetType="Button">
+            <Setter Property="Foreground" Value="#FFE4E6" />
+            <Setter Property="Background" Value="#4C0519" />
+            <Setter Property="BorderBrush" Value="#BE123C" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16,9" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Margin" Value="0" />
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020617" Offset="0.0"/>
+                <GradientStop Color="#0F172A" Offset="0.5"/>
+                <GradientStop Color="#111827" Offset="1.0"/>
+            </LinearGradientBrush>
+        </Grid.Background>
+
+        <Ellipse Width="420"
+                 Height="420"
+                 HorizontalAlignment="Left"
+                 VerticalAlignment="Top"
+                 Margin="-120,-120,0,0"
+                 Opacity="0.18"
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#38BDF8" Offset="0"/>
+                    <GradientStop Color="#0038BDF8" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+
+        <Ellipse Width="420"
+                 Height="420"
+                 HorizontalAlignment="Right"
+                 VerticalAlignment="Bottom"
+                 Margin="0,0,-120,-120"
+                 Opacity="0.15"
+                 IsHitTestVisible="False">
+            <Ellipse.Fill>
+                <RadialGradientBrush>
+                    <GradientStop Color="#6366F1" Offset="0"/>
+                    <GradientStop Color="#006366F1" Offset="1"/>
+                </RadialGradientBrush>
+            </Ellipse.Fill>
+        </Ellipse>
+        <Grid Margin="20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="16"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Border Grid.Row="0"
+                Background="#0F172A"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="20">
+                <StackPanel>
+                    <TextBlock Text="会員詳細（編集）"
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Foreground="White"/>
+                    <TextBlock Margin="0,6,0,0"
+                           Text="管理者が顧客情報を編集します（メール認証なし）。"
+                           Foreground="#94A3B8"
+                           FontSize="12"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2"
+                Background="#0F172A"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="16"
+                Padding="20">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="名前" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputStyle}"
+                                 Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="メール" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputStyle}"
+                                 Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Margin="0,6,0,0"
+                                   FontSize="11"
+                                   Foreground="#64748B"
+                                   Text="※管理画面編集のためメール認証は行いません（デモ用）。"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="2">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="郵便番号" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputStyle}"
+                                 Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="住所" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputStyle}"
+                                 Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <Grid Grid.Row="4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="16"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="電話番号" Style="{StaticResource LabelTextStyle}"/>
+                            <TextBox Style="{StaticResource InputStyle}"
+                                 Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <Grid Grid.Column="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="12"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0">
+                                <TextBlock Text="ロール" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBox Style="{StaticResource ReadOnlyInputStyle}"
+                                     Text="{Binding RoleText, Mode=OneWay}"/>
+                                <TextBlock Margin="0,6,0,0"
+                                       FontSize="11"
+                                       Foreground="#64748B"
+                                       Text="※ロールは固定です。"/>
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="2">
+                                <TextBlock Text="状態" Style="{StaticResource LabelTextStyle}"/>
+                                <TextBox Style="{StaticResource ReadOnlyInputStyle}"
+                                     Text="{Binding StatusText, Mode=OneWay}"/>
+                                <TextBlock Margin="0,6,0,0"
+                                       FontSize="11"
+                                       Foreground="#64748B"
+                                       Text="※状態変更は退会（無効化）操作で行います。"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid Grid.Row="4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0">
+                    <Border Background="#3F1D1D"
+                        BorderBrush="#7F1D1D"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="12"
+                        Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Text="{Binding ErrorMessage}"
+                               Foreground="#FCA5A5"
+                               TextWrapping="Wrap"/>
+                    </Border>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="戻る"
+                        Margin="0,0,8,0"
+                        Style="{StaticResource SubButtonStyle}"
+                        Command="{Binding CloseCommand}"/>
+
+                    <Button Content="退会（無効化）"
+                        Margin="0,0,8,0"
+                        Style="{StaticResource DangerButtonStyle}"
+                        Command="{Binding DisableCommand}"/>
+
+                    <Button Content="保存"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

@@ -28,3 +28,14 @@ Thumbs.db
 # Visual Studio
 .vs/
 **/.vs/
+
+# WPF Client
+.vs/
+bin/
+obj/
+
+*.user
+*.rsuser
+*.suo
+*.userosscache
+*.sln.docstates
