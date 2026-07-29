@@ -18,20 +18,23 @@ Invoice Management System (Lite) における設計方針・構成意図を整�
 
 ## 2. システム全体構成
 ```bash
-[ Frontend (Next.js) ]
-        |
-        |  REST API (JWT)
-        |
-[ Backend API (ASP.NET Core) ]
-        |
-        |  ORM (EF Core)
-        |
-[ PostgreSQL ]
+[ Web Client (Next.js) ]       [ Desktop Client (WPF) ]
+            |                              |
+            +---------- REST API ----------+
+                       (JWT)
+                         |
+             [ Backend API (ASP.NET Core) ]
+                         |
+                    ORM (EF Core)
+                         |
+                   [ PostgreSQL ]
 ```
 ### 構成の特徴
-- フロントエンド / バックエンド完全分離
-- API ベース設計による責務の明確化
-- Web 業務アプリとして一般的な三層構成を採用
+
+- Webクライアント / WPFクライアントとバックエンドAPIを分離
+- 共通APIを複数クライアントから利用する構成
+- APIベース設計による責務の明確化
+- Web・デスクトップの双方から同一の業務ロジックを利用
 
 ## 3. ユーザー区分と責務分離
 本システムでは 2 種類のユーザー を想定しています。
@@ -133,6 +136,10 @@ Invoice Management System (Lite) における設計方針・構成意図を整�
 本システムのバックエンド API は、
 ASP.NET Core による REST API として実装しています。
 
+本APIは、Next.jsによるWebクライアントと、
+C# / WPFによるデスクトップクライアントから共通して利用します。
+業務ロジックと権限制御はバックエンドAPI側に集約しています。
+
 開発・検証環境では Swagger UI により API 仕様を確認できる構成とする。
 本番相当環境では、運用方針に応じて Swagger UI の公開可否を制御する。
 
@@ -168,12 +175,20 @@ ASP.NET Core による REST API として実装しています。
 - Jest / React Testing Library による画面・コンポーネントテスト
 - ログイン、ダッシュボード、請求書、入金、会員、督促画面などの表示・操作を確認
 
+### WPFクライアントテスト
+
+- xUnitによる主要ViewModelの単体テスト
+- 認証、請求、入金、会員、売上、催促などの画面ロジックを確認
+- 画面状態、検索条件、入力バリデーション、Request DTO生成を確認
+- API通信はServiceインターフェースとFake実装により分離
+- UIそのものではなく、ViewModelの状態と業務処理を中心に検証
+
 ### CI
 
 - GitHub Actions により、push / pull request 時にビルド・テストを自動実行
 - フロントエンドは lint / test / build を実行
 - バックエンドは restore / build / test を実行
-
+- WPFクライアントはWindows環境で restore / build / test を実行
 
 ## 9. レイヤードアーキテクチャ
 
@@ -211,9 +226,11 @@ Infrastructure
 ## 12. まとめ
 
 本システムは
-「学習用アプリ」ではなく「業務アプリ設計の再現」 を目的としています。
+「学習用アプリ」ではなく「業務アプリ設計の再現」を目的としています。
+
 - 状態変化を意識した設計
 - 一部入金・割当対応
 - 実務視点での画面遷移・集計
+- 共通APIを利用したWeb・WPFのマルチクライアント構成
 
 を重視した構成としています。

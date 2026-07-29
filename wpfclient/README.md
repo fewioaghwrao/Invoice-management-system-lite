@@ -25,8 +25,11 @@ JWT ベースの認証、Admin / Member ロール別の画面遷移、請求書�
 - PDF 出力 / CSV 出力
 - ダークテーマをベースにした業務向け UI
 
-接続先の元システムのリポジトリはこちらです。  
-[Invoice Management System (Lite)](https://github.com/fewioaghwrao/Invoice-management-system-lite)
+本クライアントは、同一リポジトリ内の
+ASP.NET Core Web API（`../backend/`）を利用します。
+
+システム全体の構成については、
+[ルートREADME](../README.md)を参照してください。
 
 ---
 
@@ -325,40 +328,23 @@ WPF 版では、単なる Web 版の移植ではなく、以下を重視して�
 ## ディレクトリ構成
 
 ```
-InvoiceSystem.Wpf/
+wpfclient/
 ├─ InvoiceSystem.Wpf.slnx
 ├─ InvoiceSystem.Wpf/
 │  ├─ Models/
 │  ├─ Services/
 │  ├─ ViewModels/
 │  ├─ Views/
+│  ├─ Commands/
+│  ├─ Configuration/
 │  ├─ Infrastructure/
 │  ├─ appsettings.json
 │  └─ App.xaml
 ├─ InvoiceSystem.Wpf.Tests/
-│  └─ ...
+│  ├─ Fakes/
+│  └─ ViewModels/
 ├─ docs/
 │  └─ images/
-│     ├─ ログイン画面.png
-│     ├─ ログアウト確認.png
-│     ├─ 会員ダッシュボード.png
-│     ├─ 会員プロフィール.png
-│     ├─ 会員用請求書一覧.png
-│     ├─ 会員用請求書詳細.png
-│     ├─ 会員用入金確認.png
-│     ├─ 管理者ダッシュボード.png
-│     ├─ 管理者用会員一覧.png
-│     ├─ 管理者用会員詳細.png
-│     ├─ 管理者用請求書一覧.png
-│     ├─ 管理者用請求書詳細.png
-│     ├─ 管理者用売上一覧.png
-│     ├─ 顧客別売上一覧.png
-│     ├─ 催促画面.png
-│     ├─ 請求書PDF出力例.png
-│     ├─ 入金一覧.png
-│     ├─ 入金詳細.png
-│     ├─ 入金登録.png
-│     └─ CSV出力例.png
 └─ README.md
 ```
 

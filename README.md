@@ -1,15 +1,27 @@
 # Invoice Management System (Lite)
 
-[![CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml)
-[![CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml)
-
+[![Web / API CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml)
+[![WPF Tests](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml)
+[![Azure Static Web Apps](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml)
 
 ## 概要
-**請求・入金管理業務において発生しがちな課題を整理し、  
-管理者／会員の権限分離・入金ステータス管理・集計業務までを再現した業務向けWebアプリです。**
 
-本システムは、
-「請求・入金管理を Excel や属人的な運用から脱却したい中小規模事業者」を想定し、
+**請求・入金管理業務を題材として、Web版とWPFデスクトップ版の
+2種類のクライアントを実装した業務向けアプリケーションです。**
+
+共通の ASP.NET Core Web API に対して、以下のクライアントを実装しています。
+
+- Next.jsによるWebクライアント
+- C# / WPFによるWindowsデスクトップクライアント
+
+請求書管理、入金登録、入金割当、会員管理、売上集計などの
+業務ロジックはバックエンドAPIに集約し、異なるUI技術から
+同一の業務機能を利用する構成としています。
+
+本システムでは、業務フロー、権限分離、状態管理に加えて、
+WebアプリとデスクトップアプリのUI・操作性の違いも比較できるようにしています。
+
+また、「請求・入金管理を Excel や属人的な運用から脱却したい中小規模事業者」を想定し、
 **業務フロー・権限設計・状態管理を重視して設計・実装**しています。
 
 ※ 本リポジトリは **中核機能に絞った Lite 版** として、  
@@ -47,6 +59,26 @@
 
 ---
 
+## アプリケーション構成
+
+本リポジトリでは、共通のバックエンドAPIに対して、
+Web版とWPF版の2種類のクライアントを実装しています。
+
+| 区分 | 技術 | 配置先 | 用途 |
+|---|---|---|---|
+| Webクライアント | Next.js / TypeScript | `frontend/` | ブラウザから利用するWeb版 |
+| WPFクライアント | C# / WPF / .NET 10 | `wpfclient/` | Windows向けデスクトップ版 |
+| バックエンドAPI | ASP.NET Core / .NET 10 | `backend/` | 認証・認可・業務ロジック・DBアクセス |
+| データベース | PostgreSQL | Docker / Heroku Postgres | 請求・入金・会員情報の永続化 |
+
+### クライアント別ドキュメント
+
+- [Webフロントエンド](./frontend/README.md)
+- [バックエンドAPI](./backend/README.md)
+- [WPFデスクトップクライアント](./wpfclient/README.md)
+
+---
+
 ## デモURL
 
 本システムは、フロントエンドとバックエンドを分離して公開しています。
@@ -76,31 +108,37 @@
 
 ## アーキテクチャ構成
 
-本システムは、実務で一般的な Web アプリケーション構成を想定し、  
-**フロントエンド（Next.js）とバックエンド（ASP.NET Core）を分離**しています。
+本システムでは、ASP.NET Core Web APIを共通のバックエンドとして、
+2種類のクライアントから利用するマルチクライアント構成を採用しています。
 
-### 構成概要
-- **フロントエンド**
-  - 画面表示
-  - ユーザー入力
-  - 画面状態管理
+### Next.js Webクライアント
 
-- **バックエンド**
-  - 認証・認可（JWT）
-  - 業務ロジック
-  - データベースアクセス
+- ブラウザ向けUI
+- レスポンシブ対応
+- Next.js App Router
+- REST APIによるバックエンド連携
 
-フロントエンドとバックエンドは **REST API による通信**を行っており、
+### WPFデスクトップクライアント
 
-- 将来的な画面追加
-- モバイルアプリ対応
-- 複数クライアント（Web / App）対応
+- Windows向けネイティブUI
+- MVVMベース構成
+- DataGridを中心とした業務画面
+- HttpClientによるバックエンド連携
 
-といった **拡張性を考慮した設計**としています。
+### ASP.NET Core Web API
+
+- JWT認証
+- Admin / Memberのロールベース認可
+- 請求・入金・会員・売上管理
+- 入金割当に基づく請求ステータス再計算
+- PostgreSQLへのデータアクセス
+
+業務ロジックと権限制御をバックエンドAPIに集約することで、
+Web版とWPF版で同じ業務ルールを利用できる構成としています。
 
 ---
 
-## スクリーンショット
+## スクリーンショット(Webクライアント)
 
 ### 管理者ダッシュボード
 売上・未入金・請求数・回収率などを集約し、請求・入金状況を一目で把握できる管理者向けダッシュボードです。  
@@ -143,6 +181,27 @@
 ### 会員用ダッシュボード（任意）
 会員自身が請求書と入金状況を確認できる画面で、管理者と会員の権限分離を実装しています。  
 ![会員用ダッシュボード](docs/screenshots/F-member-dashboard.png)
+
+---
+
+## スクリーンショット(WPFデスクトップクライアント)
+
+共通のASP.NET Core Web APIを利用する、
+Windows向けWPFクライアントも実装しています。
+
+Web版と同じ請求・入金・会員・売上管理機能を、
+DataGridを中心としたデスクトップ向けUIで操作できます。
+
+### 管理者ダッシュボード
+
+![WPF管理者ダッシュボード](./wpfclient/docs/images/管理者ダッシュボード.png)
+
+### 入金詳細・割当管理
+
+![WPF入金詳細](./wpfclient/docs/images/入金詳細.png)
+
+WPF版の画面、MVVM構成、テスト内容については、
+[WPFクライアントREADME](./wpfclient/README.md)を参照してください。
 
 ---
 
@@ -260,6 +319,15 @@
 - Next.js (App Router)
 - TypeScript
 - Tailwind CSS
+
+### Desktop Client
+- C#
+- WPF
+- .NET 10
+- MVVM
+- HttpClient
+- OxyPlot
+- xUnit
 
 ### Backend
 - ASP.NET Core（.NET 10）
@@ -487,6 +555,23 @@ CI の定義は以下に記載しています。
 
 を CI 上で自動検証しています。
 
+### WPFクライアント
+
+WPFクライアントでは、主要なViewModelを対象にxUnitテストを実装しています。
+
+- 認証
+- 会員画面
+- 請求管理
+- 入金管理
+- 売上管理
+- 管理者ダッシュボード
+- 催促管理
+
+UIそのものではなく、画面状態、検索条件、入力検証、
+Request DTOの生成、Service呼び出しなどを中心に検証しています。
+
+詳細は[WPFクライアントのテスト方針](./wpfclient/README.md#テスト)を参照してください。
+
 ---
 ## リポジトリ構成
 
@@ -494,31 +579,43 @@ CI の定義は以下に記載しています。
 invoice-management-system-lite/
 ├─ .github/
 │  └─ workflows/
-│     ├─ ci.yml                     # Frontend / Backend CI
+│     ├─ ci.yml
+│     ├─ dotnet-wpf-tests.yml
 │     └─ azure-static-web-apps-*.yml
-├─ frontend/                        # Next.js フロントエンド
-├─ backend/
-│  ├─ InvoiceSystem.Api.slnx        # .NET 10 ソリューション
-│  ├─ InvoiceSystem.Api/            # Minimal API / 認証 / エンドポイント
-│  ├─ InvoiceSystem.Application/    # ユースケース・DTO・サービス定義
-│  ├─ InvoiceSystem.Domain/         # エンティティ・ドメインモデル
-│  ├─ InvoiceSystem.Infrastructure/ # EF Core・PostgreSQL・PDF・メール
-│  └─ InvoiceSystem.Tests/          # xUnit 単体・統合テスト
+│
+├─ frontend/                         # Next.js Webクライアント
+│  ├─ src/
+│  ├─ tests/
+│  └─ README.md
+│
+├─ backend/                          # ASP.NET Core Web API
+│  ├─ InvoiceSystem.Api/
+│  ├─ InvoiceSystem.Application/
+│  ├─ InvoiceSystem.Domain/
+│  ├─ InvoiceSystem.Infrastructure/
+│  ├─ InvoiceSystem.Tests/
+│  └─ README.md
+│
+├─ wpfclient/                        # WPFデスクトップクライアント
+│  ├─ InvoiceSystem.Wpf/
+│  │  ├─ Models/
+│  │  ├─ Services/
+│  │  ├─ ViewModels/
+│  │  └─ Views/
+│  ├─ InvoiceSystem.Wpf.Tests/
+│  ├─ docs/
+│  │  └─ images/
+│  ├─ InvoiceSystem.Wpf.slnx
+│  └─ README.md
+│
 ├─ docs/
 │  ├─ design/
-│  │  ├─ requirements-definition.md # 要件定義書
-│  │  ├─ basic-design.md            # 基本設計書
-│  │  └─ detail-design.md           # 詳細設計書
 │  ├─ diagram/
-│  │  ├─ er-diagram.drawio.png      # ER図
-│  │  ├─ admin-diagram.drawio.png   # 管理者画面遷移図
-│  │  └─ member-diagram.drawio.png  # 会員画面遷移図
-│  ├─ screenshots/
-│  ├─ architecture.md
-│  └─ Integration_test.md
-├─ Dockerfile.heroku                # Heroku用 .NET 10 コンテナ
-├─ heroku.yml                       # Herokuビルドマニフェスト
-├─ docker-compose.yml               # ローカルPostgreSQL / API
+│  └─ screenshots/
+│
+├─ docker-compose.yml
+├─ Dockerfile.heroku
+├─ heroku.yml
 └─ README.md
 ```
 
@@ -540,21 +637,6 @@ invoice-management-system-lite/
 
 ### CI
 - GitHub Actions により、フロントエンド・バックエンドの build / test を自動実行
-
----
-
-## 関連リポジトリ
-
-### WPF デスクトップクライアント
-
-- [InvoiceSystem.Wpf](https://github.com/fewioaghwrao/InvoiceSystem.Wpf)
-
-本リポジトリの ASP.NET Core Web API を利用する、C# / WPF 製のデスクトップクライアントです。  
-Web 版とは別に、管理者・会員向けの請求書確認、入金管理、会員管理、売上確認などを  
-デスクトップアプリとして操作できるように実装しています。
-
-WPF 版では、業務画面としての一覧性、表形式データの見やすさ、  
-Admin / Member ロール別の画面遷移、ダークテーマ UI、xUnit / GitHub Actions によるテスト実行を意識して構成しています。
 
 ---
 
