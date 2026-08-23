@@ -1,4 +1,5 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+
 WORKDIR /src
 
 COPY backend/InvoiceSystem.Api/InvoiceSystem.Api.csproj backend/InvoiceSystem.Api/
@@ -16,8 +17,9 @@ RUN dotnet publish backend/InvoiceSystem.Api/InvoiceSystem.Api.csproj \
     --no-restore
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+
 WORKDIR /app
 
 COPY --from=build /app/publish .
 
-CMD ASPNETCORE_URLS=http://+:$PORT dotnet InvoiceSystem.Api.dll
+ENTRYPOINT ["dotnet", "InvoiceSystem.Api.dll"]
