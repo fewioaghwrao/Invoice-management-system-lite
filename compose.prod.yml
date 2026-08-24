@@ -52,5 +52,16 @@ services:
     expose:
       - "8080"
 
+  nginx:
+    image: nginx:alpine
+    container_name: invoice-system-nginx
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
 volumes:
   invoice-system-postgres-prod-data:
