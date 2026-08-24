@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Serilog;
 using System.Text.Json;
 using System.Text;
+using Microsoft.AspNetCore.HttpOverrides;
 
 // PDF生成ライブラリ QuestPDF のライセンスタイプを設定
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
@@ -96,6 +97,17 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddHealthChecks();
+
+// Forwarded Headers
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    options.KnownIPNetworks.Add(
+        System.Net.IPNetwork.Parse("172.30.0.0/24"));
+});
 
 // DbContext (Postgres + Heroku DATABASE_URL 対応)
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -175,6 +187,8 @@ if (!app.Environment.IsEnvironment("Testing"))
 {
 AppDbInitializer.Initialize(app.Services, app.Environment.IsDevelopment());
 }
+
+app.UseForwardedHeaders();
 
 app.UseSerilogRequestLogging();
 
