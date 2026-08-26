@@ -48,8 +48,8 @@ services:
 
       CORS_ORIGINS: ${CORS_ORIGINS}
 
-      SEED_DEMO_DATA: "false"
-      ENABLE_SWAGGER: "false"
+      SEED_DEMO_DATA: "true"
+      ENABLE_SWAGGER: "true"
 
     expose:
       - "8080"
