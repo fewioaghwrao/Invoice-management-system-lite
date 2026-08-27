@@ -43,7 +43,7 @@ WebアプリとデスクトップアプリのUI・操作性の違いも比較で
 - 入金ステータスは単純な手入力フラグではなく、**入金割当（Payment Allocation）をもとに再計算して管理**
 - 一部入金・複数請求への割当を前提とした**データ設計**
 - フロントエンドとバックエンドを分離し、**業務ロジックはすべてバックエンドに集約**
-- 本番相当環境（Heroku）での**結合テストを前提とした実装**
+- VPS上の本番相当環境での**結合テストを前提とした実装**
 
 ## 実装結果・得られた状態（Result）
 - 管理者／会員ともに**請求・入金状況を一貫したUIで把握可能**
@@ -69,7 +69,7 @@ Web版とWPF版の2種類のクライアントを実装しています。
 | Webクライアント | Next.js / TypeScript | `frontend/` | ブラウザから利用するWeb版 |
 | WPFクライアント | C# / WPF / .NET 10 | `wpfclient/` | Windows向けデスクトップ版 |
 | バックエンドAPI | ASP.NET Core / .NET 10 | `backend/` | 認証・認可・業務ロジック・DBアクセス |
-| データベース | PostgreSQL | Docker / Heroku Postgres | 請求・入金・会員情報の永続化 |
+| データベース | PostgreSQL 16 | Docker / VPS | 請求・入金・会員情報の永続化 |
 
 ### クライアント別ドキュメント
 
@@ -87,13 +87,16 @@ Web版とWPF版の2種類のクライアントを実装しています。
 | ----------------------- | ----------------------------------------------------------------------------------------- |
 | フロントエンド（Vercel） | https://invoice-management-system-lite.vercel.app/auth/login       |
 | フロントエンド（Azure）  | https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login                        |
-| バックエンド API         | https://invoice-app-api-b1a73aa4f113.herokuapp.com                                        |
-| Health Check             | https://invoice-app-api-b1a73aa4f113.herokuapp.com/health                                 |
-| Swagger                  | https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger                                |
+| バックエンド API         | https://api.oybusin.com                                                                  |
+| Health Check             | https://api.oybusin.com/health                                                           |
+| Swagger                  | https://api.oybusin.com/swagger                                                          |
 
 * Frontend：Vercel / Azure Static Web Apps（Next.js）
-* Backend API：Heroku（ASP.NET Core）
-* Database：Heroku Postgres
+* Backend API：ConoHa VPS / Docker / nginx（ASP.NET Core）
+* Database：PostgreSQL 16（VPS上のDockerコンテナ）
+
+> 2026年8月にバックエンドAPI / PostgreSQLをHerokuからConoHa VPSへ移行しました。  
+> 独自ドメイン `api.oybusin.com` を使用し、nginx + Let's Encrypt によりHTTPSで公開しています。
 
 ---
 
@@ -264,35 +267,36 @@ WPF版の画面、MVVM構成、テスト内容については、
   - 原因：Next.js App Router の params（Promise）未処理、ルート設計の混在、管理者／会員でのAPI責務差
   - 対応：管理者用 PDF を `/invoices/[id]/pdf` 専用ルートとして分離し、責務を整理
 
-- 本番相当環境（Heroku）で PDF の日本語が文字化け  
-  - 対応：QuestPDF に日本語フォントを埋め込み、ローカル／Heroku 両方で正常表示を確認
+- 旧Heroku環境で PDF の日本語が文字化け  
+  - 対応：QuestPDF に日本語フォントを埋め込み、ローカル／Heroku 両方で正常表示を確認  
+  - VPS移行後も同じフォント設定を継続利用
 
 ---
 
-## 動作確認・結合テスト（Azure Frontend × Heroku API）
+## 動作確認・結合テスト（Frontend × VPS API）
 
 本番公開環境特有の問題（認証・認可・CORS・PDF出力・文字化け等）を検証するため、
 ローカル環境だけでなく、公開環境での結合テストを重視しています。
 
 本アプリケーションでは、
 
-* フロントエンド：Azure Static Web Apps（Next.js）
-* バックエンド API：Heroku（ASP.NET Core）
-* データベース：Heroku Postgres
+* フロントエンド：Vercel / Azure Static Web Apps（Next.js）
+* バックエンド API：ConoHa VPS（ASP.NET Core / Docker / nginx）
+* データベース：PostgreSQL 16（VPS上のDockerコンテナ）
 
-という構成で、クラウドサービスをまたいだ結合テストを実施しています。
+という構成で、フロントエンドとVPS上のバックエンドを分離した結合テストを実施しています。
 
 ### 実施内容（抜粋）
 - 管理者 / 会員のログインおよびロール判定
 - 管理者ダッシュボード／会員ダッシュボードの表示制御
 - 管理画面への不正アクセス防止（権限分離）
 - API 通信状態（401 / 403 / 500 が発生しないこと）
-- 本番環境（Heroku）での画面・API統合動作確認
+- VPS本番相当環境での画面・API統合動作確認
 
 詳細な手順・結果・スクリーンショットについては、  
 以下のドキュメントにまとめています。
 
-- ▶ **[結合テスト結果（Heroku 本番相当環境）](./docs/Integration_test.md)**
+- ▶ **[結合テスト結果](./docs/Integration_test.md)**
 
 ※ 自動テストとは別に、  
 　想定される画面操作を通した手動結合テストも重視しています。
@@ -307,7 +311,7 @@ WPF版の画面、MVVM構成、テスト内容については、
 - EF Core / Npgsql / ASP.NET Core 関連パッケージを.NET 10対応版へ更新
 - ソリューション形式を `.sln` から `.slnx` へ移行
 - GitHub Actions のバックエンドCIを.NET 10 SDKへ更新
-- Docker / Herokuコンテナのランタイムを.NET 10へ更新
+- Dockerコンテナのランタイムを.NET 10へ更新
 - Swagger / OpenAPI設定をMicrosoft.OpenApi 2.x対応形式へ変更
 - Npgsqlの旧`TrustServerCertificate`設定を削除
 
@@ -338,117 +342,129 @@ WPF版の画面、MVVM構成、テスト内容については、
 - Serilog
 
 ### Database
-- PostgreSQL
+- PostgreSQL 16
   - ローカル：Docker
-  - 本番相当環境：Heroku Postgres（Managed）
+  - 本番相当環境：ConoHa VPS上のDockerコンテナ
+  - 永続化：Docker Volume
 
-※ Azure 環境ではフロントエンド検証を目的としており、  
-バックエンド API / DB は Heroku 側を利用しています。
+※ Azure / Vercel はフロントエンド公開・検証を目的としており、  
+バックエンド API / DB は VPS 側を利用しています。
 
-## Azure と Heroku を併用している理由
+## VPSへ移行した理由
 
-本システムでは、クラウド環境の役割を分けることで
-開発・検証・コストのバランスを取りながら運用できる構成としています。
+本システムでは当初、バックエンドAPIとPostgreSQLをHerokuで公開していましたが、
+2026年8月に **ConoHa VPSへ移行**しました。
 
-### Heroku（バックエンド / データベース）
-Heroku はアプリケーションとデータベースを一体で管理できる PaaS であり、
-以下の理由から **API と DB を配置する本番相当環境**として採用しています。
+### ConoHa VPS（バックエンド / データベース）
 
-- ASP.NET Core API をコンテナとしてデプロイできる
-- `heroku.yml` と `Dockerfile.heroku` によりデプロイ構成をコード管理できる
-- PostgreSQL（Heroku Postgres）をマネージドで利用できる
-- ローカル環境（Docker PostgreSQL）との互換性が高い
-- アプリケーションと DB を同一プラットフォームで統合管理できる
+現在は以下をVPS上でDocker Composeにより運用しています。
 
-そのため、本システムでは  
-**API + DB を Heroku 上に配置し、本番相当環境として結合テストを実施しています。**
+- ASP.NET Core Web API（.NET 10）
+- PostgreSQL 16
+- nginx
+- Let's Encrypt によるTLS証明書
+- Docker VolumeによるPostgreSQLデータ永続化
+
+バックエンドAPIは独自ドメイン
+
+`https://api.oybusin.com`
+
+で公開しています。
+
+VPSへ移行したことで、PaaS任せではなく以下のインフラ構成も自分で管理する形にしています。
+
+- Linux（Ubuntu）上でのサーバー運用
+- Docker Composeによる複数コンテナ管理
+- nginxによるリバースプロキシ
+- 独自ドメイン / DNS設定
+- HTTPS化とLet's Encrypt証明書更新
+- UFWによるポート制御
+- PostgreSQLの永続ボリューム管理
 
 ---
 
-### Infrastructure（環境別）
+### Azure / Vercel（フロントエンド）
 
-#### 公開デモ環境
+フロントエンドは引き続き **Vercel / Azure Static Web Apps** で公開しています。
 
-- Frontend：Vercel / Azure Static Web Apps
-- Backend API：Heroku
-- Database：Heroku Postgres
-- 用途：
-  - 公開デモ
-  - 認証・認可・CORSの確認
-  - PDF出力・日本語表示の確認
-  - フロントエンド／バックエンド分離構成の検証
+これにより、
 
----
+- Next.jsフロントエンド
+- VPS上のASP.NET Core API
+- PostgreSQL
 
-### Azure（フロントエンド）
-Azure では **Next.js フロントエンドのホスティング環境として Static Web Apps を利用**しています。
-
-これは以下の点を検証する目的があります。
-
-- Next.js アプリケーションの Azure Static Web Apps での運用
-- 静的・JAMstack 構成のクラウド配置
-- フロントエンドとバックエンドを分離した構成での API 通信
-- Microsoft 系クラウド環境での Web アプリ運用
+を分離した構成で、REST API通信、認証・認可、CORSなどを確認できるようにしています。
 
 ---
 
 ### 役割分担
 
-本プロジェクトでは、以下の役割分担でクラウドを利用しています。
-
 | 役割 | サービス |
 |---|---|
 | フロントエンド | Vercel / Azure Static Web Apps |
-| バックエンド API | Heroku |
-| データベース | Heroku Postgres |
+| バックエンド API | ConoHa VPS / Docker / nginx |
+| データベース | PostgreSQL 16 / Docker Volume |
+| HTTPS | Let's Encrypt |
+| 独自ドメイン | `api.oybusin.com` |
 
 この構成により、
 
 - フロントエンド / バックエンド分離構成
 - REST API ベースの通信設計
-- クラウド環境をまたいだアプリケーション連携
+- Dockerを利用した本番相当環境
+- nginxを利用したリバースプロキシ
+- 独自ドメイン・HTTPSを含むVPS運用
 
-といった、実務でも一般的なアーキテクチャを再現しています。
+まで含めて確認できる構成としています。
 
 ## デプロイ / 環境（現状）
 
 ### Frontend（Vercel）
 
-- URL：
+- URL：  
   https://invoice-management-system-lite.vercel.app/auth/login
 - Framework：Next.js（App Router）
 - Root Directory：`frontend`
-- 環境変数：
-  - `NEXT_PUBLIC_API_BASE_URL=https://invoice-app-api-b1a73aa4f113.herokuapp.com`
+- API接続先：
+  - `https://api.oybusin.com`
 
 ### Frontend（Azure Static Web Apps）
 
-- URL：
+- URL：  
   https://delightful-dune-0bf9e7300.7.azurestaticapps.net/auth/login
 - Framework：Next.js（App Router）
-- 環境変数：
-  - `NEXT_PUBLIC_API_BASE_URL=https://invoice-app-api-b1a73aa4f113.herokuapp.com`
+- API接続先：
+  - `https://api.oybusin.com`
 
-### Backend API（Heroku）
+### Backend API（ConoHa VPS）
 
-- API：
-  https://invoice-app-api-b1a73aa4f113.herokuapp.com
-- Health Check：
-  https://invoice-app-api-b1a73aa4f113.herokuapp.com/health
-- Swagger：
-  https://invoice-app-api-b1a73aa4f113.herokuapp.com/swagger
+- API：  
+  https://api.oybusin.com
+- Health Check：  
+  https://api.oybusin.com/health
+- Swagger：  
+  https://api.oybusin.com/swagger
+- OS：Ubuntu 24.04 LTS
 - Runtime：ASP.NET Core（.NET 10）
-- Deployment：Heroku Container Stack
-- Build manifest：`heroku.yml`
-- Dockerfile：`Dockerfile.heroku`
+- Deployment：Docker Compose
+- Reverse Proxy：nginx
+- HTTPS：Let's Encrypt
 - Solution：`backend/InvoiceSystem.Api.slnx`
-- Database：Heroku Postgres
+- Database：PostgreSQL 16（Docker）
+- PostgreSQL永続化：Docker Volume
+- Production Compose：`compose.prod.yml`
+- nginx設定：`deploy/nginx/default.conf`
 
 ### その他
+
 - CORS：
-  - Heroku API 側で、Azure Frontend の URL を許可
+  - 公開中のフロントエンドURLをAPI側で許可
 - Health Check：
-  - GET /health
+  - `GET /health`
+- Firewall：
+  - UFWでSSH / HTTP / HTTPSを制御
+- TLS証明書：
+  - Certbot / Let's Encryptで取得・更新
 
 ---
 
@@ -465,7 +481,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 | [基本設計書](./docs/design/basic-design.md)            | システム構成、機能設計、画面設計、データ設計概要、権限設計を整理          |
 | [詳細設計書](./docs/design/detail-design.md)           | API、DB、業務ロジック、PDF/CSV、認証・認可、テスト設計を実装寄りに整理 |
 | [Architecture Overview](./docs/architecture.md)   | 設計意図、全体構成、技術選定、Lite版としての方針を整理             |
-| [結合テスト結果](./docs/Integration_test.md)             | Heroku本番相当環境での画面・API・認証・権限制御の確認結果         |
+| [結合テスト結果](./docs/Integration_test.md)             | 旧Heroku環境で実施した画面・API・認証・権限制御の確認結果         |
 
 ### 図・ダイアグラム
 
@@ -501,7 +517,7 @@ Azure では **Next.js フロントエンドのホスティング環境として
 
 - スキーマ管理は **EF Core Migrations** を使用
 - 完成SQLファイルは管理せず、差分管理を採用
-- 本番DBはマネージドDBのバックアップ機構に依存
+- 本番DBはVPS上のDocker Volumeへ永続化し、VPS側でバックアップを管理
 
 ---
 ## CI / 品質管理（GitHub Actions）
@@ -614,8 +630,14 @@ invoice-management-system-lite/
 │  └─ screenshots/
 │
 ├─ docker-compose.yml
-├─ Dockerfile.heroku
-├─ heroku.yml
+├─ compose.prod.yml                   # VPS本番用Docker Compose
+├─ deploy/
+│  ├─ nginx/
+│  │  └─ default.conf                 # nginx / HTTPS / Reverse Proxy設定
+│  └─ certbot/
+│     └─ www/
+├─ Dockerfile.heroku                  # 旧Heroku構成（移行前）
+├─ heroku.yml                         # 旧Heroku構成（移行前）
 └─ README.md
 ```
 
@@ -644,8 +666,9 @@ invoice-management-system-lite/
 - 本アプリは、請求〜入金〜集計の業務フローを題材に、権限分離と状態管理を重視して設計・実装しています
 - 実運用を想定した機能拡張（締め処理、権限拡張など）は Lite 版では省略しています
 - CI / Integration Test / 認可設計まで含め、実務での運用・保守を意識して構築しています
-- 現状はコスト最適化のため、Backend API / DB は Heroku に統一し、フロントエンドは Vercel と Azure Static Web Apps で公開・運用検証しています。
-- Azure SQL / Azure Static Web Apps 構成も検証しましたが、常時稼働コストと運用の観点から、現状の公開デモは Backend API / DB を Heroku に統一しています（Azure はフロント運用検証として利用）。
+- Backend API / DB は2026年8月にHerokuからConoHa VPSへ移行し、Docker Composeで運用しています。
+- フロントエンドはVercel / Azure Static Web Appsで公開し、VPS上のAPI `https://api.oybusin.com` と連携しています。
+- VPSではnginx、独自ドメイン、Let's Encrypt、UFW、Docker Volumeを含めた本番相当のインフラ構成を管理しています。
 
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。

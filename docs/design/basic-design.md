@@ -118,15 +118,21 @@ Invoice Management System Lite
 本システムは、フロントエンドとバックエンドを分離した Web アプリケーション構成とする。
 
 ```text
-[ Frontend: Next.js ]
+[ Frontend: Next.js / Vercel・Azure Static Web Apps ]
         |
-        | REST API / JWT
+        | HTTPS / REST API / JWT
+        v
+[ api.oybusin.com ]
         |
-[ Backend API: ASP.NET Core ]
+        v
+[ ConoHa VPS ]
         |
-        | Entity Framework Core
+        +-- nginx
+        |     └─ Reverse Proxy / TLS (Let's Encrypt)
         |
-[ Database: PostgreSQL ]
+        +-- ASP.NET Core API (.NET 10 / Docker)
+        |
+        └-- PostgreSQL 16 (Docker / Volume)
 ```
 
 ### 3.2 構成要素
@@ -135,12 +141,12 @@ Invoice Management System Lite
 |---|---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS | 画面表示、入力受付、画面遷移、API 呼び出し |
 | バックエンド API | ASP.NET Core / .NET 10 / Minimal API | 認証・認可、業務ロジック、データアクセス、PDF・CSV 生成 |
-| データベース | PostgreSQL | 会員、請求書、入金、入金割当、督促履歴、監査ログの保持 |
+| データベース | PostgreSQL 16 | 会員、請求書、入金、入金割当、督促履歴、監査ログの保持 |
 | ORM | Entity Framework Core | エンティティと DB テーブルの対応、リレーション、制約管理 |
 | 認証方式 | JWT | ログイン後の認証、API アクセス制御 |
 | PDF 出力 | QuestPDF | 請求書 PDF の生成 |
 | CI | GitHub Actions | フロントエンド・バックエンドのビルド、単体テスト、統合テスト、継続的検証 |
-| デプロイ | Heroku / Azure Static Web Apps | 本番相当環境、UI ホスティング検証 |
+| デプロイ | ConoHa VPS / Docker Compose / nginx / Vercel / Azure Static Web Apps | VPS上のAPI・DB運用、HTTPS公開、UIホスティング検証 |
 
 ### 3.3 レイヤー構成
 
@@ -700,7 +706,7 @@ Lite 版として大規模処理は対象外だが、以下を考慮する。
 - 管理者専用 API に会員がアクセスした場合、拒否されること
 - 請求書登録から入金割当、ステータス更新まで一連の業務が成立すること
 - PDF 出力で日本語が正常に表示されること
-- 本番相当環境で API 通信が成立すること
+- VPS上の本番相当環境（`https://api.oybusin.com`）で HTTPS による API 通信が成立すること
 
 ---
 
@@ -718,11 +724,19 @@ GitHub Actions により、フロントエンドとバックエンドのビル�
 
 ### 13.2 デプロイ環境
 
+2026年8月に、バックエンド API / PostgreSQL の本番相当環境を Heroku から ConoHa VPS へ移行した。
+
 | 環境 | 用途 |
 |---|---|
-| Heroku | 本番相当・結合テスト環境 |
+| ConoHa VPS | バックエンド API、PostgreSQL、nginx を稼働させる本番相当・結合テスト環境 |
+| Docker Compose | API / PostgreSQL / nginx のコンテナ構成を管理する |
+| nginx | `api.oybusin.com` へのアクセスを ASP.NET Core API へ中継する |
+| Let's Encrypt / Certbot | HTTPS 用 TLS 証明書の取得・更新を行う |
+| Vercel | Next.js フロントエンド公開環境 |
 | Azure Static Web Apps | フロントエンド UI ホスティング検証環境 |
 | ローカル | 開発・単体確認 |
+
+バックエンド API は `https://api.oybusin.com` で公開し、Health Check は `https://api.oybusin.com/health` を使用する。
 
 ### 13.3 環境変数
 
@@ -746,11 +760,12 @@ GitHub Actions により、フロントエンドとバックエンドのビル�
 - 管理者が会員、請求書、入金、売上集計を管理する
 - 会員は自身の請求書と支払状況を確認する
 - 重要操作は監査ログとして保存する
-- 本番相当環境では Health Check により API 稼働を確認する
+- VPS本番相当環境では `https://api.oybusin.com/health` により API 稼働を確認する
 
 ### 14.2 バックアップ・データ管理
 
-- DB はマネージド DB のバックアップ機構を利用する想定とする
+- DB は VPS 上の PostgreSQL 16 コンテナで稼働し、Docker Volume によりデータを永続化する
+- バックアップは VPS 側で PostgreSQL データを保全できる運用とする
 - EF Core Migrations により DB 差分を管理する
 - 完成 SQL ファイルを手動管理するのではなく、Migration を正とする
 

@@ -506,9 +506,9 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | 要件ID | 要件 |
 |---|---|
 | NFR-AVL-001 | バックエンドAPIはヘルスチェックにより稼働確認できること |
-| NFR-AVL-002 | 本番相当環境でフロントエンド・バックエンドの結合確認を行えること |
-| NFR-AVL-003 | データベースはPostgreSQLを利用すること |
-| NFR-AVL-004 | デプロイ環境に応じた環境変数設定が可能であること |
+| NFR-AVL-002 | VPS上の本番相当環境でフロントエンド・バックエンドの結合確認を行えること |
+| NFR-AVL-003 | データベースはPostgreSQL 16を利用し、VPS上で永続化できること |
+| NFR-AVL-004 | VPS・フロントエンド各デプロイ環境に応じた環境変数設定が可能であること |
 
 ### 13.3 保守性要件
 
@@ -552,12 +552,12 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 |---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
 | バックエンド | ASP.NET Core / .NET 10 / Minimal API |
-| データベース | PostgreSQL |
+| データベース | PostgreSQL 16 |
 | ORM | Entity Framework Core |
 | 認証 | JWT |
 | PDF出力 | QuestPDF |
 | CI | GitHub Actions |
-| デプロイ | Heroku / Azure Static Web Apps |
+| デプロイ | ConoHa VPS / Docker Compose / nginx / Vercel / Azure Static Web Apps |
 
 ### 14.2 業務的前提
 
@@ -570,10 +570,15 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 
 ### 14.3 運用上の前提
 
-- デモ・検証環境では本番相当環境としてHerokuを利用する
-- フロントエンドのホスティング検証としてAzure Static Web Appsを利用する
-- Swagger UIの本番公開は必須要件としない
-- 本番DBのバックアップはマネージドDB側の機構を利用する前提とする
+- 2026年8月にバックエンド API / PostgreSQL を Heroku から ConoHa VPS へ移行している
+- バックエンド API は `https://api.oybusin.com` で公開する
+- VPS 上では Docker Compose により ASP.NET Core API、PostgreSQL 16、nginx を運用する
+- nginx をリバースプロキシとして利用し、Let's Encrypt / Certbot により HTTPS 化する
+- PostgreSQL のデータは Docker Volume に永続化する
+- フロントエンドは Vercel / Azure Static Web Apps を公開・検証環境として利用する
+- Health Check により VPS 上の API 稼働状態を確認できること
+- Swagger UI は本番相当環境で動作確認に利用できる構成とする
+- DB バックアップは VPS 側で PostgreSQL データを保全できる運用とする
 
 ---
 
@@ -614,7 +619,7 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | 1 | フロントエンドとバックエンドがAPI連携できること |
 | 2 | JWTにより認証・認可が制御されること |
 | 3 | APIレベルで管理者・会員の権限が分離されていること |
-| 4 | Heroku上の本番相当環境で主要機能を確認できること |
+| 4 | VPS上の本番相当環境（`https://api.oybusin.com`）で主要機能を確認できること |
 | 5 | GitHub Actionsでフロントエンド・バックエンドのビルドおよびテストを実行できること |
 | 6 | 日本語を含む請求書PDFが正常に出力されること |
 

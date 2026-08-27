@@ -9,7 +9,7 @@ public static class DemoDataSeeder
 {
     public static void Seed(AppDbContext context, IPasswordHasher<Member> hasher)
     {
-        var now = new DateTime(2026, 1, 8, 0, 0, 0, DateTimeKind.Utc);
+        var now = new DateTime(2027, 1, 8, 0, 0, 0, DateTimeKind.Utc);
 
 
         // -----------------------------
@@ -223,10 +223,10 @@ public static class DemoDataSeeder
         }
 
         // ==========================================================
-        // ① 2025年11月（完全固定：過去・完結 + overdue）
+        // ① 2026年11月（完全固定：過去・完結 + overdue）
         // ==========================================================
         {
-            var y = 2025; var m = 11;
+            var y = 2026; var m = 11;
             var inv = UpsertInvoice(member1, $"INV-{y}-{m:00}-FIX-M1-001", Utc(y, m, 5), Utc(y, m, 30),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 120000m));
             var p = UpsertPayment(member1, PayAt(y, m, 20, 1, 1, 1), 120000m);
@@ -234,7 +234,7 @@ public static class DemoDataSeeder
         }
 
         {
-            var y = 2025; var m = 11;
+            var y = 2026; var m = 11;
             var inv = UpsertInvoice(member2, $"INV-{y}-{m:00}-FIX-M2-001", Utc(y, m, 7), Utc(y, m, 30),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 200000m));
             var p1 = UpsertPayment(member2, PayAt(y, m, 15, 2, 1, 1), 100000m);
@@ -244,13 +244,13 @@ public static class DemoDataSeeder
         }
 
         {
-            var y = 2025; var m = 11;
+            var y = 2026; var m = 11;
             _ = UpsertInvoice(member3, $"INV-{y}-{m:00}-FIX-M3-001", Utc(y, m, 10), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 80000m));
         }
 
         {
-            var y = 2025; var m = 11;
+            var y = 2026; var m = 11;
             var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-001", Utc(y, m, 12), Utc(y, m, 30),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 50000m));
             var p = UpsertPayment(member4, PayAt(y, m, 29, 4, 1, 1), 50000m);
@@ -258,7 +258,7 @@ public static class DemoDataSeeder
         }
 
         {
-            var y = 2025; var m = 11;
+            var y = 2026; var m = 11;
             var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-002-DUNNING", Utc(y, m, 2), Utc(y, m, 10),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 50000m));
             inv.StatusId = stDunning.Id;
@@ -267,10 +267,10 @@ public static class DemoDataSeeder
         }
 
         // ==========================================================
-        // ② 2025年12月（固定：説明用サンプル）
+        // ② 2026年12月（固定：説明用サンプル）
         // ==========================================================
         {
-            var y = 2025; var m = 12;
+            var y = 2026; var m = 12;
             var inv = UpsertInvoice(member1, $"INV-{y}-{m:00}-FIX-M1-001", Utc(y, m, 1), Utc(y, m, 31),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 150000m));
             var p = UpsertPayment(member1, PayAt(y, m, 10, 1, 1, 1), 50000m);
@@ -278,13 +278,13 @@ public static class DemoDataSeeder
         }
 
         {
-            var y = 2025; var m = 12;
+            var y = 2026; var m = 12;
             _ = UpsertInvoice(member2, $"INV-{y}-{m:00}-FIX-M2-001", Utc(y, m, 3), Utc(y, m, 28),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 90000m));
         }
 
         {
-            var y = 2025; var m = 12;
+            var y = 2026; var m = 12;
             var inv = UpsertInvoice(member3, $"INV-{y}-{m:00}-FIX-M3-001", Utc(y, m, 5), Utc(y, m, 25),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 60000m));
             var p = UpsertPayment(member3, PayAt(y, m, 20, 3, 1, 1), 60000m);
@@ -292,7 +292,7 @@ public static class DemoDataSeeder
         }
 
         {
-            var y = 2025; var m = 12;
+            var y = 2026; var m = 12;
             var inv = UpsertInvoice(member4, $"INV-{y}-{m:00}-FIX-M4-001", Utc(y, m, 8), Utc(y, m, 31),
                 (1, $"月額利用料（{y}/{m:00}）", 1, 100000m));
             var p1 = UpsertPayment(member4, PayAt(y, m, 18, 4, 1, 1), 40000m);
@@ -300,11 +300,11 @@ public static class DemoDataSeeder
         }
 
         // ==========================================================
-        // ③ 2026年（1年分）: 毎月 会員1〜4 各1枚（=48件）
+        // ③ 2027年（1年分）: 毎月 会員1〜4 各1枚（=48件）
         // ==========================================================
         for (int month = 1; month <= 12; month++)
         {
-            int y = 2026;
+            int y = 2027;
             int m = month;
 
             {
@@ -356,9 +356,9 @@ public static class DemoDataSeeder
             .Include(i => i.Status)
             .Include(i => i.PaymentAllocations)
             .Where(i =>
-                i.InvoiceNumber.StartsWith("INV-2025-11-") ||
-                i.InvoiceNumber.StartsWith("INV-2025-12-") ||
-                i.InvoiceNumber.StartsWith("INV-2026-"))
+                i.InvoiceNumber.StartsWith("INV-2026-11-") ||
+                i.InvoiceNumber.StartsWith("INV-2026-12-") ||
+                i.InvoiceNumber.StartsWith("INV-2027-"))
             .ToList();
 
         foreach (var inv in targets)
@@ -391,11 +391,11 @@ public static class DemoDataSeeder
         // ==========================================================
         if (!context.AuditLogs.Any())
         {
-            var t1 = new DateTime(2026, 1, 7, 9, 30, 0, DateTimeKind.Utc);
-            var t2 = new DateTime(2026, 1, 7, 11, 15, 0, DateTimeKind.Utc);
-            var t3 = new DateTime(2026, 1, 8, 9, 10, 0, DateTimeKind.Utc);
-            var t4 = new DateTime(2026, 1, 8, 10, 45, 0, DateTimeKind.Utc);
-            var t5 = new DateTime(2026, 1, 8, 14, 20, 0, DateTimeKind.Utc);
+            var t1 = new DateTime(2027, 1, 7, 9, 30, 0, DateTimeKind.Utc);
+            var t2 = new DateTime(2027, 1, 7, 11, 15, 0, DateTimeKind.Utc);
+            var t3 = new DateTime(2027, 1, 8, 9, 10, 0, DateTimeKind.Utc);
+            var t4 = new DateTime(2027, 1, 8, 10, 45, 0, DateTimeKind.Utc);
+            var t5 = new DateTime(2027, 1, 8, 14, 20, 0, DateTimeKind.Utc);
 
             context.AuditLogs.AddRange(
                 new AuditLog
@@ -404,7 +404,7 @@ public static class DemoDataSeeder
                     ActorRole = "Admin",
                     Action = "PAYMENT_CREATED",
                     Entity = "PAYMENT",
-                    EntityId = "2026-01-M1-001",
+                    EntityId = "2027-01-M1-001",
                     Summary = "入金を登録しました（手動登録）",
                     CreatedAt = t1
                 },
@@ -414,7 +414,7 @@ public static class DemoDataSeeder
                     ActorRole = "Admin",
                     Action = "PAYMENT_ALLOCATION_ADDED",
                     Entity = "INVOICE",
-                    EntityId = "INV-2025-12-FIX-M1-001",
+                    EntityId = "INV-2026-12-FIX-M1-001",
                     Summary = "請求書に入金を割り当てました",
                     CreatedAt = t2
                 },
@@ -424,7 +424,7 @@ public static class DemoDataSeeder
                     ActorRole = "Admin",
                     Action = "PAYMENT_ALLOCATIONS_REPLACED",
                     Entity = "PAYMENT",
-                    EntityId = "2026-01-M2-001",
+                    EntityId = "2027-01-M2-001",
                     Summary = "入金割当を保存しました（再割当）",
                     CreatedAt = t3
                 },
@@ -434,7 +434,7 @@ public static class DemoDataSeeder
                     ActorRole = "Admin",
                     Action = "DUNNING_LOG_CREATED",
                     Entity = "INVOICE",
-                    EntityId = "INV-2025-11-FIX-M4-002-DUNNING",
+                    EntityId = "INV-2026-11-FIX-M4-002-DUNNING",
                     Summary = "催促履歴を追加しました",
                     CreatedAt = t4
                 },
@@ -444,7 +444,7 @@ public static class DemoDataSeeder
                     ActorRole = "Admin",
                     Action = "INVOICE_STATUS_UPDATED",
                     Entity = "INVOICE",
-                    EntityId = "INV-2025-11-FIX-M3-001",
+                    EntityId = "INV-2026-11-FIX-M3-001",
                     Summary = "期限超過のためステータスを更新しました",
                     CreatedAt = t5
                 }
