@@ -39,22 +39,28 @@ Invoice Management System Lite
 | 売上集計      | 年月・会員単位で売上や回収状況を確認する                |
 | CSV出力     | 売上一覧、会員別売上集計をCSVとして出力する             |
 | PDF出力     | 請求書PDFを出力する                         |
-| 結合テスト     | Heroku上の本番相当環境で、画面・API・認証・権限分離を確認する |
+| 結合テスト     | VPS上の本番相当環境で、画面・API・認証・権限分離を確認する |
 
 ### 1.5 システム構成概要
 
 本システムは、フロントエンドとバックエンドを分離したWebアプリケーション構成とする。
 
 ```text
-[ Frontend: Next.js ]
+[ Frontend: Next.js / Vercel・Azure Static Web Apps ]
         |
-        | REST API / JWT
+        | HTTPS / REST API / JWT
+        v
+[ https://api.oybusin.com ]
         |
-[ Backend API: ASP.NET Core ]
+        v
+[ ConoHa VPS ]
         |
-        | EF Core
+        +-- nginx
+        |     └─ Reverse Proxy / TLS (Let's Encrypt)
         |
-[ Database: PostgreSQL ]
+        +-- ASP.NET Core API (.NET 10 / Docker)
+        |
+        └-- PostgreSQL 16 (Docker / Volume)
 ```
 
 フロントエンドは画面表示、入力受付、画面遷移、API呼び出しを担当する。
@@ -81,11 +87,11 @@ Invoice Management System Lite
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
 | バックエンド  | ASP.NET Core / .NET 10 / Minimal API |
 | データアクセス | Entity Framework Core               |
-| データベース  | PostgreSQL                          |
+| データベース  | PostgreSQL 16                       |
 | 認証方式    | JWT                                 |
 | PDF出力   | QuestPDF                            |
 | CI      | GitHub Actions                      |
-| デプロイ環境  | Heroku / Azure Static Web Apps      |
+| デプロイ環境  | ConoHa VPS / Docker Compose / nginx / Vercel / Azure Static Web Apps |
 
 ---
 
@@ -4510,20 +4516,24 @@ backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 
 ### 10.8 インフラ・運用面の改善
 
-現在は、開発・CI環境でPostgreSQLやテストDBを利用し、フロントエンドとバックエンドを分離した構成としている。
+2026年8月にバックエンド API / PostgreSQL を Heroku から ConoHa VPS へ移行し、
+現在は VPS 上で Docker Compose により ASP.NET Core API、PostgreSQL 16、nginx を運用している。
 
-今後の改善案は以下のとおりである。
+バックエンド API は `https://api.oybusin.com` で公開し、
+nginx をリバースプロキシとして利用する。TLS 証明書は Let's Encrypt / Certbot で管理し、
+PostgreSQL のデータは Docker Volume に永続化する。
 
-| 改善案              | 内容                                                   |
-| ---------------- | ---------------------------------------------------- |
-| Docker Compose整備 | フロント、バックエンド、DBを一括起動できるようにする                          |
-| 本番環境構築           | Azure App Service、Azure Static Web Appsなどへの本番配置を整備する |
-| DBバックアップ         | PostgreSQLのバックアップ・リストア手順を用意する                        |
-| マイグレーション運用       | EF Core Migrationの適用手順を明確化する                         |
-| ログ監視             | アプリケーションログ、エラーログを監視できるようにする                          |
-| ヘルスチェック強化        | DB接続、外部メール送信、PDF生成などを確認する                            |
-| 環境変数管理           | JWTキー、DB接続文字列、SMTP情報などを安全に管理する                       |
-| リリース手順整備         | CI通過後のデプロイ、動作確認、ロールバック手順を定義する                        |
+VPS構築後の主な改善案は以下のとおりである。
+
+| 改善案 | 内容 |
+|---|---|
+| DBバックアップ運用 | PostgreSQLの定期バックアップ・リストア手順を明文化する |
+| マイグレーション運用 | EF Core Migrationの本番適用手順を明確化する |
+| ログ監視 | ASP.NET Core / nginx / Docker のログ監視方法を整備する |
+| ヘルスチェック強化 | 現在の `/health` に加え、必要に応じてDB接続等の確認項目を拡張する |
+| 環境変数管理 | JWTキー、DB接続文字列、SMTP情報などの秘密情報管理を強化する |
+| リリース手順整備 | CI通過後のVPSデプロイ、動作確認、ロールバック手順を明文化する |
+| 証明書更新確認 | Certbotによる自動更新とnginx reloadの運用確認を継続する |
 
 ---
 
@@ -4596,7 +4606,7 @@ backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 | 高   | API通信・型定義の整理     | 保守性向上に直結するため          |
 | 中   | 督促メール送信連携        | 回収業務の実運用に近づくため        |
 | 中   | E2Eテスト導入         | 主要業務フローの品質を担保できるため    |
-| 中   | Docker Compose整備 | ローカル再現性と引き継ぎ性を高めるため   |
+| 中   | VPS運用手順の整備 | デプロイ・バックアップ・ロールバックの再現性を高めるため |
 | 低   | 高度なダッシュボード分析     | 基本業務フロー安定後の拡張として有効なため |
 
 以上の拡張により、現在のLite版から、より実務的な請求・入金管理システムへ発展させることが可能である。
