@@ -22,19 +22,45 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
         _logger = logger;
     }
 
-    public async Task ProcessPendingAsync(CancellationToken cancellationToken)
-    {
-        var jobs = await _db.ReminderJobs
-            .Where(x => x.Status == "Pending" && x.RetryCount < 3)
-            .OrderBy(x => x.CreatedAt)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+public async Task<ReminderJobProcessResult> ProcessPendingAsync(
+    CancellationToken cancellationToken)
+{
+    var jobs = await _db.ReminderJobs
+        .Where(x => x.Status == "Pending" && x.RetryCount < 3)
+        .OrderBy(x => x.CreatedAt)
+        .Take(10)
+        .ToListAsync(cancellationToken);
 
-        foreach (var job in jobs)
+    var completedCount = 0;
+    var retryPendingCount = 0;
+    var failedCount = 0;
+
+    foreach (var job in jobs)
+    {
+        await ProcessOneAsync(job, cancellationToken);
+
+        switch (job.Status)
         {
-            await ProcessOneAsync(job, cancellationToken);
+            case "Completed":
+                completedCount++;
+                break;
+
+            case "Pending":
+                retryPendingCount++;
+                break;
+
+            case "Failed":
+                failedCount++;
+                break;
         }
     }
+
+    return new ReminderJobProcessResult(
+        TargetCount: jobs.Count,
+        CompletedCount: completedCount,
+        RetryPendingCount: retryPendingCount,
+        FailedCount: failedCount);
+}
 
     private async Task ProcessOneAsync(ReminderJob job, CancellationToken cancellationToken)
     {

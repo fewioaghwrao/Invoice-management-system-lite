@@ -2,5 +2,6 @@
 
 public interface IReminderJobProcessor
 {
-    Task ProcessPendingAsync(CancellationToken cancellationToken);
+    Task<ReminderJobProcessResult> ProcessPendingAsync(
+        CancellationToken cancellationToken);
 }
