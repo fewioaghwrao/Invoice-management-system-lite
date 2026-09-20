@@ -141,36 +141,35 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
         var staleBefore =
             DateTime.UtcNow - ProcessingTimeout;
 
-        var staleJobs = await _db.ReminderJobs
+        var recoveredCount = await _db.ReminderJobs
             .Where(x =>
                 x.Status == "Processing" &&
                 x.StartedAt != null &&
                 x.StartedAt <= staleBefore &&
                 x.RetryCount < 3)
-            .ToListAsync(cancellationToken);
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(
+                        x => x.Status,
+                        "Pending")
+                    .SetProperty(
+                        x => x.ErrorMessage,
+                        "Recovered from stale Processing state."),
+                cancellationToken);
 
-        if (staleJobs.Count == 0)
+        if (recoveredCount == 0)
         {
             return;
         }
 
-        foreach (var job in staleJobs)
-        {
-            _logger.LogWarning(
-                "Recovering stale reminder job. " +
-                "JobId={JobId}, InvoiceId={InvoiceId}, StartedAt={StartedAt}",
-                job.Id,
-                job.InvoiceId,
-                job.StartedAt);
+        _logger.LogWarning(
+            "Recovered stale reminder jobs. Count={Count}, StaleBefore={StaleBefore}",
+            recoveredCount,
+            staleBefore);
 
-            job.Status = "Pending";
-
-            job.ErrorMessage =
-                "Recovered from stale Processing state.";
-        }
-
-        await _db.SaveChangesAsync(
-            cancellationToken);
+        // ExecuteUpdateAsync は ChangeTracker を経由しないため、
+        // 同じDbContextに残る古いReminderJobの追跡状態を破棄する。
+        _db.ChangeTracker.Clear();
     }
 
     private async Task ProcessOneAsync(
