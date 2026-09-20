@@ -31,13 +31,8 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
         // Processingのまま一定時間残留しているジョブを復旧する
         await RecoverStaleProcessingJobsAsync(cancellationToken);
 
-        var jobs = await _db.ReminderJobs
-            .Where(x =>
-                x.Status == "Pending" &&
-                x.RetryCount < 3)
-            .OrderBy(x => x.CreatedAt)
-            .Take(10)
-            .ToListAsync(cancellationToken);
+        var jobs =
+            await ClaimPendingJobsAsync(cancellationToken);
 
         var completedCount = 0;
         var retryPendingCount = 0;
@@ -70,6 +65,74 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
             CompletedCount: completedCount,
             RetryPendingCount: retryPendingCount,
             FailedCount: failedCount);
+    }
+
+    private async Task<List<ReminderJob>> ClaimPendingJobsAsync(
+    CancellationToken cancellationToken)
+    {
+        // 単体テストではSQLiteを使用しているため、
+        // PostgreSQL固有の FOR UPDATE SKIP LOCKED は使用しない。
+        if (!_db.Database.IsNpgsql())
+        {
+            var jobs = await _db.ReminderJobs
+                .Where(x =>
+                    x.Status == "Pending" &&
+                    x.RetryCount < 3)
+                .OrderBy(x => x.CreatedAt)
+                .Take(10)
+                .ToListAsync(cancellationToken);
+
+            var startedAt = DateTime.UtcNow;
+
+            foreach (var job in jobs)
+            {
+                job.Status = "Processing";
+                job.StartedAt = startedAt;
+                job.ErrorMessage = null;
+            }
+
+            await _db.SaveChangesAsync(cancellationToken);
+
+            return jobs;
+        }
+
+        // PostgreSQLでは同時実行時の二重取得を防ぐため、
+        // 行ロック + SKIP LOCKED で処理対象を確保する。
+        await using var transaction =
+            await _db.Database.BeginTransactionAsync(
+                cancellationToken);
+
+        var claimedJobs = await _db.ReminderJobs
+            .FromSqlRaw(
+                """
+            SELECT *
+            FROM "ReminderJobs"
+            WHERE "Status" = 'Pending'
+              AND "RetryCount" < 3
+            ORDER BY "CreatedAt"
+            LIMIT 10
+            FOR UPDATE SKIP LOCKED
+            """)
+            .ToListAsync(cancellationToken);
+
+        var claimedAt = DateTime.UtcNow;
+
+        foreach (var job in claimedJobs)
+        {
+            job.Status = "Processing";
+            job.StartedAt = claimedAt;
+            job.ErrorMessage = null;
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Reminder jobs claimed. Count={Count}",
+            claimedJobs.Count);
+
+        return claimedJobs;
     }
 
     private async Task RecoverStaleProcessingJobsAsync(
@@ -114,13 +177,6 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
         ReminderJob job,
         CancellationToken cancellationToken)
     {
-        job.Status = "Processing";
-        job.StartedAt = DateTime.UtcNow;
-        job.ErrorMessage = null;
-
-        await _db.SaveChangesAsync(
-            cancellationToken);
-
         try
         {
             await _emailSender.SendAsync(
