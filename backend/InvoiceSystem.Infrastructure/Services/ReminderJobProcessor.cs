@@ -8,6 +8,9 @@ namespace InvoiceSystem.Infrastructure.Services;
 
 public sealed class ReminderJobProcessor : IReminderJobProcessor
 {
+    private static readonly TimeSpan ProcessingTimeout =
+        TimeSpan.FromMinutes(10);
+
     private readonly AppDbContext _db;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<ReminderJobProcessor> _logger;
@@ -22,53 +25,101 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
         _logger = logger;
     }
 
-public async Task<ReminderJobProcessResult> ProcessPendingAsync(
-    CancellationToken cancellationToken)
-{
-    var jobs = await _db.ReminderJobs
-        .Where(x => x.Status == "Pending" && x.RetryCount < 3)
-        .OrderBy(x => x.CreatedAt)
-        .Take(10)
-        .ToListAsync(cancellationToken);
-
-    var completedCount = 0;
-    var retryPendingCount = 0;
-    var failedCount = 0;
-
-    foreach (var job in jobs)
+    public async Task<ReminderJobProcessResult> ProcessPendingAsync(
+        CancellationToken cancellationToken)
     {
-        await ProcessOneAsync(job, cancellationToken);
+        // Processingのまま一定時間残留しているジョブを復旧する
+        await RecoverStaleProcessingJobsAsync(cancellationToken);
 
-        switch (job.Status)
+        var jobs = await _db.ReminderJobs
+            .Where(x =>
+                x.Status == "Pending" &&
+                x.RetryCount < 3)
+            .OrderBy(x => x.CreatedAt)
+            .Take(10)
+            .ToListAsync(cancellationToken);
+
+        var completedCount = 0;
+        var retryPendingCount = 0;
+        var failedCount = 0;
+
+        foreach (var job in jobs)
         {
-            case "Completed":
-                completedCount++;
-                break;
+            await ProcessOneAsync(
+                job,
+                cancellationToken);
 
-            case "Pending":
-                retryPendingCount++;
-                break;
+            switch (job.Status)
+            {
+                case "Completed":
+                    completedCount++;
+                    break;
 
-            case "Failed":
-                failedCount++;
-                break;
+                case "Pending":
+                    retryPendingCount++;
+                    break;
+
+                case "Failed":
+                    failedCount++;
+                    break;
+            }
         }
+
+        return new ReminderJobProcessResult(
+            TargetCount: jobs.Count,
+            CompletedCount: completedCount,
+            RetryPendingCount: retryPendingCount,
+            FailedCount: failedCount);
     }
 
-    return new ReminderJobProcessResult(
-        TargetCount: jobs.Count,
-        CompletedCount: completedCount,
-        RetryPendingCount: retryPendingCount,
-        FailedCount: failedCount);
-}
+    private async Task RecoverStaleProcessingJobsAsync(
+        CancellationToken cancellationToken)
+    {
+        var staleBefore =
+            DateTime.UtcNow - ProcessingTimeout;
 
-    private async Task ProcessOneAsync(ReminderJob job, CancellationToken cancellationToken)
+        var staleJobs = await _db.ReminderJobs
+            .Where(x =>
+                x.Status == "Processing" &&
+                x.StartedAt != null &&
+                x.StartedAt <= staleBefore &&
+                x.RetryCount < 3)
+            .ToListAsync(cancellationToken);
+
+        if (staleJobs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var job in staleJobs)
+        {
+            _logger.LogWarning(
+                "Recovering stale reminder job. " +
+                "JobId={JobId}, InvoiceId={InvoiceId}, StartedAt={StartedAt}",
+                job.Id,
+                job.InvoiceId,
+                job.StartedAt);
+
+            job.Status = "Pending";
+
+            job.ErrorMessage =
+                "Recovered from stale Processing state.";
+        }
+
+        await _db.SaveChangesAsync(
+            cancellationToken);
+    }
+
+    private async Task ProcessOneAsync(
+        ReminderJob job,
+        CancellationToken cancellationToken)
     {
         job.Status = "Processing";
         job.StartedAt = DateTime.UtcNow;
         job.ErrorMessage = null;
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.SaveChangesAsync(
+            cancellationToken);
 
         try
         {
@@ -81,24 +132,32 @@ public async Task<ReminderJobProcessResult> ProcessPendingAsync(
             job.CompletedAt = DateTime.UtcNow;
 
             _logger.LogInformation(
-                "Reminder job completed. JobId={JobId}, InvoiceId={InvoiceId}",
+                "Reminder job completed. " +
+                "JobId={JobId}, InvoiceId={InvoiceId}",
                 job.Id,
                 job.InvoiceId);
         }
         catch (Exception ex)
         {
             job.RetryCount++;
-            job.Status = job.RetryCount >= 3 ? "Failed" : "Pending";
+
+            job.Status =
+                job.RetryCount >= 3
+                    ? "Failed"
+                    : "Pending";
+
             job.ErrorMessage = ex.Message;
 
             _logger.LogError(
                 ex,
-                "Reminder job failed. JobId={JobId}, InvoiceId={InvoiceId}, RetryCount={RetryCount}",
+                "Reminder job failed. " +
+                "JobId={JobId}, InvoiceId={InvoiceId}, RetryCount={RetryCount}",
                 job.Id,
                 job.InvoiceId,
                 job.RetryCount);
         }
 
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.SaveChangesAsync(
+            cancellationToken);
     }
 }

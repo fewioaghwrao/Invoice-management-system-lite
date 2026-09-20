@@ -387,6 +387,120 @@ public sealed class ReminderJobProcessorTests
         Assert.False(result.HasFailures);
     }
 
+    [Fact]
+    public async Task ProcessPendingAsync_StaleProcessingJob_IsRecoveredAndCompleted()
+    {
+        // Arrange
+        var (db, conn) = CreateDb();
+        await using var _ = conn;
+
+        var invoice = await CreateInvoiceAsync(db);
+
+        db.ReminderJobs.Add(new ReminderJob
+        {
+            InvoiceId = invoice.Id,
+            ToEmail = "stale-test@example.com",
+            Subject = "stale processing test",
+            Body = "stale processing test body",
+            Status = "Processing",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow.AddHours(-1),
+
+            // ProcessingTimeout = 10分を超えている
+            StartedAt = DateTime.UtcNow.AddMinutes(-20)
+        });
+
+        await db.SaveChangesAsync();
+
+        var emailSender = new FakeEmailSender();
+
+        var processor = new ReminderJobProcessor(
+            db,
+            emailSender,
+            NullLogger<ReminderJobProcessor>.Instance
+        );
+
+        // Act
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
+
+        // Assert
+        var job = await db.ReminderJobs.SingleAsync();
+
+        Assert.Equal("Completed", job.Status);
+        Assert.Equal(0, job.RetryCount);
+        Assert.NotNull(job.StartedAt);
+        Assert.NotNull(job.CompletedAt);
+        Assert.Null(job.ErrorMessage);
+
+        Assert.Single(emailSender.SentEmails);
+
+        Assert.Equal(1, result.TargetCount);
+        Assert.Equal(1, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.False(result.HasFailures);
+    }
+
+    [Fact]
+    public async Task ProcessPendingAsync_RecentProcessingJob_IsNotRecovered()
+    {
+        // Arrange
+        var (db, conn) = CreateDb();
+        await using var _ = conn;
+
+        var invoice = await CreateInvoiceAsync(db);
+
+        db.ReminderJobs.Add(new ReminderJob
+        {
+            InvoiceId = invoice.Id,
+            ToEmail = "recent-test@example.com",
+            Subject = "recent processing test",
+            Body = "recent processing test body",
+            Status = "Processing",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-5),
+
+            // ProcessingTimeout = 10分以内
+            StartedAt = DateTime.UtcNow.AddMinutes(-1)
+        });
+
+        await db.SaveChangesAsync();
+
+        var emailSender = new FakeEmailSender();
+
+        var processor = new ReminderJobProcessor(
+            db,
+            emailSender,
+            NullLogger<ReminderJobProcessor>.Instance
+        );
+
+        // Act
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
+
+        // Assert
+        var job = await db.ReminderJobs.SingleAsync();
+
+        Assert.Equal("Processing", job.Status);
+        Assert.Equal(0, job.RetryCount);
+        Assert.NotNull(job.StartedAt);
+        Assert.Null(job.CompletedAt);
+        Assert.Null(job.ErrorMessage);
+
+        Assert.Empty(emailSender.SentEmails);
+
+        Assert.Equal(0, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(0, result.ProcessedCount);
+        Assert.False(result.HasTargets);
+        Assert.False(result.HasFailures);
+    }
+
     private static async Task<Invoice> CreateInvoiceAsync(
         AppDbContext db)
     {
