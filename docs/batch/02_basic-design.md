@@ -288,17 +288,33 @@ RetryCount < 3
 
 ### 8.3 復旧処理
 
-stale Processing は一旦 `Pending` へ戻す。
+stale Processing は `ExecuteUpdateAsync()` による条件付きUPDATEで、DB側から直接 `Pending` へ戻す。
 
 ```text
 Status = Pending
 ErrorMessage = "Recovered from stale Processing state."
 ```
 
-その後、同一Batch実行内で通常のClaim対象とする。
+概念上は以下の条件付きUPDATEに相当する。
+
+```sql
+UPDATE "ReminderJobs"
+SET
+    "Status" = 'Pending',
+    "ErrorMessage" = 'Recovered from stale Processing state.'
+WHERE
+    "Status" = 'Processing'
+    AND "StartedAt" IS NOT NULL
+    AND "StartedAt" <= <staleBefore>
+    AND "RetryCount" < 3;
+```
+
+更新後は同一Batch実行内で通常のClaim対象とする。
 
 ```text
 stale Processing
+      ↓
+条件付きUPDATE
       ↓
 Pendingへ復旧
       ↓
@@ -310,6 +326,8 @@ Processing
       ↓
 Completed
 ```
+
+`ExecuteUpdateAsync()` はChangeTrackerを経由しないため、復旧件数が1件以上の場合は `ChangeTracker.Clear()` を行い、その後に最新状態を再取得する。
 
 Claim時に `ErrorMessage` をクリアするため、正常完了後は `ErrorMessage = NULL` となる。
 
@@ -325,13 +343,80 @@ Claim時に `ErrorMessage` をクリアするため、正常完了後は `ErrorM
 
 ![stale Processing 実行後](../evidence/batch/10-stale-processing-after.png)
 
-### 8.4 現時点の制約
+### 8.4 stale Processing復旧の同時実行対策
 
-通常の `Pending` Claimには行ロックを使用するが、`RecoverStaleProcessingJobsAsync()` 自体には専用の排他制御を設けていない。
+複数Batchが同じ stale Processing を同時に検出しても、復旧処理は `Status = Processing` および `StartedAt <= staleBefore` を含む条件付きUPDATEとして実行する。
 
-そのため、**複数Batchが同時に stale Processing を復旧するケースについては、通常Pendingの同時取得対策とは別の競合余地が残る**。
+そのため、最初のBatchが該当行を `Pending` へ更新した後は、後続Batchでは更新条件を満たさなくなり、同じ stale Processing を重複して復旧しない。
 
-これは後続改善項目とし、現時点で「すべての経路でExactly Onceを保証する」とはしない。
+```text
+stale Processing 1件
+        │
+   ┌────┴────┐
+   │         │
+Batch A    Batch B
+   │         │
+条件付き    条件付き
+UPDATE      UPDATE
+   │         │
+Count=1    条件再評価
+   │         │
+Pending    Count=0
+   │
+Claim
+   │
+Processing
+```
+
+さらに、復旧後の `Pending` Claimでは `FOR UPDATE SKIP LOCKED` を使用するため、複数Batchが同時起動しても通常処理を行うのは1プロセスのみとなる。
+
+### 8.5 stale Processing同時起動の実機確認
+
+処理前DB：
+
+![stale同時実行前](../evidence/batch/16-stale-concurrent-before.png)
+
+Batch A：
+
+![stale同時実行 Batch A](../evidence/batch/17-stale-concurrent-batch-a.png)
+
+Batch B：
+
+![stale同時実行 Batch B](../evidence/batch/18-stale-concurrent-batch-b.png)
+
+Mailtrapでは1通のみ送信されたことを確認した。
+
+![stale同時実行 Mailtrap](../evidence/batch/19-stale-concurrent-mail.png)
+
+処理後DB：
+
+![stale同時実行後](../evidence/batch/20-stale-concurrent-after.png)
+
+確認結果：
+
+```text
+Batch A
+→ stale recovery Count=1
+→ Claim Count=1
+→ CompletedCount=1
+→ ExitCode=0
+
+Batch B
+→ stale recovery Count=0相当
+→ Claim Count=0
+→ TargetCount=0
+→ ExitCode=10
+
+Mailtrap
+→ メール1通のみ
+
+DB
+→ Id=8 がCompleted
+```
+
+A/Bのどちらが復旧・Claimに成功するかは実行タイミングに依存し、固定しない。
+
+なお、SMTP送信成功後かつCompleted更新前にプロセスが停止するケースでは、後続のstale recoveryによって再送される可能性がある。これはDB排他とは別の外部I/O境界の問題であり、Exactly Onceは保証しない。
 
 ---
 
@@ -685,6 +770,7 @@ FOR UPDATE SKIP LOCKED
 - SMTP失敗
 - SMTP復旧後の再実行
 - stale Processing復旧
+- stale Processing復旧の同時起動競合対策
 - `FOR UPDATE SKIP LOCKED` による同時起動排他
 - Mailtrapによる重複送信有無
 - ExitCode
@@ -701,6 +787,7 @@ FOR UPDATE SKIP LOCKED
 | SMTP復旧後再実行 | 同一ReminderJobがCompleted | 0 | `06`, `07` |
 | stale Processing | 10分超過を復旧しCompleted | 0 | `08`～`10` |
 | Batch同時起動 | 片方のみClaim、メール1通 | 0 / 10 | `11`～`15` |
+| stale Processing同時起動 | 条件付きUPDATEで片方のみ復旧・Claim、メール1通 | 0 / 10 | `16`～`20` |
 
 ---
 
@@ -729,6 +816,11 @@ docs/evidence/batch/
 | 13 | `13-concurrent-batch-b.png` | Batch B（Claim成功） |
 | 14 | `14-concurrent-mail.png` | Mailtrap 1通のみ |
 | 15 | `15-concurrent-after.png` | 同時起動テスト後Completed |
+| 16 | `16-stale-concurrent-before.png` | stale同時起動テスト前Processing |
+| 17 | `17-stale-concurrent-batch-a.png` | stale同時起動 Batch A（復旧・Claim成功） |
+| 18 | `18-stale-concurrent-batch-b.png` | stale同時起動 Batch B（対象なし） |
+| 19 | `19-stale-concurrent-mail.png` | stale同時起動 Mailtrap 1通のみ |
+| 20 | `20-stale-concurrent-after.png` | stale同時起動テスト後Completed |
 
 ---
 
@@ -754,9 +846,8 @@ docs/evidence/batch/
 1. ローカルConsole LoggerのTimestamp出力
 2. 外部JobIdとReminderJob.Idのログプロパティ名の明確化
 3. JSON等の構造化ログ形式を正式要件とする場合のFormatter設定
-4. stale Processing復旧処理自体の同時実行排他強化
-5. VPS上のsystemd / cron外部起動
-6. JP1/AJS本体との連携は対象外のまま
+4. VPS上のsystemd / cron外部起動
+5. JP1/AJS本体との連携は対象外のまま
 
 ---
 
@@ -767,7 +858,6 @@ docs/evidence/batch/
 - External JobIdのDB保存
 - Processorログの `ReminderJobId` 化
 - Console / JSONログのTimestamp整備
-- stale Processing復旧処理自体の排他制御強化
 - Outbox Pattern
 - Idempotency Key
 - DockerでのBatch実行
