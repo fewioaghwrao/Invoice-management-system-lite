@@ -627,9 +627,10 @@ ExitCode
 
 - Timestamp
 - LogLevel
-- External JobId
+- ExternalJobId
 - BatchName
-- ReminderJob.Id
+- ReminderJobId
+- InvoiceId
 - 処理開始 / 終了
 - TargetCount
 - CompletedCount
@@ -638,45 +639,163 @@ ExitCode
 - ExitCode
 - エラー内容
 
-### 12.2 外部JobIdとReminderJob.Id
+### 12.2 ExternalJobIdとReminderJobIdの分離
 
-ログ上は、外部実行IDと業務ジョブIDを明確に区別することが望ましい。
-
-設計上の名称：
+外部ジョブ実行単位とDB上の業務ジョブを明確に区別する。
 
 ```text
-ExternalJobId = REMINDER-CONCURRENT-B
+ExternalJobId = REMINDER-LOG-001
 ReminderJobId = 7
+InvoiceId = 56
 ```
 
-### 12.3 現行実装との差分
+Batch側では、CLIの `--job-id` から取得した値を内部変数 `externalJobId` として扱い、ログプロパティ名を `ExternalJobId` とする。
 
-現行ログでは、Batch側の外部実行IDとProcessor側のDB IDが、どちらも表示上 `JobId` というプロパティ名で出力されている。
+```text
+Reminder batch started.
+ExternalJobId=REMINDER-LOG-001
+BatchName=Reminder
+```
+
+`ReminderJobProcessor` 側では、`ReminderJobs.Id` を `ReminderJobId` として出力する。
+
+```text
+Reminder job completed.
+ReminderJobId=7
+InvoiceId=56
+```
+
+これにより、従来どちらも `JobId` として出力していた曖昧さを解消する。
+
+### 12.3 Timestamp付きConsoleログ
+
+`InvoiceSystem.Batch` のConsoleログは `SimpleConsole` を使用し、UTC Timestampを付与する。
+
+設定方針：
+
+```text
+TimestampFormat = yyyy-MM-dd'T'HH:mm:ss.fff'Z'
+UseUtcTimestamp = true
+SingleLine = true
+```
+
+出力例：
+
+```text
+2026-09-22T21:25:41.021Z info: InvoiceSystem.Batch[0] Reminder batch started. ExternalJobId=REMINDER-LOG-001, BatchName=Reminder
+```
+
+UTCを採用することで、Windows開発環境、VPS、systemd / journal等でタイムゾーンが異なる場合でも同一基準で時系列を追跡できる。
+
+### 12.4 ILoggerへの統一
+
+Batchのログ出力は `ILogger` に統一する。
+
+Host構築後の通常ログはDIから取得した `ILogger` を使用する。
+
+一方、以下のようなHost構築前に発生し得るエラーも同じ形式で出力できるよう、Bootstrap Loggerを使用する。
+
+- command不正
+- `--job-id` 不足
+- DB接続文字列未設定
 
 例：
 
 ```text
-Reminder batch started. JobId=REMINDER-CONCURRENT-B
-Reminder job completed. JobId=7
+2026-09-22T21:28:20.524Z fail: InvoiceSystem.Batch[0] Invalid command. Command=(null), ExitCode=20
 ```
 
-実行証跡上は文脈で区別可能だが、可観測性向上のため、後続でProcessor側ログを `ReminderJobId` へ変更することを推奨する。
+```text
+2026-09-22T21:28:38.518Z fail: InvoiceSystem.Batch[0] Required parameter is missing. Parameter=--job-id, ExitCode=20
+```
 
-また、ローカル実行の既定Console Loggerでは、添付証跡上Timestampが出力されていない。
+これにより、従来 `Console.Error.WriteLine()` で別形式となっていたエラーも、Timestamp / LogLevel / Category / ExitCodeを含む共通形式で出力する。
 
-そのため、要件の `Timestamp` を満たすには以下のいずれかを後続で実施する。
+### 12.5 処理結果ログ
 
-- Console FormatterにTimestampを付与
-- JSON Console Loggingを使用
-- VPS/systemd運用時にjournalのTimestampを正式証跡とする
+Batch処理結果は1行形式で出力する。
 
-### 12.4 構造化ログ
+```text
+Reminder batch processed.
+ExternalJobId=REMINDER-LOG-001
+TargetCount=0
+CompletedCount=0
+RetryPendingCount=0
+FailedCount=0
+```
 
-`ILogger` のメッセージテンプレートを利用し、プロパティとして値を渡す方式を採用する。
+対象なしの場合：
 
-ただし、現時点のローカルConsole出力はプレーンテキスト表示であり、**JSON形式の構造化ログ出力までは証跡化していない**。
+```text
+Reminder batch completed with no targets.
+ExternalJobId=REMINDER-LOG-001
+ExitCode=10
+```
 
-「構造化ログ」をJSON等の機械可読形式まで要求する場合は、後続の運用設計でConsole Formatterを定義する。
+成功時：
+
+```text
+Reminder batch completed successfully.
+ExternalJobId=REMINDER-LOG-001
+ExitCode=0
+```
+
+失敗時：
+
+```text
+Reminder batch completed with failures.
+ExternalJobId=REMINDER-LOG-001
+ExitCode=50
+```
+
+### 12.6 構造化ログ
+
+`ILogger` のメッセージテンプレートを利用し、値をログプロパティとして渡す。
+
+例：
+
+```text
+ExternalJobId
+ReminderJobId
+InvoiceId
+ExitCode
+TargetCount
+CompletedCount
+RetryPendingCount
+FailedCount
+```
+
+現時点では `SimpleConsole` によるプレーンテキスト出力を正式採用しており、JSON Console Formatterは導入していない。
+
+JSON形式の機械可読ログが必要となった場合は、VPS / systemd等の運用要件に応じて別途検討する。
+
+### 12.7 実機確認
+
+ローカル実行により以下を確認済みとする。
+
+```text
+正常系 / 対象なし
+→ UTC Timestampあり
+→ ExternalJobIdあり
+→ TargetCount / CompletedCount / RetryPendingCount / FailedCountあり
+→ ExitCode=10
+```
+
+```text
+command不正
+→ LogLevel=fail
+→ Timestampあり
+→ ExitCode=20
+```
+
+```text
+--job-id不足
+→ LogLevel=fail
+→ Timestampあり
+→ ExitCode=20
+```
+
+単体テストは114件すべて成功しており、ログ変更による既存機能への回帰がないことを確認済みとする。
 
 ---
 
@@ -774,6 +893,9 @@ FOR UPDATE SKIP LOCKED
 - `FOR UPDATE SKIP LOCKED` による同時起動排他
 - Mailtrapによる重複送信有無
 - ExitCode
+- UTC Timestamp付きConsoleログ
+- ExternalJobId / ReminderJobIdの識別子分離
+- 引数エラー時のILogger出力
 
 ---
 
@@ -843,11 +965,9 @@ docs/evidence/batch/
 
 現時点の未完了・要改善事項：
 
-1. ローカルConsole LoggerのTimestamp出力
-2. 外部JobIdとReminderJob.Idのログプロパティ名の明確化
-3. JSON等の構造化ログ形式を正式要件とする場合のFormatter設定
-4. VPS上のsystemd / cron外部起動
-5. JP1/AJS本体との連携は対象外のまま
+1. JSON形式の機械可読ログを正式要件とする場合のFormatter設定
+2. VPS上のsystemd / cron外部起動
+3. JP1/AJS本体との連携は対象外のまま
 
 ---
 
@@ -856,8 +976,7 @@ docs/evidence/batch/
 - 10件を超える場合の連続チャンク処理
 - `BatchExecution` 等の実行履歴テーブル
 - External JobIdのDB保存
-- Processorログの `ReminderJobId` 化
-- Console / JSONログのTimestamp整備
+- 必要に応じたJSON Console Formatterの導入
 - Outbox Pattern
 - Idempotency Key
 - DockerでのBatch実行
