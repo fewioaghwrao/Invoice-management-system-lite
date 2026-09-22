@@ -17,7 +17,7 @@ const int ExitSystemError = 50;
 const int ExitUnexpectedError = 99;
 
 var command = args.FirstOrDefault();
-var jobId = GetOption(args, "--job-id");
+var externalJobId = GetOption(args, "--job-id");
 
 if (!string.Equals(
         command,
@@ -30,7 +30,7 @@ if (!string.Equals(
     return ExitBusinessError;
 }
 
-if (string.IsNullOrWhiteSpace(jobId))
+if (string.IsNullOrWhiteSpace(externalJobId))
 {
     Console.Error.WriteLine(
         "ERROR: required parameter '--job-id' is missing.");
@@ -56,7 +56,7 @@ try
         string.IsNullOrWhiteSpace(defaultConnection))
     {
         Console.Error.WriteLine(
-            $"ERROR JobId={jobId} " +
+            $"ERROR ExternalJobId={externalJobId} " +
             "Database connection string is not configured.");
 
         return ExitSystemError;
@@ -96,8 +96,8 @@ try
             .GetRequiredService<IReminderJobProcessor>();
 
     logger.LogInformation(
-        "Reminder batch started. JobId={JobId}, BatchName={BatchName}",
-        jobId,
+        "Reminder batch started. ExternalJobId={ExternalJobId}, BatchName={BatchName}",
+        externalJobId,
         "Reminder");
 
     var result =
@@ -107,13 +107,13 @@ try
     logger.LogInformation(
         """
         Reminder batch processed.
-        JobId={JobId},
+        ExternalJobId={ExternalJobId},
         TargetCount={TargetCount},
         CompletedCount={CompletedCount},
         RetryPendingCount={RetryPendingCount},
         FailedCount={FailedCount}
         """,
-        jobId,
+        externalJobId,
         result.TargetCount,
         result.CompletedCount,
         result.RetryPendingCount,
@@ -122,8 +122,8 @@ try
     if (!result.HasTargets)
     {
         logger.LogInformation(
-            "Reminder batch completed with no targets. JobId={JobId}, ExitCode={ExitCode}",
-            jobId,
+            "Reminder batch completed with no targets. ExternalJobId={ExternalJobId}, ExitCode={ExitCode}",
+            externalJobId,
             ExitNoTargets);
 
         return ExitNoTargets;
@@ -132,16 +132,16 @@ try
     if (result.HasFailures)
     {
         logger.LogWarning(
-            "Reminder batch completed with failures. JobId={JobId}, ExitCode={ExitCode}",
-            jobId,
+            "Reminder batch completed with failures. ExternalJobId={ExternalJobId}, ExitCode={ExitCode}",
+            externalJobId,
             ExitSystemError);
 
         return ExitSystemError;
     }
 
     logger.LogInformation(
-        "Reminder batch completed successfully. JobId={JobId}, ExitCode={ExitCode}",
-        jobId,
+        "Reminder batch completed successfully. ExternalJobId={ExternalJobId}, ExitCode={ExitCode}",
+        externalJobId,
         ExitSuccess);
 
     return ExitSuccess;
@@ -149,21 +149,21 @@ try
 catch (DbUpdateException ex)
 {
     Console.Error.WriteLine(
-        $"ERROR JobId={jobId} Database update failed: {ex.Message}");
+        $"ERROR ExternalJobId={externalJobId} Database update failed: {ex.Message}");
 
     return ExitSystemError;
 }
 catch (DbException ex)
 {
     Console.Error.WriteLine(
-        $"ERROR JobId={jobId} Database access failed: {ex.Message}");
+        $"ERROR ExternalJobId={externalJobId} Database access failed: {ex.Message}");
 
     return ExitSystemError;
 }
 catch (Exception ex)
 {
     Console.Error.WriteLine(
-        $"ERROR JobId={jobId} Unexpected error: {ex}");
+        $"ERROR ExternalJobId={externalJobId} Unexpected error: {ex}");
 
     return ExitUnexpectedError;
 }

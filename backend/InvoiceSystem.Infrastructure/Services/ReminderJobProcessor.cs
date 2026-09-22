@@ -188,7 +188,7 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
 
             _logger.LogInformation(
                 "Reminder job completed. " +
-                "JobId={JobId}, InvoiceId={InvoiceId}",
+                "ReminderJobId={ReminderJobId}, InvoiceId={InvoiceId}",
                 job.Id,
                 job.InvoiceId);
         }
@@ -206,7 +206,7 @@ public sealed class ReminderJobProcessor : IReminderJobProcessor
             _logger.LogError(
                 ex,
                 "Reminder job failed. " +
-                "JobId={JobId}, InvoiceId={InvoiceId}, RetryCount={RetryCount}",
+                "ReminderJobId={ReminderJobId}, InvoiceId={InvoiceId}, RetryCount={RetryCount}",
                 job.Id,
                 job.InvoiceId,
                 job.RetryCount);
