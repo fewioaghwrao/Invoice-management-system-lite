@@ -1,0 +1,20 @@
+[Unit]
+Description=Invoice System Reminder Batch
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/home/deploy/apps/Invoice-management-system-lite-batch
+
+ExecStart=/home/deploy/apps/Invoice-management-system-lite-batch/deploy/batch/run-reminder-batch.sh
+
+# ExitCode=10 は「処理対象なし」の正常終了
+SuccessExitStatus=10
+
+TimeoutStartSec=15min
+
+StandardOutput=journal
+StandardError=journal

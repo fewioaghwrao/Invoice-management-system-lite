@@ -128,6 +128,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Infrastructure 層 DI
 builder.Services.AddInfrastructureServices();
 
+// ReminderJobWorker
+// 外部ジョブ管理方式へ移行した場合は false にして、
+// API内BackgroundServiceによる定期実行を停止する。
+var reminderWorkerEnabled =
+    builder.Configuration.GetValue<bool>(
+        "ReminderWorker:Enabled");
+
+if (reminderWorkerEnabled)
+{
+    builder.Services.AddReminderJobWorker();
+}
+
 // Services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());

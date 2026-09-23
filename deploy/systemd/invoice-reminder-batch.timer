@@ -1,0 +1,10 @@
+[Unit]
+Description=Run Invoice Reminder Batch Daily
+
+[Timer]
+OnCalendar=*-*-* 08:35:00 Asia/Tokyo
+Persistent=true
+Unit=invoice-reminder-batch.service
+
+[Install]
+WantedBy=timers.target

@@ -91,11 +91,18 @@ public sealed class ReminderJobWorkerTests
             _onCalled = onCalled;
         }
 
-        public Task ProcessPendingAsync(CancellationToken cancellationToken)
+        public Task<ReminderJobProcessResult> ProcessPendingAsync(
+            CancellationToken cancellationToken)
         {
             WasCalled = true;
             _onCalled();
-            return Task.CompletedTask;
+
+            return Task.FromResult(
+                new ReminderJobProcessResult(
+                    TargetCount: 0,
+                    CompletedCount: 0,
+                    RetryPendingCount: 0,
+                    FailedCount: 0));
         }
     }
 
@@ -110,10 +117,12 @@ public sealed class ReminderJobWorkerTests
             _onCalled = onCalled;
         }
 
-        public Task ProcessPendingAsync(CancellationToken cancellationToken)
+        public Task<ReminderJobProcessResult> ProcessPendingAsync(
+            CancellationToken cancellationToken)
         {
             WasCalled = true;
             _onCalled();
+
             throw new InvalidOperationException("processor error");
         }
     }

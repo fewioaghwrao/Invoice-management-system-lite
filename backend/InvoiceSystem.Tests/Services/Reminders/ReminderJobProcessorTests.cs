@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using InvoiceSystem.Application.Common.Interfaces;
+using InvoiceSystem.Application.Services;
 using InvoiceSystem.Domain.Entities;
 using InvoiceSystem.Domain.Enums;
 using InvoiceSystem.Infrastructure;
@@ -63,7 +64,8 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         var job = await db.ReminderJobs.SingleAsync();
@@ -80,6 +82,15 @@ public sealed class ReminderJobProcessorTests
         Assert.Equal("customer@example.com", sent.To);
         Assert.Equal("お支払い確認", sent.Subject);
         Assert.Equal("本文です。", sent.Body);
+
+        // ReminderJobProcessResult
+        Assert.Equal(1, result.TargetCount);
+        Assert.Equal(1, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.False(result.HasFailures);
     }
 
     [Fact]
@@ -113,7 +124,8 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         var job = await db.ReminderJobs.SingleAsync();
@@ -123,6 +135,15 @@ public sealed class ReminderJobProcessorTests
         Assert.Equal("SMTP error", job.ErrorMessage);
         Assert.NotNull(job.StartedAt);
         Assert.Null(job.CompletedAt);
+
+        // ReminderJobProcessResult
+        Assert.Equal(1, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(1, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.True(result.HasFailures);
     }
 
     [Fact]
@@ -156,7 +177,8 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         var job = await db.ReminderJobs.SingleAsync();
@@ -166,6 +188,15 @@ public sealed class ReminderJobProcessorTests
         Assert.Equal("SMTP error", job.ErrorMessage);
         Assert.NotNull(job.StartedAt);
         Assert.Null(job.CompletedAt);
+
+        // ReminderJobProcessResult
+        Assert.Equal(1, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(1, result.FailedCount);
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.True(result.HasFailures);
     }
 
     [Fact]
@@ -200,13 +231,23 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         var job = await db.ReminderJobs.SingleAsync();
 
         Assert.Equal("Completed", job.Status);
         Assert.Empty(emailSender.SentEmails);
+
+        // ReminderJobProcessResult
+        Assert.Equal(0, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(0, result.ProcessedCount);
+        Assert.False(result.HasTargets);
+        Assert.False(result.HasFailures);
     }
 
     [Fact]
@@ -240,7 +281,8 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         var job = await db.ReminderJobs.SingleAsync();
@@ -248,6 +290,15 @@ public sealed class ReminderJobProcessorTests
         Assert.Equal("Pending", job.Status);
         Assert.Equal(3, job.RetryCount);
         Assert.Empty(emailSender.SentEmails);
+
+        // ReminderJobProcessResult
+        Assert.Equal(0, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(0, result.ProcessedCount);
+        Assert.False(result.HasTargets);
+        Assert.False(result.HasFailures);
     }
 
     [Fact]
@@ -269,7 +320,15 @@ public sealed class ReminderJobProcessorTests
                 Body = $"Body {i}",
                 Status = "Pending",
                 RetryCount = 0,
-                CreatedAt = new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc).AddMinutes(i)
+                CreatedAt = new DateTime(
+                    2026,
+                    6,
+                    15,
+                    0,
+                    0,
+                    0,
+                    DateTimeKind.Utc
+                ).AddMinutes(i)
             });
         }
 
@@ -284,13 +343,21 @@ public sealed class ReminderJobProcessorTests
         );
 
         // Act
-        await processor.ProcessPendingAsync(CancellationToken.None);
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
 
         // Assert
         Assert.Equal(10, emailSender.SentEmails.Count);
 
-        var completedCount = await db.ReminderJobs.CountAsync(x => x.Status == "Completed");
-        var pendingCount = await db.ReminderJobs.CountAsync(x => x.Status == "Pending");
+        var completedCount =
+            await db.ReminderJobs.CountAsync(
+                x => x.Status == "Completed"
+            );
+
+        var pendingCount =
+            await db.ReminderJobs.CountAsync(
+                x => x.Status == "Pending"
+            );
 
         Assert.Equal(10, completedCount);
         Assert.Equal(2, pendingCount);
@@ -300,11 +367,142 @@ public sealed class ReminderJobProcessorTests
             .OrderBy(x => x.CreatedAt)
             .ToListAsync();
 
-        Assert.Equal("customer11@example.com", remaining[0].ToEmail);
-        Assert.Equal("customer12@example.com", remaining[1].ToEmail);
+        Assert.Equal(
+            "customer11@example.com",
+            remaining[0].ToEmail
+        );
+
+        Assert.Equal(
+            "customer12@example.com",
+            remaining[1].ToEmail
+        );
+
+        // ReminderJobProcessResult
+        Assert.Equal(10, result.TargetCount);
+        Assert.Equal(10, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(10, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.False(result.HasFailures);
     }
 
-    private static async Task<Invoice> CreateInvoiceAsync(AppDbContext db)
+    [Fact]
+    public async Task ProcessPendingAsync_StaleProcessingJob_IsRecoveredAndCompleted()
+    {
+        // Arrange
+        var (db, conn) = CreateDb();
+        await using var _ = conn;
+
+        var invoice = await CreateInvoiceAsync(db);
+
+        db.ReminderJobs.Add(new ReminderJob
+        {
+            InvoiceId = invoice.Id,
+            ToEmail = "stale-test@example.com",
+            Subject = "stale processing test",
+            Body = "stale processing test body",
+            Status = "Processing",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow.AddHours(-1),
+
+            // ProcessingTimeout = 10分を超えている
+            StartedAt = DateTime.UtcNow.AddMinutes(-20)
+        });
+
+        await db.SaveChangesAsync();
+
+        var emailSender = new FakeEmailSender();
+
+        var processor = new ReminderJobProcessor(
+            db,
+            emailSender,
+            NullLogger<ReminderJobProcessor>.Instance
+        );
+
+        // Act
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
+
+        // Assert
+        var job = await db.ReminderJobs.SingleAsync();
+
+        Assert.Equal("Completed", job.Status);
+        Assert.Equal(0, job.RetryCount);
+        Assert.NotNull(job.StartedAt);
+        Assert.NotNull(job.CompletedAt);
+        Assert.Null(job.ErrorMessage);
+
+        Assert.Single(emailSender.SentEmails);
+
+        Assert.Equal(1, result.TargetCount);
+        Assert.Equal(1, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(1, result.ProcessedCount);
+        Assert.True(result.HasTargets);
+        Assert.False(result.HasFailures);
+    }
+
+    [Fact]
+    public async Task ProcessPendingAsync_RecentProcessingJob_IsNotRecovered()
+    {
+        // Arrange
+        var (db, conn) = CreateDb();
+        await using var _ = conn;
+
+        var invoice = await CreateInvoiceAsync(db);
+
+        db.ReminderJobs.Add(new ReminderJob
+        {
+            InvoiceId = invoice.Id,
+            ToEmail = "recent-test@example.com",
+            Subject = "recent processing test",
+            Body = "recent processing test body",
+            Status = "Processing",
+            RetryCount = 0,
+            CreatedAt = DateTime.UtcNow.AddMinutes(-5),
+
+            // ProcessingTimeout = 10分以内
+            StartedAt = DateTime.UtcNow.AddMinutes(-1)
+        });
+
+        await db.SaveChangesAsync();
+
+        var emailSender = new FakeEmailSender();
+
+        var processor = new ReminderJobProcessor(
+            db,
+            emailSender,
+            NullLogger<ReminderJobProcessor>.Instance
+        );
+
+        // Act
+        var result =
+            await processor.ProcessPendingAsync(CancellationToken.None);
+
+        // Assert
+        var job = await db.ReminderJobs.SingleAsync();
+
+        Assert.Equal("Processing", job.Status);
+        Assert.Equal(0, job.RetryCount);
+        Assert.NotNull(job.StartedAt);
+        Assert.Null(job.CompletedAt);
+        Assert.Null(job.ErrorMessage);
+
+        Assert.Empty(emailSender.SentEmails);
+
+        Assert.Equal(0, result.TargetCount);
+        Assert.Equal(0, result.CompletedCount);
+        Assert.Equal(0, result.RetryPendingCount);
+        Assert.Equal(0, result.FailedCount);
+        Assert.Equal(0, result.ProcessedCount);
+        Assert.False(result.HasTargets);
+        Assert.False(result.HasFailures);
+    }
+
+    private static async Task<Invoice> CreateInvoiceAsync(
+        AppDbContext db)
     {
         var member = new Member
         {
@@ -343,9 +541,15 @@ public sealed class ReminderJobProcessorTests
     {
         public List<SentEmail> SentEmails { get; } = new();
 
-        public Task SendAsync(string to, string subject, string body)
+        public Task SendAsync(
+            string to,
+            string subject,
+            string body)
         {
-            SentEmails.Add(new SentEmail(to, subject, body));
+            SentEmails.Add(
+                new SentEmail(to, subject, body)
+            );
+
             return Task.CompletedTask;
         }
     }
@@ -359,11 +563,17 @@ public sealed class ReminderJobProcessorTests
             _message = message;
         }
 
-        public Task SendAsync(string to, string subject, string body)
+        public Task SendAsync(
+            string to,
+            string subject,
+            string body)
         {
             throw new InvalidOperationException(_message);
         }
     }
 
-    private sealed record SentEmail(string To, string Subject, string Body);
+    private sealed record SentEmail(
+        string To,
+        string Subject,
+        string Body);
 }
