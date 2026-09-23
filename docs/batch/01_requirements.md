@@ -16,8 +16,14 @@
 - 二重実行防止
 - 障害発生時の復旧
 - API内BackgroundServiceとの責任分離
+- Dockerコンテナからの実行
+- VPS上での外部スケジュール実行
+- systemd service / timerによる定刻実行
+- journalによる実行ログ追跡
 
-本機能ではJP1/AJS自体は導入せず、ローカル環境ではPowerShell、VPS環境ではsystemdまたはcron等を使用して外部ジョブ管理製品からの起動を模擬する。
+本機能ではJP1/AJS自体は導入しない。ローカル環境ではPowerShell、VPS環境ではDocker + systemd service / timerを使用し、外部ジョブ管理製品からの起動を模擬する。
+
+VPSではsystemd timerによる定刻自動実行まで実機確認済みとし、JP1/AJS本体との接続・ジョブネット定義は対象外とする。
 
 ---
 
@@ -84,11 +90,17 @@ RetryCount = RetryCount + 1
 
 ### 2.3 ReminderJobWorker
 
-現在はReminderJobWorkerがBackgroundServiceとしてAPIプロセス内で常駐している。
+ReminderJobWorkerはBackgroundServiceとしてAPIプロセス内で実行可能であり、一定間隔でIReminderJobProcessorを取得してReminderJobProcessorを実行する。
 
-ReminderJobWorkerは一定間隔でIReminderJobProcessorを取得し、ReminderJobProcessorを実行する。
+通常構成では実行間隔を30秒とする。
 
-現在の実行間隔は30秒とする。
+外部ジョブ管理方式へ切り替える場合は、以下の設定でAPI内Workerを停止できること。
+
+```text
+ReminderWorker:Enabled = false
+```
+
+VPSでは環境変数 `ReminderWorker__Enabled=false` を設定し、API内Worker停止を確認済みとする。
 
 ---
 
@@ -334,6 +346,50 @@ ReminderJobProcessor
 
 これにより、API内スケジューリング方式と外部ジョブ管理方式の責任を分離する。
 
+### 11.1 VPS / Docker外部起動要件
+
+VPSでは `InvoiceSystem.Batch` をDockerイメージとして実行できること。
+
+Batchコンテナは既存Invoice SystemのDocker Networkへ参加し、`postgres` エイリアスを使用してPostgreSQLへ接続できること。
+
+Batch用のDB・SMTP認証情報は `.env.batch.prod` 等の外部環境変数ファイルから読み込み、リポジトリへ保存しないこと。
+
+### 11.2 systemd service要件
+
+VPSではsystemdのoneshot serviceからBatchを起動できること。
+
+```text
+systemd service
+    ↓
+run-reminder-batch.sh
+    ↓
+docker run
+    ↓
+InvoiceSystem.Batch
+```
+
+Batchが返した終了コードをラッパースクリプトからsystemdへ返却すること。
+
+処理対象なしの `ExitCode=10` は異常ではないため、systemd側では正常終了として扱えること。
+
+### 11.3 systemd timer要件
+
+systemd timerからserviceを定刻起動できること。
+
+検証用スケジュールとして `08:35 Asia/Tokyo` を使用し、timer起動 → service起動 → Docker Batch実行 → journal記録まで確認する。
+
+検証後はtimerを停止・無効化できること。
+
+### 11.4 journalログ要件
+
+VPS上の外部起動では、Batch標準出力・標準エラーをsystemd journalへ記録し、以下を追跡できること。
+
+- systemd service開始・終了
+- ExternalJobId
+- Batch処理件数
+- Batch ExitCode
+- SMTP / DB等のエラー内容
+
 ---
 
 ## 12. ReminderHistoryとの責任分離
@@ -393,47 +449,58 @@ ReminderHistoryは、請求書に対して実施した督促内容を記録す�
 
 本対応は以下を確認できた場合に完了とする。
 
-- [ ] InvoiceSystem.BatchをCLIから起動できる
-- [ ] JobIdを受け取れる
-- [ ] 既存ReminderJobProcessorを利用できる
-- [ ] Pendingジョブを処理できる
-- [ ] Completedジョブを再処理しない
-- [ ] 処理結果を件数として取得できる
-- [ ] 処理結果に応じたExitCodeを返却できる
-- [ ] 障害発生後に再実行できる
-- [ ] Processing残留ジョブを復旧可能である
-- [ ] API内WorkerとBatchの二重実行を防止できる
-- [ ] ログからJobIdとReminderJob.Idを追跡できる
-- [ ] VPS上で外部スケジューラから起動できる
+- [x] InvoiceSystem.BatchをCLIから起動できる
+- [x] JobIdを受け取れる
+- [x] 既存ReminderJobProcessorを利用できる
+- [x] Pendingジョブを処理できる
+- [x] Completedジョブを再処理しない
+- [x] 処理結果を件数として取得できる
+- [x] 処理結果に応じたExitCodeを返却できる
+- [x] 障害発生後に再実行できる
+- [x] Processing残留ジョブを復旧可能である
+- [x] API内WorkerとBatchの二重実行を防止できる
+- [x] ログからJobIdとReminderJob.Idを追跡できる
+- [x] DockerコンテナからBatchを起動できる
+- [x] VPS上で既存PostgreSQLへ接続してBatchを実行できる
+- [x] systemd serviceからBatchを起動できる
+- [x] ExitCode=10をsystemd上の正常終了として扱える
+- [x] systemd timerから定刻自動実行できる
+- [x] journalから自動実行ログを確認できる
+- [x] 検証後にtimerを停止・無効化できる
+
+主な実機証跡：
+
+- `25-vps-no-target-exit10.png`：VPS手動起動・対象なし ExitCode=10
+- `28-vps-retry-success-command.png`：VPS再実行成功 ExitCode=0
+- `32-vps-smtp-failure-exit50.png`：VPS SMTP失敗 ExitCode=50
+- `33-systemd-timer-auto-run-0835.png`：systemd timer定刻自動実行
 
 ---
 
-## 16. 後続フェーズ
+## 16. 実施結果と後続フェーズ
 
 ```text
 01_requirements.md
         ↓
 02_basic-design.md
         ↓
-ReminderJobProcessor結果返却対応
+ReminderJobProcessor結果返却対応 ✅
         ↓
-ReminderJobWorker有効/無効切替
+ReminderJobWorker有効/無効切替 ✅
         ↓
-InvoiceSystem.Batch追加
+InvoiceSystem.Batch追加 ✅
         ↓
-ローカルDB実行
+ローカルDB実行・再実行試験 ✅
         ↓
-再実行試験
+Processing残留復旧・多重起動対策 ✅
         ↓
-Processing残留復旧
+Docker化 ✅
         ↓
-多重起動対策
+VPS配置・既存PostgreSQL接続 ✅
         ↓
-Docker化
+systemd service / timerによる外部起動 ✅
         ↓
-VPS配置
+journal / ExitCode確認・証跡取得 ✅
         ↓
-systemd / cronによる外部起動
-        ↓
-README・証跡
+JP1/AJS本体との接続・ジョブネット定義（対象外 / 将来候補）
 ```

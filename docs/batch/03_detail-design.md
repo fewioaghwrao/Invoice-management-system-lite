@@ -18,6 +18,10 @@ Invoice Management System のリマインダーメール外部Batchについて�
 - stale Processing復旧
 - ExitCode
 - Console Logging
+- Batch Docker実行
+- `run-reminder-batch.sh`
+- systemd service / timer
+- journalログ
 
 本書では、JP1/AJS本体の設定値やジョブネット定義は扱わない。
 外部ジョブ管理製品から起動されるアプリケーション側Batchの詳細設計を対象とする。
@@ -35,6 +39,10 @@ Invoice Management System のリマインダーメール外部Batchについて�
 | Infrastructure | `ReminderJobWorker` | API内定期実行。外部Batch運用時は無効化可能 |
 | Infrastructure | `MailtrapEmailSender` | SMTPメール送信 |
 | DB | `ReminderJobs` | Reminder処理キュー・状態管理 |
+| Deploy | `InvoiceSystem.Batch/Dockerfile` | Batchコンテナイメージ作成 |
+| Deploy | `deploy/batch/run-reminder-batch.sh` | Docker Batch起動、ExternalJobId生成、ExitCode伝播 |
+| Deploy | `invoice-reminder-batch.service` | systemd oneshot service |
+| Deploy | `invoice-reminder-batch.timer` | systemd定刻起動 |
 
 ---
 
@@ -684,9 +692,245 @@ Mailtrap__From
 
 ---
 
-## 20. テスト設計
+## 20. Docker / VPS実行詳細
 
-### 20.1 単体テスト
+### 20.1 Batchイメージ
+
+VPSではBatchを以下のイメージ名で実行する。
+
+```text
+invoice-system-batch:prod
+```
+
+実行時は既存Invoice SystemのDocker Networkへ参加する。
+
+```text
+invoice-management-system-lite_invoice-network
+```
+
+PostgreSQLコンテナのNetwork Aliasは `postgres` とし、Batch接続文字列では `Host=postgres` を使用する。
+
+### 20.2 環境変数ファイル
+
+Batch用環境変数は以下から読み込む。
+
+```text
+/home/deploy/apps/Invoice-management-system-lite-batch/.env.batch.prod
+```
+
+主な設定：
+
+```text
+ConnectionStrings__DefaultConnection
+Mailtrap__Host
+Mailtrap__Port
+Mailtrap__UserName
+Mailtrap__Password
+Mailtrap__From
+```
+
+認証情報はGit管理せず、VPSでは以下の権限とする。
+
+```bash
+chmod 600 .env.batch.prod
+```
+
+### 20.3 API Worker停止
+
+VPSの外部スケジュール方式ではAPIコンテナへ以下を設定する。
+
+```text
+ReminderWorker__Enabled=false
+```
+
+コンテナ内 `printenv ReminderWorker__Enabled` で `false` を確認し、API起動ログにWorker起動ログが出力されないことを確認する。
+
+---
+
+## 21. `run-reminder-batch.sh` 詳細
+
+対象：
+
+```text
+deploy/batch/run-reminder-batch.sh
+```
+
+責務：
+
+- Batch用Dockerコンテナ起動
+- `.env.batch.prod` の指定
+- 既存Docker Networkへの参加
+- 実行単位ごとのExternalJobId生成
+- Docker Batch終了コードの取得
+- journalへ終了コードを明示出力
+- Batch終了コードをsystemdへそのまま返却
+
+ExternalJobId形式：
+
+```text
+REMINDER-SYSTEMD-yyyyMMddTHHmmssZ-PID
+```
+
+実例：
+
+```text
+REMINDER-SYSTEMD-20260922T233500Z-424519
+```
+
+主要処理：
+
+```bash
+EXTERNAL_JOB_ID="REMINDER-SYSTEMD-$(date -u +'%Y%m%dT%H%M%SZ')-$$"
+
+if /usr/bin/docker run --rm \
+  --network "${NETWORK}" \
+  --env-file "${ENV_FILE}" \
+  "${IMAGE}" \
+  reminder \
+  --job-id "${EXTERNAL_JOB_ID}"
+then
+  EXIT_CODE=0
+else
+  EXIT_CODE=$?
+fi
+
+echo "Reminder batch process exited. ExternalJobId=${EXTERNAL_JOB_ID}, ExitCode=${EXIT_CODE}"
+exit "${EXIT_CODE}"
+```
+
+`set -Eeuo pipefail` を使用するが、Docker Batchの非0終了コードを取得する必要があるため、`docker run` は `if` 文内で実行する。
+
+---
+
+## 22. systemd service詳細
+
+対象：
+
+```text
+deploy/systemd/invoice-reminder-batch.service
+```
+
+主要設定：
+
+```ini
+[Unit]
+Description=Invoice System Reminder Batch
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=deploy
+WorkingDirectory=/home/deploy/apps/Invoice-management-system-lite-batch
+ExecStart=/home/deploy/apps/Invoice-management-system-lite-batch/deploy/batch/run-reminder-batch.sh
+SuccessExitStatus=10
+TimeoutStartSec=15min
+StandardOutput=journal
+StandardError=journal
+```
+
+### 22.1 oneshot
+
+Batchは1回実行型であるため `Type=oneshot` とする。
+
+処理完了後にserviceが `inactive (dead)` となることは正常動作である。
+
+### 22.2 ExitCode判定
+
+`SuccessExitStatus=10` により、Batchの `ExitCode=10`（処理対象なし）をsystemd上の正常終了として扱う。
+
+```text
+0  → Success
+10 → Success
+20 → Failure
+50 → Failure
+99 → Failure
+```
+
+Batch生終了コードはラッパースクリプトのjournalログで確認する。
+
+### 22.3 Docker依存
+
+`Requires=docker.service` および `After=docker.service` により、Docker service起動後にBatchを実行する。
+
+---
+
+## 23. systemd timer / journal詳細
+
+### 23.1 timer
+
+対象：
+
+```text
+deploy/systemd/invoice-reminder-batch.timer
+```
+
+検証時設定：
+
+```ini
+[Timer]
+OnCalendar=*-*-* 08:35:00 Asia/Tokyo
+Persistent=true
+Unit=invoice-reminder-batch.service
+```
+
+`08:35` は検証用設定であり、業務上の固定スケジュールではない。
+
+`Persistent=true` により、timer停止中に予定時刻を経過した場合、再有効化時に未実行分を補完できる構成とする。
+
+### 23.2 有効化・停止
+
+有効化：
+
+```bash
+sudo systemctl enable --now invoice-reminder-batch.timer
+```
+
+証跡取得後の停止：
+
+```bash
+sudo systemctl disable --now invoice-reminder-batch.timer
+```
+
+停止確認条件：
+
+```text
+Loaded: ... disabled
+Active: inactive (dead)
+Trigger: n/a
+```
+
+### 23.3 journal
+
+ログ確認：
+
+```bash
+sudo journalctl \
+  -u invoice-reminder-batch.service \
+  --no-pager
+```
+
+確認対象：
+
+- systemd service開始
+- ExternalJobId
+- stale Processing復旧SQL
+- Pending Claim
+- Target / Completed / RetryPending / Failed件数
+- Batch ExitCode
+- ラッパースクリプト終了コード
+- systemd service終了
+
+08:35 JSTのtimer自動実行を実機確認済みとする。
+
+![systemd timer自動実行](../evidence/batch/33-systemd-timer-auto-run-0835.png)
+
+---
+
+## 24. テスト設計
+
+### 24.1 単体テスト
 
 対象：
 
@@ -715,7 +959,7 @@ stale Processingは復旧してCompleted
 0 failed
 ```
 
-### 20.2 PostgreSQL実機確認
+### 24.2 PostgreSQL / Docker / VPS実機確認
 
 確認済み：
 
@@ -730,11 +974,20 @@ Pending同時Claim
 stale Processing同時復旧
 UTC Timestampログ
 引数エラー時ILogger出力
+Docker Batch実行
+VPS既存PostgreSQL接続
+VPS SMTP失敗 / RetryPending / ExitCode=50
+SMTP設定復旧後の同一ReminderJob再実行 / ExitCode=0
+API Worker無効化
+systemd service手動起動
+systemd timer 08:35 JST定刻自動実行
+journalログ確認
+timer停止・無効化確認
 ```
 
 ---
 
-## 21. 実機証跡
+## 25. 実機証跡
 
 証跡格納先：
 
@@ -750,20 +1003,25 @@ docs/evidence/batch/
 08～10 : stale Processing復旧
 11～15 : Pending同時Claim
 16～20 : stale Processing同時復旧
+21～24 : Docker Batch実行
+25     : VPS対象なし ExitCode=10
+26～30 : VPS Pending登録・障害復旧後再実行・Mailtrap受信
+31～32 : VPS SMTP失敗 ExitCode=50
+33     : systemd timer 08:35定刻自動実行 / journal
 ```
 
-ログ設計については、最新の実行ログを追加証跡として保存する場合、
-以下の命名を推奨する。
+VPS / systemdの主要証跡：
 
-```text
-21-logging-timestamp.png
-22-logging-invalid-command.png
-23-logging-missing-job-id.png
-```
+- `25-vps-no-target-exit10.png`
+- `28-vps-retry-success-command.png`
+- `29-vps-after-completed.png`
+- `30-vps-mailtrap-received.png`
+- `32-vps-smtp-failure-exit50.png`
+- `33-systemd-timer-auto-run-0835.png`
 
 ---
 
-## 22. At-Least-Once制約
+## 26. At-Least-Once制約
 
 SMTP送信とDB更新は同一トランザクションにできない。
 
@@ -807,23 +1065,21 @@ Message Queue
 
 ---
 
-## 23. 今後の拡張候補
+## 27. 今後の拡張候補
 
 - 10件超の連続チャンク処理
 - Batch実行履歴テーブル
 - ExternalJobIdのDB保存
 - JSON Console Formatter
-- DockerでのBatch実行
-- VPS上でのsystemd / cron実行
 - JP1/AJS本体との連携
 - Outbox Pattern
 - Idempotency Key
 
 ---
 
-## 24. 詳細設計上の完了条件
+## 28. 詳細設計上の完了条件
 
-以下を満たした時点で、ローカル外部Batchの詳細設計を完了とする。
+以下を満たした時点で、外部Batchのアプリケーション側詳細設計およびVPS/systemd実証を完了とする。
 
 ```text
 CLI起動可能
@@ -837,6 +1093,14 @@ Pending同時Claimの排他あり
 stale復旧競合対策あり
 単体テスト成功
 PostgreSQL実機確認済み
+Docker Batch実行確認済み
+VPS既存PostgreSQL接続確認済み
+API Worker無効化確認済み
+systemd service起動確認済み
+ExitCode=10をsystemd正常扱い確認済み
+systemd timer定刻自動実行確認済み
+journalログ確認済み
+証跡取得後timer停止済み
 ```
 
-VPS / systemd / cron / JP1連携は後続フェーズとする。
+JP1/AJS本体との接続・ジョブネット定義は対象外とし、将来の連携候補とする。
