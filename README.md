@@ -68,7 +68,8 @@ Web版とWPF版の2種類のクライアントを実装しています。
 |---|---|---|---|
 | Webクライアント | Next.js / TypeScript | `frontend/` | ブラウザから利用するWeb版 |
 | WPFクライアント | C# / WPF / .NET 10 | `wpfclient/` | Windows向けデスクトップ版 |
-| バックエンドAPI | ASP.NET Core / .NET 10 | `backend/` | 認証・認可・業務ロジック・DBアクセス |
+| バックエンドAPI | ASP.NET Core / .NET 10 | `backend/InvoiceSystem.Api/` | 認証・認可・業務ロジック・DBアクセス |
+| Reminder Batch | .NET 10 Console / Docker / systemd | `backend/InvoiceSystem.Batch/` | 督促メールの外部ジョブ実行 |
 | データベース | PostgreSQL 16 | Docker / VPS | 請求・入金・会員情報の永続化 |
 
 ### クライアント別ドキュメント
@@ -136,8 +137,17 @@ Web版とWPF版の2種類のクライアントを実装しています。
 - 入金割当に基づく請求ステータス再計算
 - PostgreSQLへのデータアクセス
 
-業務ロジックと権限制御をバックエンドAPIに集約することで、
-Web版とWPF版で同じ業務ルールを利用できる構成としています。
+### Reminder Batch
+
+- `backend/InvoiceSystem.Batch/` に外部起動可能なCLI Batchを実装
+- `ReminderJobs` のPendingデータを排他取得し、督促メールを処理
+- 終了コード `0 / 10 / 20 / 50 / 99` により、外部ジョブ管理側から結果を判定可能
+- PostgreSQLでは `FOR UPDATE SKIP LOCKED` を利用し、多重起動時の二重処理を抑止
+- staleな`Processing`ジョブを再実行可能な状態へ戻す復旧処理を実装
+- VPSではDocker Batchをsystemd service / timerから起動できる構成を検証
+
+業務ロジックと権限制御をバックエンドAPIに集約しつつ、
+定期・非同期処理は外部起動可能なBatchへ分離できる構成としています。
 
 ---
 
@@ -335,11 +345,13 @@ WPF版の画面、MVVM構成、テスト内容については、
 
 ### Backend
 - ASP.NET Core（.NET 10）
+- .NET 10 Console Batch
 - Entity Framework Core 10
 - PostgreSQL / Npgsql
 - JWT認証・ロールベース認可
 - OpenAPI / Swagger
 - Serilog
+- Docker / systemd service / systemd timer
 
 ### Database
 - PostgreSQL 16
@@ -357,13 +369,16 @@ WPF版の画面、MVVM構成、テスト内容については、
 
 ### ConoHa VPS（バックエンド / データベース）
 
-現在は以下をVPS上でDocker Composeにより運用しています。
+現在は以下をVPS上で運用・検証しています。
 
-- ASP.NET Core Web API（.NET 10）
+- ASP.NET Core Web API（.NET 10 / Docker Compose）
 - PostgreSQL 16
 - nginx
 - Let's Encrypt によるTLS証明書
 - Docker VolumeによるPostgreSQLデータ永続化
+- Reminder Batch（.NET 10 / Docker）
+- systemd service / timer によるBatch定刻起動
+- journalctl によるBatch実行ログ確認
 
 バックエンドAPIは独自ドメイン
 
@@ -380,6 +395,8 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 - HTTPS化とLet's Encrypt証明書更新
 - UFWによるポート制御
 - PostgreSQLの永続ボリューム管理
+- systemd service / timerによる外部Batchスケジュール管理
+- Batch終了コードとjournalを利用した実行結果の追跡
 
 ---
 
@@ -403,6 +420,7 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 |---|---|
 | フロントエンド | Vercel / Azure Static Web Apps |
 | バックエンド API | ConoHa VPS / Docker / nginx |
+| Reminder Batch | Docker / systemd service / timer |
 | データベース | PostgreSQL 16 / Docker Volume |
 | HTTPS | Let's Encrypt |
 | 独自ドメイン | `api.oybusin.com` |
@@ -414,6 +432,8 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 - Dockerを利用した本番相当環境
 - nginxを利用したリバースプロキシ
 - 独自ドメイン・HTTPSを含むVPS運用
+- 外部起動可能なBatchとsystemdによる定刻ジョブ実行
+- 終了コード・journalによるジョブ実行結果の追跡
 
 まで含めて確認できる構成としています。
 
@@ -455,6 +475,17 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 - Production Compose：`compose.prod.yml`
 - nginx設定：`deploy/nginx/default.conf`
 
+### Reminder Batch（ConoHa VPS）
+
+- Batch Project：`backend/InvoiceSystem.Batch/`
+- Dockerfile：`backend/InvoiceSystem.Batch/Dockerfile`
+- 起動スクリプト：`deploy/batch/run-reminder-batch.sh`
+- systemd service：`deploy/systemd/invoice-reminder-batch.service`
+- systemd timer：`deploy/systemd/invoice-reminder-batch.timer`
+- 実行ログ：`journalctl -u invoice-reminder-batch.service`
+- 検証時は08:35 JSTの定刻起動を確認し、証跡取得後はtimerを無効化
+- API内`ReminderJobWorker`は`ReminderWorker__Enabled=false`で停止可能
+
 ### その他
 
 - CORS：
@@ -482,6 +513,9 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 | [詳細設計書](./docs/design/detail-design.md)           | API、DB、業務ロジック、PDF/CSV、認証・認可、テスト設計を実装寄りに整理 |
 | [Architecture Overview](./docs/architecture.md)   | 設計意図、全体構成、技術選定、Lite版としての方針を整理             |
 | [結合テスト結果](./docs/Integration_test.md)             | 旧Heroku環境で実施した画面・API・認証・権限制御の確認結果         |
+| [Batch 要件定義](./docs/batch/01_requirements.md) | 外部ジョブ管理を想定したReminder Batchの要件を整理 |
+| [Batch 基本設計](./docs/batch/02_basic-design.md) | CLI、終了コード、排他、Retry、Docker / VPS / systemd構成を整理 |
+| [Batch 詳細設計](./docs/batch/03_detail-design.md) | Processor、Docker起動、systemd service / timer、journal等の実装詳細 |
 
 ### 図・ダイアグラム
 
@@ -510,6 +544,10 @@ VPSへ移行したことで、PaaS任せではなく以下のインフラ構成�
 - 請求ステータスは `Invoices.StatusId` として保持しつつ、入金割当の変更時に再計算する
   - 未入金 / 一部入金 / 入金済み / 期限超過 を入金割当と支払期限から判定
   - 入金割当を正として扱うことで、後からの修正・再計算に耐える設計とする
+- Reminder BatchはAPI常駐処理と分離可能なCLIとして実装
+  - `ReminderJobs` の状態遷移とRetryCountで再実行性を確保
+  - PostgreSQLの `FOR UPDATE SKIP LOCKED` で多重起動時の排他を実施
+  - VPSではsystemdからDocker Batchを起動し、終了コードとjournalで結果を追跡
 
 ---
 
@@ -604,9 +642,10 @@ invoice-management-system-lite/
 │  ├─ tests/
 │  └─ README.md
 │
-├─ backend/                          # ASP.NET Core Web API
+├─ backend/                          # ASP.NET Core API / Batch
 │  ├─ InvoiceSystem.Api/
 │  ├─ InvoiceSystem.Application/
+│  ├─ InvoiceSystem.Batch/           # 外部起動可能なReminder CLI Batch
 │  ├─ InvoiceSystem.Domain/
 │  ├─ InvoiceSystem.Infrastructure/
 │  ├─ InvoiceSystem.Tests/
@@ -625,13 +664,21 @@ invoice-management-system-lite/
 │  └─ README.md
 │
 ├─ docs/
+│  ├─ batch/                         # Batch 要件 / 基本 / 詳細設計
 │  ├─ design/
 │  ├─ diagram/
+│  ├─ evidence/
+│  │  └─ batch/                      # Batch / VPS / systemd 動作証跡
 │  └─ screenshots/
 │
 ├─ docker-compose.yml
 ├─ compose.prod.yml                   # VPS本番用Docker Compose
 ├─ deploy/
+│  ├─ batch/
+│  │  └─ run-reminder-batch.sh        # Docker Batch起動 / ExitCode伝播
+│  ├─ systemd/
+│  │  ├─ invoice-reminder-batch.service
+│  │  └─ invoice-reminder-batch.timer
 │  ├─ nginx/
 │  │  └─ default.conf                 # nginx / HTTPS / Reverse Proxy設定
 │  └─ certbot/
@@ -669,6 +716,7 @@ invoice-management-system-lite/
 - Backend API / DB は2026年8月にHerokuからConoHa VPSへ移行し、Docker Composeで運用しています。
 - フロントエンドはVercel / Azure Static Web Appsで公開し、VPS上のAPI `https://api.oybusin.com` と連携しています。
 - VPSではnginx、独自ドメイン、Let's Encrypt、UFW、Docker Volumeを含めた本番相当のインフラ構成を管理しています。
+- Reminder BatchはDockerで実行し、systemd service / timerによる定刻起動、終了コード判定、journalctlによるログ追跡まで検証しています。
 
   
 ※ 設計資料（ER図・状態遷移図）は /docs 配下にまとめて掲載しています。
