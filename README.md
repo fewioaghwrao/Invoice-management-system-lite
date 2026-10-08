@@ -78,6 +78,23 @@ Web版とWPF版の2種類のクライアントを実装しています。
 - [バックエンドAPI](./backend/README.md)
 - [WPFデスクトップクライアント](./wpfclient/README.md)
 
+### 関連ツール
+
+#### Microsoft Access 月次照合ツール
+
+Invoice Management System の請求・入金・入金割当データを利用して、
+月次照合を行う Microsoft Access / VBA 製の業務支援ツールを
+別リポジトリで実装しています。
+
+- Admin JWT認証によるAPI連携
+- Access Export APIからZIP / 3CSVを取得
+- 請求・入金・入金割当の再集計
+- 未入金・一部入金・過剰割当・未割当入金などの照合
+- 対象年月の月次集計
+- Accessレポートによる月次確認
+
+▶ [Invoice Access Operations Tool](https://github.com/fewioaghwrao/Invoice-Access-Operations-Tool-)
+
 ---
 
 ## デモURL

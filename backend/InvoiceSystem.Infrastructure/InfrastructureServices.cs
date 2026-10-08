@@ -1,6 +1,8 @@
 ﻿using InvoiceSystem.Application.Services;
+using InvoiceSystem.Application.Services.AccessExport;
 using InvoiceSystem.Application.Services.Sales;
 using InvoiceSystem.Infrastructure.Services;
+using InvoiceSystem.Infrastructure.Services.AccessExport;
 using InvoiceSystem.Infrastructure.Services.Sales;
 using Microsoft.Extensions.DependencyInjection;
 using InvoiceSystem.Application.Common.Interfaces;
@@ -17,6 +19,9 @@ public static class InfrastructureServices
 
         // 売上一覧（/api/sales）
         services.AddScoped<ISalesService, SalesService>();
+
+        // Access 月次照合用 Export
+        services.AddScoped<IAccessExportService, AccessExportService>();
 
         services.AddScoped<IAdminSummaryService, AdminSummaryService>();
 

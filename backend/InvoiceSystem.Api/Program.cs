@@ -228,6 +228,10 @@ app.MapPaymentEndpoints();
 app.MapCollectionEndpoints();
 app.MapAuthEndpoints();
 app.MapSalesEndpoints();
+
+// Access月次照合用Export
+app.MapAccessExportEndpoints();
+
 app.MapAdminEndpoints();
 app.MapMyAccountEndpoints();
 app.MapAdminOperationLogEndpoints();
