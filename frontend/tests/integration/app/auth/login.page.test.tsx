@@ -25,7 +25,7 @@ describe("LoginPage", () => {
   it("初期表示で主要要素を表示する", () => {
     render(<LoginPage />);
 
-    expect(screen.getByRole("heading", { name: "ログイン" })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { name: "ログイン" })).toHaveLength(2);
     expect(screen.getByLabelText("メールアドレス")).toBeInTheDocument();
     expect(screen.getByLabelText("パスワード")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "ログイン" })).toBeInTheDocument();

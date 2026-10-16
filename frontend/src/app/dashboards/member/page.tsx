@@ -8,140 +8,111 @@ type QuickLink = {
   title: string;
   desc: string;
   icon: string;
-  badge: { label: string; tone: "done" | "planned" | "info" };
 };
 
-function badgeClass(tone: QuickLink["badge"]["tone"]) {
-  switch (tone) {
-    case "done":
-      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-200";
-    case "planned":
-      return "border-amber-500/30 bg-amber-500/10 text-amber-200";
-    default:
-      return "border-slate-500/30 bg-slate-500/10 text-slate-200";
-  }
-}
-
 function cardAccent(href: string) {
-  if (href.startsWith("/account/invoices")) return "hover:border-sky-500/60"; // 請求書
-  if (href === "/account/unpaid") return "hover:border-amber-500/60"; // 未入金（注意喚起）
-  if (href === "/account/profile") return "hover:border-emerald-500/60"; // 設定
+  if (href.startsWith("/account/invoices")) return "hover:border-sky-500/60";
+  if (href === "/account/unpaid") return "hover:border-amber-500/60";
+  if (href === "/account/profile") return "hover:border-emerald-500/60";
   return "hover:border-slate-500/60";
 }
 
-export default async function MemberDashboardPage() {
-  const links: QuickLink[] = [
-    {
-      href: "/account/invoices",
-      title: "自分の請求書一覧",
-      desc: "請求書の金額・支払期限・入金状況を確認できます。",
-      icon: "📄",
-      badge: { label: "実装済み", tone: "done" },
-    },
-    {
-      href: "/account/unpaid",
-      title: "入金確認（未入金）",
-      desc: "未入金の請求書を確認し、対応が必要なものを把握できます。",
-      icon: "⏳",
-      badge: { label: "実装済み", tone: "done" },
-    },
-    {
-      href: "/account/profile",
-      title: "登録情報の確認",
-      desc: "氏名・メール・住所などの登録情報を確認/変更できます。",
-      icon: "👤",
-      badge: { label: "実装済み", tone: "done" }, // もし未実装なら planned に
-    },
-  ];
+const links: QuickLink[] = [
+  {
+    href: "/account/invoices",
+    title: "請求書一覧",
+    desc: "請求書の金額・支払期限・入金状況を確認できます。",
+    icon: "📄",
+  },
+  {
+    href: "/account/unpaid",
+    title: "未入金の確認",
+    desc: "未入金の請求書と支払期限を確認できます。",
+    icon: "⏳",
+  },
+  {
+    href: "/account/profile",
+    title: "登録情報",
+    desc: "氏名・メールアドレス・住所などを確認・変更できます。",
+    icon: "👤",
+  },
+];
 
+export default function MemberDashboardPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950">
+    <div className="flex min-h-screen flex-col bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950">
+      {/* スマートフォンはタイトル行とユーザー操作行を分ける */}
       <header className="border-b border-slate-800 bg-slate-950/40 backdrop-blur">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4 sm:py-5 flex items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-5">
           <div className="min-w-0">
-            <h1 className="truncate text-base sm:text-lg font-semibold text-slate-100">
-              会員用ダッシュボード
+            <h1 className="text-lg font-semibold text-slate-100">
+              マイページ
             </h1>
-            <p className="mt-1 hidden sm:block text-xs text-slate-400">
-              自分の請求書・入金状況を確認するメイン画面です。
+            <p className="mt-1 text-sm text-slate-400 sm:text-xs">
+              請求書やお支払い状況を確認できます。
             </p>
           </div>
 
-<div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
-  <CurrentUserBadge />
-  <LogoutButton />
-</div>
+          <div className="flex w-full flex-wrap items-center justify-between gap-2 sm:w-auto sm:justify-end sm:gap-3">
+            <CurrentUserBadge />
+            <LogoutButton />
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
-        {/* ポートフォリオ最適化：意図を短く明示 */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 sm:p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-100">
-            できること（会員向け）
-          </h2>
-        <p className="mt-2 text-xs sm:text-sm text-slate-300/90 leading-relaxed">
-            請求書の一覧・支払期限・入金ステータスを確認し、未入金の把握ができます。
-            <span className="hidden sm:inline">
-              {" "}
-              Lite版はコア機能の完成度を優先し、運用系（自動リマインド等）は拡張予定として整理しています。
-            </span>
-          </p>
-        </section>
+      {/* メインコンテンツ：余白部分を伸ばし、フッターを画面下部へ */}
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 px-4 py-5 sm:space-y-5 sm:px-6 sm:py-8">
+        <h2 className="text-base font-semibold text-slate-100">
+          ご利用メニュー
+        </h2>
 
-        {/* クイックリンク（Link入れ子禁止） */}
-        <section className="grid gap-4 sm:gap-6 md:grid-cols-2">
+        {/* スマホ1列、タブレット2列、PC3列 */}
+        <nav
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3"
+          aria-label="会員向けメニュー"
+        >
           {links.map((x) => (
             <Link
               key={x.href}
               href={x.href}
               className={[
-                "group rounded-2xl border border-slate-800 bg-slate-900/60 p-5 sm:p-6 shadow-sm transition",
+                "group flex h-full min-h-36 flex-col rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm transition sm:p-5",
                 "hover:-translate-y-0.5 hover:bg-slate-900/80 hover:shadow-lg",
                 cardAccent(x.href),
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500/60",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
               ].join(" ")}
               aria-label={`${x.title}へ`}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-semibold text-slate-100 flex items-center gap-2">
-                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-700 bg-slate-950/40 text-base">
-                      {x.icon}
-                    </span>
-                    <span className="truncate">{x.title}</span>
-                  </h3>
-                  <p className="mt-2 text-xs sm:text-sm text-slate-300/90">
-                    {x.desc}
-                  </p>
-                </div>
-
+              <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
                 <span
-                  className={[
-                    "shrink-0 inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium",
-                    badgeClass(x.badge.tone),
-                  ].join(" ")}
+                  className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-700 bg-slate-950/40 text-lg"
+                  aria-hidden="true"
                 >
-                  {x.badge.label}
+                  {x.icon}
                 </span>
-              </div>
+                <span>{x.title}</span>
+              </h3>
 
-              <div className="mt-4 flex items-center justify-between">
-                <p className="text-[11px] text-slate-500">
-                  ※ {x.badge.tone === "planned" ? "段階的に拡張予定" : "動作確認済み"}
-                </p>
-<span className="text-[11px] rounded-full border border-slate-700 bg-slate-950/40 px-2 py-1 text-slate-300 group-hover:text-slate-100">
-  開く →
-</span>
+              <p className="mt-3 text-sm leading-relaxed text-slate-300/90">
+                {x.desc}
+              </p>
+
+              <div className="mt-auto flex justify-end pt-4">
+                <span
+                  className="rounded-full border border-slate-700 bg-slate-950/40 px-3 py-1.5 text-xs text-slate-300 group-hover:text-slate-100"
+                  aria-hidden="true"
+                >
+                  開く →
+                </span>
               </div>
             </Link>
           ))}
-        </section>
+        </nav>
       </main>
 
       <footer className="border-t border-slate-800 bg-slate-950/30">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4 text-[11px] text-slate-500">
-          Invoice &amp; Payment Status Dashboard (Lite) / Member Dashboard
+        <div className="mx-auto w-full max-w-5xl px-4 py-4 text-xs text-slate-500 sm:px-6">
+          Invoice Management System
         </div>
       </footer>
     </div>

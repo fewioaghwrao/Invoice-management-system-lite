@@ -110,29 +110,36 @@ export default function LoginPage() {
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-4 py-8">
         <div className="w-full max-w-3xl grid gap-10 rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur">
-          <div className="hidden flex-col justify-between md:flex">
-            <div>
-              <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-sky-300">
-                Invoice Dashboard Lite
-              </span>
-              <h1 className="mt-4 text-2xl font-semibold tracking-tight">共通ログイン</h1>
-              <p className="mt-2 text-sm text-slate-300 leading-relaxed">
-                請求書・入金ステータスダッシュボード（Lite版）へログインします。
-                管理者ロールと一般会員ロールで、ダッシュボードの表示内容が切り替わります。
-              </p>
-            </div>
-          </div>
+        <div className="hidden flex-col justify-between md:flex">
+  <div>
+    <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-sky-300">
+      Invoice Management System
+    </span>
+
+    <h1 className="mt-4 text-2xl font-semibold tracking-tight">
+      ログイン
+    </h1>
+
+    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+      請求・入金情報を確認するため、ログインしてください。
+    </p>
+  </div>
+</div>
 
           <div className="rounded-2xl bg-slate-900/80 p-6 shadow-lg">
-            <div className="mb-6 md:hidden">
-              <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-sky-300">
-                Invoice Dashboard Lite
-              </span>
-              <h1 className="mt-3 text-xl font-semibold tracking-tight">ログイン</h1>
-              <p className="mt-1 text-xs text-slate-300">
-                メールアドレスとパスワードを入力してサインインしてください。
-              </p>
-            </div>
+<div className="mb-6 md:hidden">
+  <span className="inline-flex items-center rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-sky-300">
+    Invoice Management System
+  </span>
+
+  <h1 className="mt-3 text-xl font-semibold tracking-tight">
+    ログイン
+  </h1>
+
+  <p className="mt-1 text-xs text-slate-300">
+    請求・入金情報を確認するため、ログインしてください。
+  </p>
+</div>
 
             <form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1">
@@ -217,18 +224,19 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="mt-4 flex flex-col gap-2 text-xs text-slate-300">
-              <p className="text-center">
-                アカウントをお持ちでない方は、こちらから新規登録できます。
-              </p>
-              <button
-                type="button"
-                onClick={() => router.push("/auth/register")}
-                className="inline-flex w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800"
-              >
-                新規会員登録
-              </button>
-            </div>
+<div className="mt-4 flex flex-col gap-2 text-xs text-slate-300">
+  <p className="text-center">
+    初めてご利用の方はこちら
+  </p>
+
+  <button
+    type="button"
+    onClick={() => router.push("/auth/register")}
+    className="inline-flex w-full items-center justify-center rounded-xl border border-slate-700 bg-slate-900/60 px-4 py-2.5 text-xs font-semibold text-slate-100 transition hover:bg-slate-800"
+  >
+    新規会員登録
+  </button>
+</div>
 
             <div className="mt-3 text-center">
               <button

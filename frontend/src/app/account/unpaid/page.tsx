@@ -129,7 +129,7 @@ const items = [...(unpaid.items ?? []), ...(partial.items ?? [])]
       <div className="flex items-center justify-between">
         <div>
           <div className="text-sm font-semibold text-slate-100">
-            入金確認（未払い状況）
+            未入金の確認
           </div>
           <p className="mt-1 text-xs text-slate-400">
             未入金 / 一部入金の請求書をまとめて確認できます。
@@ -257,10 +257,6 @@ const items = [...(unpaid.items ?? []), ...(partial.items ?? [])]
         </div>
       </section>
 
-      <div className="text-[11px] text-slate-500">
-※ 入金予定日登録／自動リマインド機能は
-  フル版での実装を想定しています
-      </div>
     </div>
   );
 }

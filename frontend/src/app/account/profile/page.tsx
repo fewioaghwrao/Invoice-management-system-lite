@@ -41,7 +41,7 @@ export default async function AccountProfilePage() {
     <div className="space-y-4">
       <div>
         <h2 className="text-sm sm:text-base font-semibold text-slate-100">
-          プロフィール
+          登録情報
         </h2>
         <p className="mt-1 text-xs text-slate-400">
           請求書の宛名や連絡先に使用される情報です。
