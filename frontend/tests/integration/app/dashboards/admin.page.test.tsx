@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import AdminDashboardPage from "@/app/dashboards/admin/page";
 import { apiGetServer } from "@/lib/api.server";
 
@@ -103,8 +103,8 @@ describe("AdminDashboardPage", () => {
 
 expect(screen.getByText(/[¥￥]1,200,000/)).toBeInTheDocument();
 expect(screen.getAllByText(/[¥￥]300,000/).length).toBeGreaterThan(0);
-expect(screen.getByText("12")).toBeInTheDocument();
-expect(screen.getByText("8")).toBeInTheDocument();
+expect(screen.getByText("12 件")).toBeInTheDocument();
+expect(screen.getByText("8 件")).toBeInTheDocument();
 expect(screen.getByText("75.0%")).toBeInTheDocument();
 
 expect(screen.getAllByText("INV-0010").length).toBeGreaterThan(0);
@@ -151,11 +151,11 @@ expect(screen.getAllByText("入金割当を追加しました").length).toBeGrea
     render(element);
 
 expect(
-  screen.getAllByText("現在、未入金の請求書はありません。").length
+  screen.getAllByText("未入金の請求書はありません。").length
 ).toBeGreaterThan(0);
 
 expect(
-  screen.getByText("未回収がある顧客がありません（回収率ワースト対象なし）")
+  screen.getByText("未回収残額のある顧客はありません。")
 ).toBeInTheDocument();
 
 expect(
@@ -191,12 +191,12 @@ expect(
 
     render(element);
 
-    expect(screen.getByRole("link", { name: "前年へ" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "2025年へ" })).toHaveAttribute(
       "href",
       "/dashboards/admin?year=2025"
     );
 
-    expect(screen.getByRole("link", { name: "翌年へ" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "2027年へ" })).toHaveAttribute(
       "href",
       "/dashboards/admin?year=2027"
     );
@@ -401,10 +401,15 @@ it("期限超過表示と下段リンクを表示する", async () => {
 
   expect(screen.getAllByText("期限超過").length).toBeGreaterThan(0);
 
-  expect(screen.getByRole("link", { name: /請求書一覧/ })).toHaveAttribute("href", "/invoices");
-  expect(screen.getByRole("link", { name: /会員一覧/ })).toHaveAttribute("href", "/members");
-  expect(screen.getByRole("link", { name: /売上一覧/ })).toHaveAttribute("href", "/sales");
-  expect(screen.getByRole("link", { name: /入金一覧/ })).toHaveAttribute("href", "/payments");
+  // PC用ナビゲーションに限定する（PC・スマホ双方に同名リンクがあるため）。
+  const adminNav = within(
+    screen.getByRole("navigation", { name: "管理者画面の移動" })
+  );
+
+  expect(adminNav.getByRole("link", { name: /請求書一覧/ })).toHaveAttribute("href", "/invoices");
+  expect(adminNav.getByRole("link", { name: /会員一覧/ })).toHaveAttribute("href", "/members");
+  expect(adminNav.getByRole("link", { name: /売上一覧/ })).toHaveAttribute("href", "/sales");
+  expect(adminNav.getByRole("link", { name: /入金一覧/ })).toHaveAttribute("href", "/payments");
 });
 
 it("操作ログで summary なし・entity 不明・entityId なしのフォールバックを表示する", async () => {
