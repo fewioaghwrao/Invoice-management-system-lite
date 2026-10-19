@@ -13,23 +13,7 @@ jest.mock("next/link", () => {
     children: React.ReactNode;
     className?: string;
   }) {
-    return (
-      <a href={href} className={className}>
-        {children}
-      </a>
-    );
-  };
-});
-
-jest.mock("@/components/CurrentUserBadge", () => {
-  return function MockCurrentUserBadge() {
-    return <div>CurrentUserBadge</div>;
-  };
-});
-
-jest.mock("@/components/LogoutButton", () => {
-  return function MockLogoutButton() {
-    return <button type="button">LogoutButton</button>;
+    return <a href={href} className={className}>{children}</a>;
   };
 });
 
@@ -52,33 +36,28 @@ describe("PaymentDetailPage", () => {
 
     render(element);
 
-    expect(screen.getByText("入金詳細（割当）")).toBeInTheDocument();
-    expect(screen.getByText("入金を請求書へ割り当てます。")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "入金詳細（割当）" })).toBeInTheDocument();
+    expect(screen.getByText("入金状況を確認し、請求書への割当を管理します。"))
+      .toBeInTheDocument();
 
     expect(screen.getByRole("link", { name: "ダッシュボード" })).toHaveAttribute(
-      "href",
-      "/dashboards/admin"
+      "href", "/dashboards/admin"
     );
     expect(screen.getByRole("link", { name: "入金一覧" })).toHaveAttribute(
-      "href",
-      "/payments"
+      "href", "/payments"
     );
     expect(screen.getByText("入金詳細")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "← 入金一覧へ" })).toHaveAttribute(
-      "href",
-      "/payments"
+      "href", "/payments"
     );
   });
 
-  it("CurrentUserBadge / LogoutButton / PaymentDetailClient を表示する", async () => {
+  it("PaymentDetailClient を表示する", async () => {
     const element = await PaymentDetailPage({
       params: Promise.resolve({ id: "123" }),
     });
 
     render(element);
-
-    expect(screen.getByText("CurrentUserBadge")).toBeInTheDocument();
-    expect(screen.getByText("LogoutButton")).toBeInTheDocument();
     expect(screen.getByText("PaymentDetailClient")).toBeInTheDocument();
   });
 

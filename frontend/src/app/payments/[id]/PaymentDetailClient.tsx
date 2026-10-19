@@ -297,7 +297,7 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
 
   if (!payment) {
     return (
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
+      <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
         <p className="text-sm text-slate-300">データ取得中/または見つかりません。</p>
         {error && <pre className="mt-3 whitespace-pre-wrap text-xs text-rose-200">{error}</pre>}
       </section>
@@ -305,9 +305,9 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       {/* サマリー */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
+      <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-xs text-slate-400">入金ID</p>
@@ -319,23 +319,23 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
           </span>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
             <p className="text-[11px] text-slate-400">入金額</p>
-            <p className="mt-2 text-xl font-semibold text-emerald-300">{formatCurrency(payment.amount)}</p>
+            <p className="mt-2 break-words text-xl font-semibold text-emerald-300">{formatCurrency(payment.amount)}</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
             <p className="text-[11px] text-slate-400">割当合計</p>
-            <p className="mt-2 text-xl font-semibold">{formatCurrency(payment.allocatedAmount)}</p>
+            <p className="mt-2 break-words text-xl font-semibold">{formatCurrency(payment.allocatedAmount)}</p>
             <p className="mt-1 text-[11px] text-slate-500">（入力中合計: {formatCurrency(allocatedSum)}）</p>
           </div>
           <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
             <p className="text-[11px] text-slate-400">未割当</p>
-            <p className="mt-2 text-xl font-semibold text-amber-300">{formatCurrency(payment.unallocatedAmount)}</p>
+            <p className="mt-2 break-words text-xl font-semibold text-amber-300">{formatCurrency(payment.unallocatedAmount)}</p>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3 text-xs text-slate-200">
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3 text-xs text-slate-200">
           <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
             <p className="text-[11px] text-slate-400">入金日</p>
             <p className="mt-2 font-medium">{payment.paymentDate.slice(0, 10)}</p>
@@ -348,7 +348,7 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
       </section>
 
       {/* 割当入力 */}
-      <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
+      <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h2 className="text-sm font-semibold text-slate-100">請求書への割当</h2>
@@ -371,8 +371,8 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
             const loading = !!loadingCandRow[idx];
 
             return (
-              <div key={idx} className="grid gap-2 rounded-xl border border-slate-800 bg-slate-950/30 p-3 md:grid-cols-12">
-                <div className="md:col-span-7">
+              <div key={idx} className="grid min-w-0 gap-3 rounded-xl border border-slate-800 bg-slate-950/30 p-3 lg:grid-cols-12">
+                <div className="min-w-0 lg:col-span-7">
                   <label className="text-[11px] font-medium text-slate-300">請求書（検索して選択）</label>
 
                   <div className="relative mt-1">
@@ -381,7 +381,7 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
                       onChange={(e) => {
                         updateRow(idx, { invoiceQuery: e.target.value, invoiceId: null, invoiceNumber: "" });
                       }}
-                      className="w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 pr-20 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                      className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 pr-20 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                       placeholder="例：INV-2025 / 会員名（2文字以上）"
                       disabled={saving}
                     />
@@ -437,19 +437,19 @@ export default function PaymentDetailClient({ paymentId }: { paymentId: string }
                   </div>
                 </div>
 
-                <div className="md:col-span-3">
+                <div className="min-w-0 lg:col-span-3">
                   <label className="text-[11px] font-medium text-slate-300">割当金額（円）</label>
                   <input
                     value={r.amount}
                     onChange={(e) => updateRow(idx, { amount: e.target.value })}
-                    className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                    className="mt-1 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     placeholder="例：45000"
                     inputMode="numeric"
                     disabled={saving}
                   />
                 </div>
 
-                <div className="md:col-span-2 flex items-end justify-end">
+                <div className="flex items-end justify-end lg:col-span-2">
                   <button
                     type="button"
                     onClick={() => removeRow(idx)}

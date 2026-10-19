@@ -1,6 +1,4 @@
 import Link from "next/link";
-import CurrentUserBadge from "@/components/CurrentUserBadge";
-import LogoutButton from "@/components/LogoutButton";
 import PaymentDetailClient from "./PaymentDetailClient";
 
 export default async function PaymentDetailPage({
@@ -11,41 +9,31 @@ export default async function PaymentDetailPage({
   const { id } = await params;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#10b981_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
-
-<header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-  <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0">
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
-          <Link href="/dashboards/admin" className="hover:text-sky-300">ダッシュボード</Link>
-          <span>/</span>
-          <Link href="/payments" className="hover:text-sky-300">入金一覧</Link>
-          <span>/</span>
-          <span>入金詳細</span>
+    <div className="w-full min-w-0 text-slate-50">
+      <header className="mb-5 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-sm sm:mb-6 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <nav aria-label="パンくずリスト" className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <Link href="/dashboards/admin" className="hover:text-sky-300">ダッシュボード</Link>
+              <span aria-hidden="true">/</span>
+              <Link href="/payments" className="hover:text-sky-300">入金一覧</Link>
+              <span aria-hidden="true">/</span>
+              <span>入金詳細</span>
+            </nav>
+            <h1 className="mt-1 break-words text-lg font-semibold">入金詳細（割当）</h1>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              入金状況を確認し、請求書への割当を管理します。
+            </p>
+          </div>
+          <Link
+            href="/payments"
+            className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/60 px-3 text-xs font-medium text-slate-200 hover:bg-slate-800"
+          >
+            ← 入金一覧へ
+          </Link>
         </div>
-
-        <h1 className="mt-1 text-lg font-semibold">入金詳細（割当）</h1>
-        <p className="mt-1 text-xs text-slate-400">入金を請求書へ割り当てます。</p>
-      </div>
-
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <Link href="/payments" className="text-xs text-slate-300 hover:text-slate-100">
-          ← 入金一覧へ
-        </Link>
-
-        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:justify-end">
-          <CurrentUserBadge />
-          <LogoutButton />
-        </div>
-      </div>
-    </div>
-  </div>
-</header>
-
-
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-8">
+      </header>
+      <main className="w-full min-w-0">
         <PaymentDetailClient paymentId={decodeURIComponent(id)} />
       </main>
     </div>

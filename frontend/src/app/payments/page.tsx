@@ -1,7 +1,5 @@
 // src/app/payments/page.tsx
 import Link from "next/link";
-import CurrentUserBadge from "@/components/CurrentUserBadge";
-import LogoutButton from "@/components/LogoutButton";
 import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
@@ -251,51 +249,34 @@ export default async function PaymentsPage({
   const totalPages = Math.max(1, Math.ceil(result.totalCount / result.pageSize));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#10b981_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
-
-<header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-  <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      {/* 左：タイトル */}
-      <div className="min-w-0">
-        <h1 className="text-lg font-semibold">入金一覧</h1>
-        <p className="mt-1 text-xs text-slate-400">
-          入金明細を一覧で確認し、請求書への割当状況（未割当/一部/完了）を把握できます。
-        </p>
-      </div>
-
-      {/* 右：操作群 */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-        <Link
-          href="/dashboards/admin"
-          className="text-xs text-slate-300 hover:text-slate-100"
-        >
-          ← 管理者トップへ
-        </Link>
-
-        <Link
-          href="/payments/new"
-          className="inline-flex h-9 w-full sm:w-auto items-center justify-center whitespace-nowrap rounded-lg bg-emerald-600 px-4 text-xs font-medium leading-none text-slate-50 hover:bg-emerald-500"
-        >
-          + 入金登録
-        </Link>
-
-        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap sm:justify-end">
-          <CurrentUserBadge />
-          <LogoutButton />
+    <div className="w-full min-w-0 text-slate-50">
+      {/* ページ固有ヘッダー: 共通ヘッダーの下、サイドバーの右 */}
+      <header className="mb-5 rounded-2xl border border-slate-800 bg-slate-900/70 p-4 shadow-sm sm:mb-6 sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <nav aria-label="パンくずリスト" className="flex items-center gap-2 text-xs text-slate-400">
+              <Link href="/dashboards/admin" className="hover:text-sky-300">ダッシュボード</Link>
+              <span aria-hidden="true">/</span>
+              <span>入金一覧</span>
+            </nav>
+            <h1 className="mt-1 text-lg font-semibold text-slate-50">入金一覧</h1>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              入金明細と請求書への割当状況（未割当・一部割当・割当済）を確認できます。
+            </p>
+          </div>
+          <Link
+            href="/payments/new"
+            className="inline-flex min-h-9 shrink-0 items-center justify-center rounded-lg bg-emerald-600 px-4 text-xs font-medium text-white transition hover:bg-emerald-500"
+          >
+            ＋ 入金登録
+          </Link>
         </div>
-      </div>
-    </div>
-  </div>
-</header>
-
-
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-8 space-y-6">
+      </header>
+      <main className="w-full min-w-0 space-y-5 sm:space-y-6">
         {/* 検索・絞り込み（GET） */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-          <form className="flex flex-wrap items-end gap-3" action="/payments">
-            <div className="flex flex-col gap-1">
+          <form className="grid min-w-0 grid-cols-1 items-end gap-3 sm:grid-cols-2 xl:grid-cols-6" action="/payments">
+            <div className="flex min-w-0 flex-col gap-1">
               <label className="text-[11px] text-slate-400">年</label>
               <select
                 name="year"
@@ -308,7 +289,7 @@ export default async function PaymentsPage({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <label className="text-[11px] text-slate-400">月</label>
               <select
                 name="month"
@@ -322,7 +303,7 @@ export default async function PaymentsPage({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <label className="text-[11px] text-slate-400">割当ステータス</label>
               <select
                 name="status"
@@ -336,13 +317,13 @@ export default async function PaymentsPage({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 flex-col gap-1">
               <label className="text-[11px] text-slate-400">検索（入金ID / 名義 / 請求書番号）</label>
               <input
                 name="q"
                 defaultValue={result.keyword}
                 placeholder="例: 123 / クライアントC / INV-004"
-                className="h-9 w-full md:w-80 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
+                className="h-9 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
               />
             </div>
 
@@ -361,22 +342,22 @@ export default async function PaymentsPage({
           </form>
 
           {/* サマリー */}
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
               <p className="text-[11px] text-slate-400">入金合計</p>
-              <p className="mt-2 text-xl font-semibold text-emerald-300">
+              <p className="mt-2 break-words text-xl font-semibold tabular-nums text-emerald-300">
                 {formatCurrency(result.summary.totalAmount)}
               </p>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
               <p className="text-[11px] text-slate-400">割当済み合計</p>
-              <p className="mt-2 text-xl font-semibold">
+              <p className="mt-2 break-words text-xl font-semibold tabular-nums">
                 {formatCurrency(result.summary.allocatedTotal)}
               </p>
             </div>
             <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
               <p className="text-[11px] text-slate-400">未割当合計</p>
-              <p className="mt-2 text-xl font-semibold text-amber-300">
+              <p className="mt-2 break-words text-xl font-semibold tabular-nums text-amber-300">
                 {formatCurrency(result.summary.unallocatedTotal)}
               </p>
             </div>
@@ -385,14 +366,14 @@ export default async function PaymentsPage({
 
         {/* 一覧 */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-slate-100">入金一覧（{result.totalCount}件）</h2>
             <p className="text-[11px] text-slate-400">入金詳細→割当へ遷移できます</p>
           </div>
 
           {/* PC/タブレット：テーブル */}
-          <div className="hidden md:block overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
-            <table className="min-w-full text-xs">
+          <div className="hidden max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40 md:block">
+            <table className="w-full min-w-[1080px] text-xs">
               <thead className="bg-slate-900/90">
                 <tr className="text-left text-[11px] text-slate-400">
                   <th className="px-4 py-2 font-medium">入金ID</th>
@@ -411,17 +392,17 @@ export default async function PaymentsPage({
                   const unallocated = Math.max(0, p.amount - p.allocatedAmount);
                   return (
                     <tr key={p.paymentId} className="border-t border-slate-800/80 hover:bg-slate-800/60">
-                      <td className="px-4 py-2 text-slate-100">{p.id}</td>
-                      <td className="px-4 py-2 text-slate-200">{formatDate(p.paidAt)}</td>
-                      <td className="px-4 py-2 text-slate-200">{p.payerName}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-slate-100">{p.id}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-slate-200">{formatDate(p.paidAt)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-slate-200">{p.payerName}</td>
                       <td className="px-4 py-2">
                         <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(p.status)}`}>
                           {statusLabel(p.status)}
                         </span>
                       </td>
-                      <td className="px-4 py-2 text-right text-emerald-200">{formatCurrency(p.amount)}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(p.allocatedAmount)}</td>
-                      <td className="px-4 py-2 text-right text-amber-200">{formatCurrency(unallocated)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-right text-emerald-200">{formatCurrency(p.amount)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-right">{formatCurrency(p.allocatedAmount)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-right text-amber-200">{formatCurrency(unallocated)}</td>
 <td className="px-4 py-2">
   {p.invoices.length === 0 ? (
     <span className="text-[11px] text-slate-500">—</span>
@@ -438,7 +419,7 @@ export default async function PaymentsPage({
   )}
 </td>
 
-                      <td className="px-4 py-2 text-right">
+                      <td className="whitespace-nowrap px-4 py-2 text-right">
                         <Link
                           href={`/payments/${p.paymentId}`}
                           className="inline-flex h-8 items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-3 text-[11px] font-medium text-slate-200 hover:bg-slate-800"
@@ -468,9 +449,9 @@ export default async function PaymentsPage({
               return (
                 <div key={p.paymentId} className="rounded-2xl border border-slate-800 bg-slate-950/30 p-4">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-slate-100">{p.id}</p>
-<p className="mt-1 text-[11px] text-slate-400 truncate">
+<p className="mt-1 break-words text-xs text-slate-400">
   {formatDate(p.paidAt)} / {p.payerName}
 </p>
                     </div>
@@ -529,7 +510,7 @@ export default async function PaymentsPage({
           </div>
 
           {/* ページネーション */}
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] text-slate-400">
               {result.page} / {totalPages} ページ
             </p>
