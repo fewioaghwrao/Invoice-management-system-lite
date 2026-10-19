@@ -103,13 +103,13 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
     invoices.length > 0 ? (page - 1) * PAGE_SIZE + invoices.length : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
+    <div className="min-w-0 text-slate-50">
       {/* 背景グラデーション */}
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
+
 
       {/* ヘッダー */}
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
+<header className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-sm">
+  <div className="w-full min-w-0 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-[11px] text-slate-400">
@@ -129,12 +129,6 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
 
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href="/dashboards/admin"
-                className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800 hover:text-sky-300 transition"
-              >
-                ← 管理トップへ
-              </Link>
-              <Link
   href="/invoices/new"
   className="inline-flex items-center justify-center rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-medium text-slate-50 shadow-sm shadow-sky-500/30 hover:bg-sky-500"
 >
@@ -146,15 +140,15 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
       </header>
 
       {/* メインコンテンツ */}
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="min-w-0 space-y-6 py-5 sm:py-6">
         {/* 🔍 検索フォーム（スマホ=1列〜2列 / md以上=今まで通り） */}
         <form
           className="grid gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md shadow-sky-900/20 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6"
           method="get"
         >
 {/* ✅ デモ用クイックフィルタ（保存済み検索） */}
-<div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-md shadow-sky-900/10">
-  <span className="text-[11px] text-slate-400 mr-1">デモ：</span>
+<div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-700/70 bg-slate-950/40 p-3 sm:col-span-2 md:col-span-4 lg:col-span-6">
+  <span className="text-[11px] text-slate-400 mr-1">クイック検索：</span>
 
   <Link
     href="/invoices?invoiceNumber=FIX&fromInvoiceDate=2025-11-01&toInvoiceDate=2025-12-31"
@@ -250,7 +244,7 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
           </div>
 
           {/* ボタンエリア：スマホでは2列幅で横並び */}
-          <div className="flex items-end gap-2 sm:col-span-2 md:col-span-2 lg:col-span-1">
+          <div className="flex items-end gap-2 sm:col-span-2 md:col-span-4 lg:col-span-2">
             <button
               type="submit"
               className="inline-flex w-full items-center justify-center rounded-lg bg-sky-600 px-4 py-2 text-xs font-medium text-slate-50 shadow-sm shadow-sky-500/30 transition hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:ring-offset-1 focus:ring-offset-slate-950"
@@ -337,8 +331,8 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
         </section>
 
         {/* ====== md以上：テーブル表示（操作列追加） ====== */}
-        <div className="hidden md:block overflow-x-auto">
-          <div className="min-w-[980px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 shadow-md">
+        <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
+          <div className="min-w-[920px] overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 shadow-md">
             <table className="min-w-full text-xs">
               <thead className="bg-slate-900/90 text-[11px] font-medium uppercase tracking-wide text-slate-400">
                 <tr>
@@ -366,7 +360,7 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
                         {inv.invoiceDate?.slice(0, 10) ?? "-"}
                       </td>
 
-                      <td className="px-4 py-3 align-middle font-semibold text-sky-300">
+                      <td className="px-4 py-3 align-middle font-semibold text-sky-300 break-all">
 <Link href={`${invoiceDetailHref(inv)}?from=${from}`} className="hover:text-sky-200">
   {inv.invoiceNumber}
 </Link>
@@ -376,7 +370,7 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
                         {inv.memberName}
                       </td>
 
-                      <td className="px-4 py-3 align-middle text-right tabular-nums text-slate-50">
+                      <td className="whitespace-nowrap px-4 py-3 align-middle text-right tabular-nums text-slate-50">
                         {formatCurrency(inv.totalAmount)}
                       </td>
 
@@ -384,12 +378,12 @@ const from = encodeURIComponent(qs.replace(/^\?/, "")); // 先頭?を外して�
                         {inv.dueDate?.slice(0, 10) ?? "-"}
                       </td>
 
-                      <td className="px-4 py-3 align-middle">
+                      <td className="whitespace-nowrap px-4 py-3 align-middle">
                         <span className={statusBadgeClass(inv.statusName)}>{inv.statusName}</span>
                       </td>
 
                       {/* 操作 */}
-                      <td className="px-4 py-3 align-middle">
+                      <td className="whitespace-nowrap px-4 py-3 align-middle">
                         <div className="flex justify-end gap-2">
  <Link
   href={`${invoiceDetailHref(inv)}?from=${from}`}

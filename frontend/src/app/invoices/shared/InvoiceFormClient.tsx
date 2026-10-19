@@ -194,12 +194,12 @@ export default function InvoiceFormClient(props: {
   const disableSave = saving || isLocked;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
+    <div className="min-w-0 text-slate-50">
 
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
+<header className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-sm">
+  <div className="w-full min-w-0 px-4 py-4 sm:px-5 sm:py-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <div className="flex items-center gap-2 text-[11px] text-slate-400">
                 <Link href="/dashboards/admin" className="hover:text-sky-300">
@@ -215,10 +215,10 @@ export default function InvoiceFormClient(props: {
               <h1 className="mt-1 text-lg font-semibold">{title}</h1>
               <p className="mt-1 text-xs text-slate-400">
                 {props.mode === "new"
-                  ? "新規で登録できるフォーム"
+                  ? "請求情報と明細を入力してください。"
                   : isLocked
                   ? "閲覧専用（入金済み/キャンセルのため編集不可）"
-                  : "既存データを編集するフォーム"}
+                  : "請求情報と明細を確認・変更できます。"}
               </p>
               <p className="mt-1 text-[11px] text-slate-500">
                 小計：{formatCurrency(subtotal)} / 合計：{formatCurrency(total)}
@@ -261,7 +261,7 @@ export default function InvoiceFormClient(props: {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="min-w-0 space-y-6 py-5 sm:py-6">
         {/* ✅ ロック時のバナー（A案の要） */}
         {isLocked && (
           <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-200">
@@ -274,7 +274,7 @@ export default function InvoiceFormClient(props: {
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-md">
           <h2 className="text-sm font-semibold">基本情報</h2>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="flex flex-col gap-1">
               <label className="text-[11px] font-medium text-slate-300">請求番号</label>
               <input

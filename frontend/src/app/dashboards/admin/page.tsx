@@ -1,7 +1,7 @@
 // src/app/dashboards/admin/page.tsx
 import Link from "next/link";
-import CurrentUserBadge from "@/components/CurrentUserBadge";
-import LogoutButton from "@/components/LogoutButton";
+import AdminSidebar from "@/components/admin/AdminSidebar";
+import AdminHeader from "@/components/admin/AdminHeader";
 import MonthlySalesChartClient from "@/components/MonthlySalesChartClient";
 import { apiGetServer } from "@/lib/api.server";
 import {
@@ -146,21 +146,6 @@ function formatCurrency(value: number): string {
   });
 }
 
-// 管理者向けナビゲーション（既存の遷移先を維持）
-const ADMIN_NAV = [
-  { href: "/dashboards/admin", label: "ダッシュボード", icon: "▦" },
-  { href: "/invoices", label: "請求書一覧", icon: "📄" },
-  { href: "/payments", label: "入金一覧", icon: "💰" },
-  { href: "/members", label: "会員一覧", icon: "👥" },
-  { href: "/sales", label: "売上一覧", icon: "📈" },
-  { href: "/sales/by-member", label: "顧客別集計", icon: "📊" },
-  {
-    href: "/dashboards/admin/operation-logs",
-    label: "操作ログ",
-    icon: "🕘",
-  },
-] as const;
-
 export default async function AdminDashboardPage({
   searchParams,
 }: {
@@ -221,101 +206,10 @@ export default async function AdminDashboardPage({
     <div className="relative flex min-h-screen flex-col bg-slate-950 text-slate-50">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-40" />
 
-      {/* ヘッダー: モバイルではタイトルと操作領域を上下に配置 */}
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-          <div className="min-w-0">
-            <h1 className="text-lg font-semibold leading-snug text-slate-50 sm:text-xl">
-              請求・入金ステータスダッシュボード（管理者）
-            </h1>
-            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
-              売上・未入金・請求書と入金の状況を確認できます。
-            </p>
-          </div>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between lg:justify-end">
-            <div className="flex items-center justify-between gap-2 rounded-xl border border-slate-700 bg-slate-900/60 px-3 py-2 sm:justify-start">
-              <Link
-                href={`/dashboards/admin?year=${selectedYear - 1}`}
-                className="rounded px-1 text-xs text-slate-300 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                aria-label={`${selectedYear - 1}年へ`}
-              >
-                ← {selectedYear - 1}
-              </Link>
-              <span className="rounded-full border border-slate-600 bg-slate-800 px-3 py-1 text-xs font-semibold text-slate-100">
-                {selectedYear} 年
-              </span>
-              <Link
-                href={`/dashboards/admin?year=${selectedYear + 1}`}
-                className="rounded px-1 text-xs text-slate-300 hover:text-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                aria-label={`${selectedYear + 1}年へ`}
-              >
-                {selectedYear + 1} →
-              </Link>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <CurrentUserBadge />
-              <LogoutButton />
-            </div>
-          </div>
-        </div>
-      </header>
+      <AdminHeader variant="dashboard" selectedYear={selectedYear} />
 
       <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-start lg:gap-6 lg:px-8">
-        {/* PC：常時表示メニュー。details の開閉状態に依存させない */}
-        <aside className="w-full shrink-0 lg:sticky lg:top-6 lg:w-52" aria-label="管理者メニュー">
-          <nav className="hidden flex-col gap-2 lg:flex" aria-label="管理者画面の移動">
-            {ADMIN_NAV.map((item) => {
-              const active = item.href === "/dashboards/admin";
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={[
-                    "flex min-h-11 items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
-                    active
-                      ? "border-sky-500/40 bg-sky-500/10 text-sky-100"
-                      : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-50",
-                  ].join(" ")}
-                >
-                  <span className="w-5 text-center" aria-hidden="true">{item.icon}</span>
-                  <span>{item.label}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* スマートフォン・タブレット：開閉メニュー */}
-          <details className="rounded-xl border border-slate-800 bg-slate-900/90 lg:hidden">
-            <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-slate-100 marker:text-sky-400">
-              管理メニューを開く
-            </summary>
-            <nav className="grid gap-2 border-t border-slate-800 p-3 sm:grid-cols-2" aria-label="管理者画面の移動（モバイル）">
-              {ADMIN_NAV.map((item) => {
-                const active = item.href === "/dashboards/admin";
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={[
-                      "flex min-h-11 items-center gap-3 rounded-xl border px-3 py-2.5 text-sm font-medium transition",
-                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500",
-                      active
-                        ? "border-sky-500/40 bg-sky-500/10 text-sky-100"
-                        : "border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-600 hover:bg-slate-800 hover:text-slate-50",
-                    ].join(" ")}
-                  >
-                    <span className="w-5 text-center" aria-hidden="true">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </nav>
-          </details>
-        </aside>
+        <AdminSidebar activeSection="dashboard" />
 
         {/* ダッシュボード本体 */}
         <main className="min-w-0 flex-1 space-y-5 sm:space-y-6" id="overview">
