@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AdminHeader from "@/components/admin/AdminHeader";
+import AdminSidebar from "@/components/admin/AdminSidebar";
 import { apiGetServer } from "@/lib/api.server";
 import {
   formatOperationActionLabel,
@@ -24,6 +26,7 @@ type ApiAdminOperationLogListResultDto = {
 };
 
 const PAGE_SIZE = 10;
+const OPERATION_LOGS_PATH = "/dashboards/admin/operation-logs";
 
 async function getOperationLogs(
   page: number,
@@ -38,7 +41,7 @@ function parsePage(value: string | string[] | undefined): number {
   const raw = Array.isArray(value) ? value[0] : value;
   const page = Number(raw ?? 1);
 
-  if (Number.isNaN(page) || page < 1) return 1;
+  if (!Number.isFinite(page) || page < 1) return 1;
   return Math.floor(page);
 }
 
@@ -79,211 +82,212 @@ export default async function AdminOperationLogsPage({
   const pageNumbers = buildPageNumbers(currentPage, totalPages);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
+    <div className="relative flex min-h-screen flex-col bg-slate-950 text-slate-50">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-40"
+      />
 
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold text-slate-50">
-              操作ログ一覧
-            </h1>
-            <p className="mt-1 text-xs text-slate-400">
-              管理者による請求書・入金・催促履歴などの操作を確認できます。
-            </p>
-          </div>
+      {/* 共通ヘッダーはサイドバーより上に配置。管理者トップと同じ構成。 */}
+      <AdminHeader variant="management" />
 
-          <Link
-            href="/dashboards/admin"
-            className="shrink-0 rounded-full border border-slate-700 bg-slate-900/60 px-4 py-2 text-xs text-slate-300 hover:border-sky-400 hover:text-sky-300"
-          >
-            ダッシュボードへ戻る
-          </Link>
-        </div>
-      </header>
+      <div className="relative z-10 mx-auto flex w-full max-w-[1440px] flex-1 flex-col gap-5 px-4 py-6 sm:px-6 lg:flex-row lg:items-start lg:gap-6 lg:px-8">
+        <AdminSidebar activeSection="operation-logs" />
 
-      <main className="relative z-10 mx-auto max-w-6xl px-6 py-8">
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <h2 className="text-sm font-semibold text-slate-100">
-                監査ログ
-              </h2>
-              <p className="mt-1 text-[11px] text-slate-400">
-                全 {totalCount} 件の操作ログを {PAGE_SIZE} 件ずつ表示しています。
-              </p>
+        <main className="w-full min-w-0 flex-1 space-y-5">
+          {/* 画面固有のサブヘッダーは角丸カード */}
+          <header className="rounded-2xl border border-slate-800 bg-slate-900/60 px-4 py-4 shadow-sm sm:px-5 sm:py-5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <nav aria-label="パンくずリスト" className="flex flex-wrap items-center gap-2 text-[11px] text-slate-400">
+                  <Link href="/dashboards/admin" className="hover:text-sky-300">
+                    ダッシュボード
+                  </Link>
+                  <span aria-hidden="true">/</span>
+                  <span aria-current="page">操作ログ一覧</span>
+                </nav>
+                <h1 className="mt-1 text-lg font-semibold text-slate-50">
+                  操作ログ一覧
+                </h1>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  管理者による請求書・入金・催促履歴などの操作を確認できます。
+                </p>
+              </div>
+
+              <Link
+                href="/dashboards/admin"
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-950/40 px-3 py-2 text-xs text-slate-200 hover:border-sky-400 hover:text-sky-300"
+              >
+                ダッシュボードへ戻る
+              </Link>
+            </div>
+          </header>
+
+          <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-slate-100">監査ログ</h2>
+                <p className="mt-1 text-[11px] text-slate-400">
+                  全 {totalCount} 件の操作ログを {PAGE_SIZE} 件ずつ表示しています。
+                </p>
+              </div>
+              <div className="shrink-0 rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[11px] text-slate-300">
+                {currentPage} / {totalPages} ページ
+              </div>
             </div>
 
-            <div className="rounded-full border border-slate-700 bg-slate-950/50 px-3 py-1 text-[11px] text-slate-300">
-              {currentPage} / {totalPages} ページ
-            </div>
-          </div>
+            {logs.length === 0 ? (
+              <div className="rounded-xl border border-slate-800 bg-slate-950/40 px-4 py-8 text-center text-xs text-slate-400">
+                操作ログはありません。
+              </div>
+            ) : (
+              <>
+                {/* デスクトップはテーブル。幅の厳しい端末はカード表示。 */}
+                <div className="hidden min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40 xl:block">
+                  <table className="w-full min-w-[800px] text-xs">
+                    <thead className="bg-slate-900/90">
+                      <tr className="text-left text-[11px] text-slate-400">
+                        <th className="whitespace-nowrap px-3 py-3 font-medium">日時</th>
+                        <th className="whitespace-nowrap px-3 py-3 font-medium">操作</th>
+                        <th className="px-3 py-3 font-medium">対象</th>
+                        <th className="px-3 py-3 font-medium">内容</th>
+                        <th className="whitespace-nowrap px-3 py-3 text-right font-medium">実行者ID</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/80">
+                      {logs.map((x) => (
+                        <tr key={x.id} className="hover:bg-slate-800/70">
+                          <td className="whitespace-nowrap px-3 py-3 text-slate-200">
+                            {new Date(x.at).toLocaleString("ja-JP")}
+                          </td>
+                          <td className="px-3 py-3 text-slate-100">
+                            {formatOperationActionLabel(x.action)}
+                          </td>
+                          <td className="break-words px-3 py-3 text-slate-200">
+                            {formatOperationTarget(x.entity, x.entityId)}
+                          </td>
+                          <td className="break-words px-3 py-3 text-slate-200">
+                            {x.summary || "-"}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-400">
+                            {x.actorUserId}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
-          <div className="overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
-            <table className="hidden min-w-full text-xs sm:table">
-              <thead className="bg-slate-900/90">
-                <tr className="text-left text-[11px] text-slate-400">
-                  <th className="px-4 py-3 font-medium">日時</th>
-                  <th className="px-4 py-3 font-medium">操作</th>
-                  <th className="px-4 py-3 font-medium">対象</th>
-                  <th className="px-4 py-3 font-medium">内容</th>
-                  <th className="px-4 py-3 font-medium text-right">actor</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {logs.map((x) => (
-                  <tr
-                    key={x.id}
-                    className="border-t border-slate-800/80 hover:bg-slate-800/70"
-                  >
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-200">
-                      {new Date(x.at).toLocaleString("ja-JP")}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-100">
-                      {formatOperationActionLabel(x.action)}
-                    </td>
-
-                    <td className="whitespace-nowrap px-4 py-3 text-slate-200">
-                      {formatOperationTarget(x.entity, x.entityId)}
-                    </td>
-
-                    <td className="px-4 py-3 text-slate-200">
-                      {x.summary || "-"}
-                    </td>
-
-                    <td className="px-4 py-3 text-right text-slate-400">
-                      {x.actorUserId}
-                    </td>
-                  </tr>
-                ))}
-
-                {logs.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      className="px-4 py-8 text-center text-slate-400"
+                <div className="grid min-w-0 gap-3 xl:hidden">
+                  {logs.map((x) => (
+                    <article
+                      key={x.id}
+                      className="min-w-0 rounded-xl border border-slate-800 bg-slate-950/40 p-3 sm:p-4"
                     >
-                      操作ログはありません。
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-
-            <div className="divide-y divide-slate-800/80 sm:hidden">
-              {logs.map((x) => (
-                <div key={x.id} className="px-4 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-xs text-slate-400">
-                        {new Date(x.at).toLocaleString("ja-JP")}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-100">
-                        {formatOperationActionLabel(x.action)}
-                      </p>
-                      <p className="mt-1 truncate text-xs text-slate-300">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-[11px] text-slate-400">
+                            {new Date(x.at).toLocaleString("ja-JP")}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-slate-100">
+                            {formatOperationActionLabel(x.action)}
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-slate-700 bg-slate-900/60 px-2 py-1 text-[11px] text-slate-400">
+                          実行者ID: {x.actorUserId}
+                        </span>
+                      </div>
+                      <p className="mt-2 break-words text-xs text-slate-300 [overflow-wrap:anywhere]">
                         {formatOperationTarget(x.entity, x.entityId)}
                       </p>
-                    </div>
-
-                    <p className="shrink-0 text-[11px] text-slate-500">
-                      actor: {x.actorUserId}
-                    </p>
-                  </div>
-
-                  <p className="mt-2 text-xs text-slate-200">
-                    {x.summary || "-"}
-                  </p>
+                      <p className="mt-2 break-words text-xs leading-relaxed text-slate-200 [overflow-wrap:anywhere]">
+                        {x.summary || "-"}
+                      </p>
+                    </article>
+                  ))}
                 </div>
-              ))}
-
-              {logs.length === 0 && (
-                <div className="px-4 py-8 text-center text-xs text-slate-400">
-                  操作ログはありません。
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3">
-            {hasPrev ? (
-              <Link
-                href={`/admin/operation-logs?page=${currentPage - 1}`}
-                className="rounded-full border border-slate-700 bg-slate-950/50 px-4 py-2 text-xs text-slate-300 hover:border-sky-400 hover:text-sky-300"
-              >
-                ← 前へ
-              </Link>
-            ) : (
-              <span className="rounded-full border border-slate-800 bg-slate-950/30 px-4 py-2 text-xs text-slate-600">
-                ← 前へ
-              </span>
+              </>
             )}
 
-            <div className="hidden items-center gap-2 sm:flex">
-              {pageNumbers[0] > 1 && (
-                <>
-                  <Link
-                    href="/admin/operation-logs?page=1"
-                    className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
-                  >
-                    1
-                  </Link>
-                  <span className="text-xs text-slate-500">...</span>
-                </>
+            <nav aria-label="操作ログのページ切替" className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              {hasPrev ? (
+                <Link
+                  href={`${OPERATION_LOGS_PATH}?page=${currentPage - 1}`}
+                  className="rounded-lg border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs text-slate-300 hover:border-sky-400 hover:text-sky-300"
+                >
+                  ← 前へ
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-xs text-slate-600">
+                  ← 前へ
+                </span>
               )}
 
-              {pageNumbers.map((page) => {
-                const active = page === currentPage;
+              <div className="hidden flex-wrap items-center justify-center gap-2 md:flex">
+                {pageNumbers[0] > 1 && (
+                  <>
+                    <Link
+                      href={`${OPERATION_LOGS_PATH}?page=1`}
+                      className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
+                    >
+                      1
+                    </Link>
+                    <span className="text-xs text-slate-500">...</span>
+                  </>
+                )}
 
-                return (
-                  <Link
-                    key={page}
-                    href={`/admin/operation-logs?page=${page}`}
-                    className={
-                      active
-                        ? "rounded-full bg-sky-500/20 px-3 py-1 text-xs font-medium text-sky-200"
-                        : "rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
-                    }
-                  >
-                    {page}
-                  </Link>
-                );
-              })}
+                {pageNumbers.map((page) => {
+                  const active = page === currentPage;
 
-              {pageNumbers[pageNumbers.length - 1] < totalPages && (
-                <>
-                  <span className="text-xs text-slate-500">...</span>
-                  <Link
-                    href={`/admin/operation-logs?page=${totalPages}`}
-                    className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
-                  >
-                    {totalPages}
-                  </Link>
-                </>
-              )}
-            </div>
+                  return (
+                    <Link
+                      key={page}
+                      href={`${OPERATION_LOGS_PATH}?page=${page}`}
+                      aria-current={active ? "page" : undefined}
+                      className={
+                        active
+                          ? "rounded-lg bg-sky-500/20 px-3 py-1.5 text-xs font-medium text-sky-200"
+                          : "rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
+                      }
+                    >
+                      {page}
+                    </Link>
+                  );
+                })}
 
-            <div className="text-xs text-slate-400 sm:hidden">
-              {currentPage} / {totalPages}
-            </div>
+                {pageNumbers[pageNumbers.length - 1] < totalPages && (
+                  <>
+                    <span className="text-xs text-slate-500">...</span>
+                    <Link
+                      href={`${OPERATION_LOGS_PATH}?page=${totalPages}`}
+                      className="rounded-lg border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:border-sky-400 hover:text-sky-300"
+                    >
+                      {totalPages}
+                    </Link>
+                  </>
+                )}
+              </div>
 
-            {hasNext ? (
-              <Link
-                href={`/admin/operation-logs?page=${currentPage + 1}`}
-                className="rounded-full border border-slate-700 bg-slate-950/50 px-4 py-2 text-xs text-slate-300 hover:border-sky-400 hover:text-sky-300"
-              >
-                次へ →
-              </Link>
-            ) : (
-              <span className="rounded-full border border-slate-800 bg-slate-950/30 px-4 py-2 text-xs text-slate-600">
-                次へ →
+              <span className="text-xs text-slate-400 md:hidden">
+                {currentPage} / {totalPages}
               </span>
-            )}
-          </div>
-        </section>
-      </main>
+
+              {hasNext ? (
+                <Link
+                  href={`${OPERATION_LOGS_PATH}?page=${currentPage + 1}`}
+                  className="rounded-lg border border-slate-700 bg-slate-950/50 px-3 py-2 text-xs text-slate-300 hover:border-sky-400 hover:text-sky-300"
+                >
+                  次へ →
+                </Link>
+              ) : (
+                <span className="rounded-lg border border-slate-800 bg-slate-950/30 px-3 py-2 text-xs text-slate-600">
+                  次へ →
+                </span>
+              )}
+            </nav>
+          </section>
+        </main>
+      </div>
     </div>
   );
 }

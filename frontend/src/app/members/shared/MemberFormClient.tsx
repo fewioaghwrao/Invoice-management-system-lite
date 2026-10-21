@@ -177,25 +177,25 @@ const res = await fetch(`/bff/members/${form.id}`, {
   const isAdmin = form.role === 1; // ★追加：管理者ロック
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-1">
+    <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
+      <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">名前</label>
           <input
             value={form.name}
             onChange={(e) => onChange({ name: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             placeholder="例：山田 太郎"
             disabled={saving || disabling || isDisabledMember}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">メール</label>
           <input
             value={form.email}
             onChange={(e) => onChange({ email: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             placeholder="例：example@example.com"
             disabled={saving || disabling || isDisabledMember}
           />
@@ -205,46 +205,46 @@ const res = await fetch(`/bff/members/${form.id}`, {
         </div>
 
         {/* 住所系（DTOに合わせて追加） */}
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">郵便番号</label>
           <input
             value={form.postalCode ?? ""}
             onChange={(e) => onChange({ postalCode: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             placeholder="例：123-4567"
             disabled={saving || disabling || isDisabledMember}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">住所</label>
           <input
             value={form.address ?? ""}
             onChange={(e) => onChange({ address: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             placeholder="例：東京都〇〇区..."
             disabled={saving || disabling || isDisabledMember}
           />
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">電話番号</label>
           <input
             value={form.phone ?? ""}
             onChange={(e) => onChange({ phone: e.target.value })}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="w-full min-w-0 rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             placeholder="例：090-1234-5678"
             disabled={saving || disabling || isDisabledMember}
           />
         </div>
 
         {/* ロール：ロック＆管理者除外（選択UIをやめて表示だけ） */}
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">ロール</label>
           <input
             value={roleLabel(form.role)}
             readOnly
-            className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-300"
+            className="w-full min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-300"
           />
           <p className="text-[11px] text-slate-500">
             ※デモの故障防止のためロールは固定です（管理者選択も不可）。
@@ -252,12 +252,12 @@ const res = await fetch(`/bff/members/${form.id}`, {
         </div>
 
         {/* 状態：ここもロック推奨（退会＝disableに寄せる） */}
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">状態</label>
           <input
             value={form.isActive ? "有効" : "無効"}
             readOnly
-            className="rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2 text-xs text-slate-300"
+            className="w-full min-w-0 rounded-lg border border-slate-800 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-300"
           />
           <p className="text-[11px] text-slate-500">
             ※状態変更は「退会（無効化）」操作で行います。
@@ -271,7 +271,7 @@ const res = await fetch(`/bff/members/${form.id}`, {
         </pre>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
         <button
           type="button"
           onClick={() => router.back()}
@@ -281,7 +281,7 @@ const res = await fetch(`/bff/members/${form.id}`, {
           戻る
         </button>
 
-  <div className="flex items-center gap-2">
+  <div className="flex flex-wrap items-center gap-2">
     {/* 退会ボタン：退会済み/管理者は出さない */}
     {!isDisabledMember && !isAdmin && (
       <button

@@ -1,7 +1,5 @@
 // src/app/sales/page.tsx
 import Link from "next/link";
-import CurrentUserBadge from "@/components/CurrentUserBadge";
-import LogoutButton from "@/components/LogoutButton";
 import SalesFiltersClient from "@/components/SalesFiltersClient";
 import { apiGetServer } from "@/lib/api.server";
 import CsvExportButton from "@/components/CsvExportButton";
@@ -180,38 +178,23 @@ const result = await getSalesList({
   const totalPages = Math.max(1, Math.ceil(result.totalCount / result.pageSize));
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
-
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0">
-              <h1 className="text-lg font-semibold text-slate-50">売上一覧（請求ベース）</h1>
-              <p className="mt-1 text-xs text-slate-400">
-                請求金額を「売上」として一覧化し、入金済み・残額もあわせて確認できます。
-              </p>
-            </div>
-
-<div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-  <Link
-    href="/dashboards/admin"
-    className="text-xs text-slate-300 hover:text-slate-100"
-  >
-    ← 管理者トップへ
-  </Link>
-
-  <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-    <CurrentUserBadge />
-    <LogoutButton />
-  </div>
-</div>
-
-          </div>
+    <div className="w-full min-w-0 max-w-full text-slate-50">
+      {/* 共通アプリヘッダーとサイドバーは sales/layout.tsx 側で表示 */}
+      <header className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-sm">
+        <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5">
+          <nav aria-label="パンくずリスト" className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <Link href="/dashboards/admin" className="hover:text-sky-300">ダッシュボード</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">売上一覧</span>
+          </nav>
+          <h1 className="mt-2 text-lg font-semibold text-slate-50 sm:text-xl">売上一覧（請求ベース）</h1>
+          <p className="mt-1 text-sm leading-relaxed text-slate-400">
+            請求金額を「売上」として一覧化し、入金済み・残額もあわせて確認できます。
+          </p>
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="min-w-0 space-y-5 pt-5 sm:space-y-6 sm:pt-6">
         <SalesFiltersClient
           currentYear={currentYear}
           year={result.year}
@@ -247,7 +230,7 @@ const result = await getSalesList({
 
         {/* サマリー */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-md">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
               <p className="text-[11px] text-slate-400">請求合計（売上）</p>
               <p className="mt-2 text-lg sm:text-xl font-semibold break-words">
@@ -276,7 +259,7 @@ const result = await getSalesList({
         </section>
 
         {/* 一覧 */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-md space-y-4">
+        <section className="min-w-0 space-y-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
           {/* スマホ：カード */}
           <div className="space-y-3 md:hidden">
             {result.rows.map((r) => (
@@ -311,7 +294,7 @@ const result = await getSalesList({
                   </div>
 
                   <div className="col-span-2">
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-1 gap-2 min-[440px]:grid-cols-3">
                       <div className="rounded-lg border border-slate-800 bg-slate-950/30 p-2">
                         <p className="text-[11px] text-slate-400">請求</p>
                         <p className="mt-1 text-slate-100 font-semibold break-words">
@@ -344,7 +327,7 @@ const result = await getSalesList({
           </div>
 
           {/* md以上：テーブル */}
-          <div className="hidden md:block overflow-x-auto">
+          <div className="hidden min-w-0 max-w-full overflow-x-auto md:block">
             <div className="min-w-[980px] overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
               <table className="min-w-full text-xs">
                 <thead className="bg-slate-900/90">

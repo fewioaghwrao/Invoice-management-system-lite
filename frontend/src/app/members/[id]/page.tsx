@@ -10,9 +10,9 @@ type MemberDetailDto = {
   postalCode?: string | null;
   address?: string | null;
   phone?: string | null;
-  role: number;        // ← enumは JSON では number で来るのでOK
+  role: number;
   isActive: boolean;
-  createdAt: string;  // ISO文字列
+  createdAt: string;
 };
 
 export default async function MemberDetailPage({
@@ -21,41 +21,36 @@ export default async function MemberDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-
-  // ★ API はあなたのバックエンド仕様に合わせて調整
   const member = await apiGetServer<MemberDetailDto>(`/api/members/${id}`);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <div>
-            <div className="flex items-center gap-2 text-[11px] text-slate-400">
-              <Link href="/dashboards/admin" className="hover:text-sky-300">
-                ダッシュボード
-              </Link>
-              <span>/</span>
-              <Link href="/members" className="hover:text-sky-300">
-                会員一覧
-              </Link>
-              <span>/</span>
-              <span>詳細</span>
-            </div>
-            <h1 className="mt-1 text-lg font-semibold">会員詳細（編集）</h1>
-            <p className="mt-1 text-xs text-slate-400">
-              管理者が顧客情報を編集します（メール認証なし）。
+    <div className="w-full min-w-0 text-slate-50">
+      {/* 管理者共通ヘッダーとメニューは members/layout.tsx で表示 */}
+      <header className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 shadow-sm">
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-5">
+          <div className="min-w-0">
+            <nav aria-label="パンくずリスト" className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+              <Link href="/dashboards/admin" className="hover:text-sky-300">ダッシュボード</Link>
+              <span aria-hidden="true">/</span>
+              <Link href="/members" className="hover:text-sky-300">会員一覧</Link>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">会員詳細</span>
+            </nav>
+            <h1 className="mt-2 text-lg font-semibold text-slate-50 sm:text-xl">会員詳細・編集</h1>
+            <p className="mt-1 text-sm leading-relaxed text-slate-400">
+              会員情報の確認・編集と、アカウントの有効状態を確認できます。
             </p>
           </div>
           <Link
             href="/members"
-            className="inline-flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-800"
+            className="inline-flex min-h-10 shrink-0 items-center justify-center self-start rounded-lg border border-slate-700 bg-slate-900/60 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 sm:self-auto"
           >
             ← 一覧へ
           </Link>
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="min-w-0 pt-5 sm:pt-6">
         <MemberFormClient mode="edit" initialValue={member} />
       </main>
     </div>

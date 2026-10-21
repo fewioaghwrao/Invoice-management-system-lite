@@ -63,10 +63,10 @@ describe("MembersPage", () => {
 
     render(element);
 
-    expect(screen.getByText("会員一覧（管理者）")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "会員一覧" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "会員の基本情報・ロール・有効 / 無効状態を検索し、退会（無効化）操作を行います。"
+        "会員の基本情報・ロール・有効状態を検索し、詳細を確認できます。"
       )
     ).toBeInTheDocument();
 
@@ -105,7 +105,7 @@ expect(
 
     expect(screen.getAllByRole("link", { name: "詳細" }).length).toBeGreaterThan(0);
 
-    expect(screen.getByRole("link", { name: "← 管理トップへ" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "ダッシュボード" })).toHaveAttribute(
       "href",
       "/dashboards/admin"
     );
