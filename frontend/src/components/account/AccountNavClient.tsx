@@ -5,69 +5,49 @@ import { usePathname } from "next/navigation";
 
 type NavItem = {
   href: string;
-  title: string;
-  sub?: string;
-  match?: "exact" | "prefix";
+  label: string;
+  icon: string;
 };
 
-const NAV: NavItem[] = [
-  {
-    href: "/account/invoices",
-    title: "請求書一覧",
-    sub: "（請求書）",
-    match: "prefix",
-  },
-  {
-    href: "/account/unpaid",
-    title: "入金確認",
-    sub: "（未入金）", // ← “未払い”より業務用語として自然
-    match: "exact",
-  },
-  {
-    href: "/account/profile",
-    title: "プロフィール",
-    sub: "（登録情報）",
-    match: "exact",
-  },
+const NAV_ITEMS: NavItem[] = [
+  { href: "/dashboards/member", label: "マイページ", icon: "⌂" },
+  { href: "/account/invoices", label: "請求書一覧", icon: "📄" },
+  { href: "/account/unpaid", label: "未入金の確認", icon: "⏳" },
+  { href: "/account/profile", label: "登録情報", icon: "👤" },
 ];
 
-function isActive(pathname: string, item: NavItem) {
-  if (item.match === "prefix") return pathname.startsWith(item.href);
-  return pathname === item.href;
-}
-
-function className(active: boolean) {
-  const base =
-    "shrink-0 rounded-xl border px-4 py-3 text-xs font-medium transition outline-none";
-  const inactive =
-    "border-slate-700 bg-slate-950/40 text-slate-200 hover:bg-slate-800 focus-visible:ring-2 focus-visible:ring-slate-500/60";
-  const activeCls =
-    "border-slate-500 bg-slate-800 text-slate-50 shadow-sm";
-  return `${base} ${active ? activeCls : inactive}`;
+function isActive(pathname: string, href: string): boolean {
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export default function AccountNavClient() {
   const pathname = usePathname();
 
   return (
-    <div className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 [-webkit-overflow-scrolling:touch] snap-x">
-      {NAV.map((item) => {
-        const active = isActive(pathname, item);
+    <nav aria-label="会員用メニュー" className="flex flex-col gap-1.5">
+      {NAV_ITEMS.map((item) => {
+        const active = isActive(pathname, item.href);
 
         return (
           <Link
             key={item.href}
             href={item.href}
-            className={`${className(active)} snap-start`}
             aria-current={active ? "page" : undefined}
+            className={[
+              "flex min-h-11 items-center gap-2.5 rounded-xl border px-3 py-2.5 text-sm font-medium transition-colors",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400",
+              active
+                ? "border-sky-500/50 bg-slate-700/70 text-white"
+                : "border-transparent text-slate-300 hover:border-slate-700 hover:bg-slate-800/80 hover:text-white",
+            ].join(" ")}
           >
-            {item.title}
-            {item.sub ? (
-<span className="ml-2 hidden sm:inline text-[11px] text-slate-400">{item.sub}</span>
-            ) : null}
+            <span aria-hidden="true" className="w-5 shrink-0 text-center">
+              {item.icon}
+            </span>
+            <span>{item.label}</span>
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }

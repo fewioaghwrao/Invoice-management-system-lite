@@ -97,25 +97,25 @@ export default function CsvExportButton({
         type="button"
         onClick={() => setOpen(true)}
         disabled={loading}
-        className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60"
+        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800 disabled:opacity-60 sm:w-auto"
       >
         {loading ? "出力中…" : label}
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-3 sm:p-6">
           <div
             className="absolute inset-0 bg-black/60"
             onClick={() => setOpen(false)}
           />
 
           <div
-            className="absolute left-1/2 top-1/2 w-[min(92vw,520px)]
-                       -translate-x-1/2 -translate-y-1/2
-                       rounded-2xl border border-slate-800
-                       bg-slate-950 p-4 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="sales-export-dialog-title"
+            className="relative my-auto max-h-[calc(100dvh-24px)] w-full max-w-[520px] min-w-0 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 p-4 shadow-xl sm:p-5"
           >
-            <h3 className="text-sm font-semibold text-slate-50">
+            <h3 id="sales-export-dialog-title" className="text-sm font-semibold text-slate-50">
               CSVを出力しますか？
             </h3>
 
@@ -128,7 +128,7 @@ export default function CsvExportButton({
             <div className="mt-3 space-y-2 text-xs">
               <div className="text-slate-300">
                 ファイル名：
-                <span className="ml-1 font-medium text-slate-50">
+                <span className="mt-1 block break-all font-medium text-slate-50 sm:mt-0 sm:ml-1 sm:inline">
                   {fileName}
                 </span>
               </div>
@@ -145,27 +145,23 @@ export default function CsvExportButton({
               {memberName && (
                 <div className="text-slate-300">
                   顧客：
-                  <span className="ml-1 font-medium text-slate-50">
+                  <span className="mt-1 block break-words font-medium text-slate-50 sm:mt-0 sm:ml-1 sm:inline">
                     {memberName}
                   </span>
                 </div>
               )}
             </div>
 
-            <div className="mt-4 flex justify-end gap-2">
+            <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 onClick={() => setOpen(false)}
-                className="rounded-lg border border-slate-800
-                           bg-slate-900/40 px-3 py-2 text-xs
-                           text-slate-200 hover:bg-slate-900"
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-slate-800 bg-slate-900/40 px-4 py-2 text-xs text-slate-200 hover:bg-slate-900 sm:w-auto"
               >
                 キャンセル
               </button>
               <button
                 onClick={onConfirm}
-                className="rounded-lg border border-sky-500/30
-                           bg-sky-500/10 px-3 py-2 text-xs
-                           text-sky-200 hover:bg-sky-500/20"
+                className="inline-flex min-h-10 w-full items-center justify-center rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs text-sky-200 hover:bg-sky-500/20 sm:w-auto"
               >
                 出力する
               </button>

@@ -8,18 +8,6 @@ jest.mock("next/headers", () => ({
   cookies: jest.fn(),
 }));
 
-jest.mock("@/components/CurrentUserBadge", () => {
-  return function MockCurrentUserBadge() {
-    return <div>CurrentUserBadge</div>;
-  };
-});
-
-jest.mock("@/components/LogoutButton", () => {
-  return function MockLogoutButton() {
-    return <button>LogoutButton</button>;
-  };
-});
-
 describe("PaymentsPage", () => {
   const originalFetch = global.fetch;
   const mockCookies = nextHeaders.cookies as jest.MockedFunction<
@@ -101,15 +89,13 @@ describe("PaymentsPage", () => {
 
     render(element);
 
-    expect(screen.getByText("入金一覧")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "入金一覧" })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "入金明細を一覧で確認し、請求書への割当状況（未割当/一部/完了）を把握できます。"
+        "入金明細と請求書への割当状況（未割当・一部割当・割当済）を確認できます。"
       )
     ).toBeInTheDocument();
 
-    expect(screen.getByText("CurrentUserBadge")).toBeInTheDocument();
-    expect(screen.getByText("LogoutButton")).toBeInTheDocument();
 
     expect(screen.getAllByText(/[¥￥]800,000/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/[¥￥]620,000/).length).toBeGreaterThan(0);
@@ -132,11 +118,11 @@ describe("PaymentsPage", () => {
     expect(screen.getAllByText("INV-0011").length).toBeGreaterThan(0);
     expect(screen.getAllByText("INV-0020").length).toBeGreaterThan(0);
 
-    expect(screen.getByRole("link", { name: "← 管理者トップへ" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "ダッシュボード" })).toHaveAttribute(
       "href",
       "/dashboards/admin"
     );
-    expect(screen.getByRole("link", { name: "+ 入金登録" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /入金登録/ })).toHaveAttribute(
       "href",
       "/payments/new"
     );

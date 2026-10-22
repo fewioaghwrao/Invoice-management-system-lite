@@ -150,7 +150,7 @@ const res = await fetch(`/api/account/me`, {
               className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500"
             />
             <p className="text-[11px] text-slate-500">
-              ※ 本来は変更後に確認メールを送信して認証しますが、Lite版では省略しています。
+              メールアドレスを変更しても確認メールは送信されません。
             </p>
           </div>
 
@@ -225,7 +225,7 @@ const res = await fetch(`/api/account/me`, {
           <div className="mt-1">変更前：{originalEmail}</div>
           <div className="mt-1">変更後：{form.email}</div>
           <div className="mt-2 text-[11px] text-amber-200/80">
-            ※ Lite版のため、確認メールは送信されません。
+            変更内容について確認メールは送信されません。
           </div>
         </div>
       )}

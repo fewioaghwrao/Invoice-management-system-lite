@@ -205,10 +205,10 @@ const res = await fetch(`/api/payments`, {
   };
 
   return (
-    <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-      <div className="grid gap-4 md:grid-cols-2">
+    <section className="w-full min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 shadow-md sm:p-5">
+      <div className="grid min-w-0 gap-4 md:grid-cols-2">
         {/* 会員選択 */}
-        <div className="flex flex-col gap-1 md:col-span-2">
+        <div className="flex min-w-0 flex-col gap-1 md:col-span-2">
           <label className="text-[11px] font-medium text-slate-300">会員（入金元）</label>
 
           <select
@@ -218,7 +218,7 @@ const res = await fetch(`/api/payments`, {
               // 会員を変えたら payerName を自動追従させたいので「未編集状態」に戻す
               setPayerNameTouched(false);
             }}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             disabled={saving || loadingMembers}
           >
             <option value="">
@@ -237,12 +237,12 @@ const res = await fetch(`/api/payments`, {
         </div>
 
         {/* 入金日 */}
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">入金日</label>
           <input
             value={paymentDate}
             onChange={(e) => setPaymentDate(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
             placeholder="YYYY-MM-DD"
             disabled={saving}
           />
@@ -250,7 +250,7 @@ const res = await fetch(`/api/payments`, {
         </div>
 
         {/* 入金名義（自動セット + 編集可） */}
-        <div className="flex flex-col gap-1">
+        <div className="flex min-w-0 flex-col gap-1">
           <label className="text-[11px] font-medium text-slate-300">入金名義</label>
           <input
             value={payerName}
@@ -258,7 +258,7 @@ const res = await fetch(`/api/payments`, {
               setPayerName(e.target.value);
               setPayerNameTouched(true);
             }}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
             placeholder="会員を選ぶと自動入力されます（編集可）"
             disabled={saving}
           />
@@ -268,26 +268,26 @@ const res = await fetch(`/api/payments`, {
         </div>
 
         {/* 入金額 */}
-        <div className="flex flex-col gap-1 md:col-span-2">
+        <div className="flex min-w-0 flex-col gap-1 md:col-span-2">
           <label className="text-[11px] font-medium text-slate-300">入金額（円）</label>
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
             placeholder="例：60000"
             inputMode="numeric"
             disabled={saving}
           />
-          <p className="text-[11px] text-slate-500">※ここでは手動入力のみ（CSV取り込みは後で追加）</p>
+          <p className="text-[11px] text-slate-500">入金情報を手動で登録します。</p>
         </div>
 
         {/* 入金方法（任意） */}
-        <div className="flex flex-col gap-1 md:col-span-2">
+        <div className="flex min-w-0 flex-col gap-1 md:col-span-2">
           <label className="text-[11px] font-medium text-slate-300">入金方法（任意）</label>
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
+            className="min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 disabled:opacity-60"
             disabled={saving}
           >
             <option value="BANK_TRANSFER">振込</option>
@@ -304,7 +304,7 @@ const res = await fetch(`/api/payments`, {
         </pre>
       )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
         <button
           type="button"
           onClick={() => router.back()}

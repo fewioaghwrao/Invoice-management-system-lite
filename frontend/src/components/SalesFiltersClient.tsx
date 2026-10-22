@@ -32,15 +32,16 @@ export default function SalesFiltersClient(props: {
     router.push(`/sales?${q}`);
   };
 
-return (
-  <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-md">
-    <div className="grid gap-3 sm:flex sm:flex-wrap sm:items-end">
+  return (
+    <section className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-3 shadow-md sm:p-4 xl:p-5">
+      <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {/* 年 */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-slate-400">年</label>
+      <div className="flex min-w-0 flex-col gap-1">
+        <label htmlFor="sales-year" className="text-[11px] text-slate-400">年</label>
         <select
+          id="sales-year"
           defaultValue={String(props.year)}
-          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          className="h-10 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           onChange={(e) => push({ year: e.target.value })}
         >
           {[props.currentYear - 1, props.currentYear, props.currentYear + 1].map((y) => (
@@ -52,11 +53,12 @@ return (
       </div>
 
       {/* 月 */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-slate-400">月</label>
+      <div className="flex min-w-0 flex-col gap-1">
+        <label htmlFor="sales-month" className="text-[11px] text-slate-400">月</label>
         <select
+          id="sales-month"
           defaultValue={String(props.month)}
-          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          className="h-10 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           onChange={(e) => push({ month: e.target.value })}
         >
           <option value="all">すべて</option>
@@ -69,11 +71,12 @@ return (
       </div>
 
       {/* ステータス */}
-      <div className="flex flex-col gap-1">
-        <label className="text-[11px] text-slate-400">ステータス</label>
+      <div className="flex min-w-0 flex-col gap-1">
+        <label htmlFor="sales-status" className="text-[11px] text-slate-400">ステータス</label>
         <select
+          id="sales-status"
           defaultValue={String(props.status).toLowerCase()}
-          className="h-9 w-full sm:w-auto rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100"
+          className="h-10 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           onChange={(e) => push({ status: e.target.value })}
         >
           <option value="all">すべて</option>
@@ -85,41 +88,41 @@ return (
 
       {/* 検索 */}
       <form
-        className="grid gap-2 sm:flex sm:items-end sm:gap-2 sm:ml-auto"
+        className="grid min-w-0 gap-2 sm:col-span-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end xl:col-span-3"
         onSubmit={(e) => {
           e.preventDefault();
           const fd = new FormData(e.currentTarget);
           push({ q: String(fd.get("q") ?? "") });
         }}
       >
-        <div className="flex flex-col gap-1">
-          <label className="text-[11px] text-slate-400">検索（請求書ID / 顧客名）</label>
+        <div className="flex min-w-0 flex-col gap-1">
+          <label htmlFor="sales-keyword" className="text-[11px] text-slate-400">検索（請求書ID / 顧客名）</label>
           <input
+            id="sales-keyword"
             name="q"
             defaultValue={props.keyword}
-            className="h-9 w-full sm:w-72 rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500"
+            className="h-10 min-w-0 w-full rounded-lg border border-slate-700 bg-slate-950/40 px-3 text-xs text-slate-100 placeholder:text-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
             placeholder="例: INV-002 / クライアントA"
           />
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2">
           <button
             type="submit"
-            className="h-9 flex-1 sm:flex-none rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
+            className="inline-flex h-10 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800 sm:flex-none"
           >
             検索
           </button>
 
           <Link
             href={`/sales?year=${props.year}&month=all&status=all&page=1`}
-            className="h-9 flex-1 sm:flex-none inline-flex items-center justify-center rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800"
+            className="inline-flex h-10 min-w-0 flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-slate-600 bg-slate-900 px-4 text-xs font-medium text-slate-200 hover:bg-slate-800 sm:flex-none"
           >
             リセット
           </Link>
         </div>
       </form>
-    </div>
-  </section>
-);
-
+      </div>
+    </section>
+  );
 }

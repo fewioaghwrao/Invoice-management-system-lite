@@ -241,7 +241,7 @@ const remaining = useMemo(() => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 grid place-items-center text-xs text-slate-400">
+      <div className="flex min-h-48 w-full min-w-0 items-center justify-center rounded-2xl border border-slate-800 bg-slate-900/70 p-6 text-xs text-slate-400" role="status">
         読み込み中…
       </div>
     );
@@ -249,8 +249,8 @@ const remaining = useMemo(() => {
 
   if (err || !snap) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-50 grid place-items-center p-6">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 text-xs text-slate-200">
+      <div className="w-full min-w-0 rounded-2xl border border-slate-800 bg-slate-900/80 p-4 text-slate-200 shadow-sm sm:p-6">
+        <div className="text-xs">
           <p className="font-semibold">エラー</p>
           <p className="mt-2 text-slate-400">{err ?? "データが取得できません"}</p>
           <Link
@@ -265,14 +265,12 @@ const remaining = useMemo(() => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
-
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="w-full min-w-0 space-y-6">
+      {/* ページ固有の見出し。共通ヘッダーは collections/layout.tsx が描画します。 */}
+      <section aria-label="督促画面ヘッダー" className="min-w-0 rounded-2xl border border-slate-800 bg-slate-900/60 p-4 shadow-sm sm:p-5">
+          <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
                 <Link href="/dashboards/admin" className="hover:text-sky-300">
                   ダッシュボード
                 </Link>
@@ -293,20 +291,20 @@ const remaining = useMemo(() => {
                 <span>督促</span>
               </div>
 
-              <h1 className="mt-1 text-lg font-semibold">
+              <h1 className="mt-2 break-words text-lg font-semibold leading-snug sm:text-xl">
                 督促（{snap.invoiceNumber}）
               </h1>
-              <p className="mt-1 text-xs text-slate-400">
+              <p className="mt-1 break-words text-xs leading-relaxed text-slate-400">
                 テンプレ選択 → 文面プレビュー → 履歴管理 → 次アクションまで一画面で管理します。
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:flex xl:flex-wrap xl:justify-end">
               <Link
                 href={`/invoices/${snap.invoiceId}${
                   from ? `?from=${encodeURIComponent(from)}` : ""
                 }`}
-                className="inline-flex items-center justify-center rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+                className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-900/60 px-3 py-2 text-center text-xs text-slate-200 hover:bg-slate-800"
               >
                 ← 請求書詳細へ
               </Link>
@@ -315,7 +313,7 @@ const remaining = useMemo(() => {
               {canCopy && (
                 <button
                   onClick={handleCopyBody}
-                  className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-200 hover:bg-slate-800"
+                  className="inline-flex min-h-10 items-center justify-center rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs text-slate-200 hover:bg-slate-800"
                 >
                   本文コピー
                 </button>
@@ -325,7 +323,7 @@ const remaining = useMemo(() => {
                 disabled={saving}
                 onClick={handleRecordSent}
                 className={[
-                  "rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 text-xs font-medium text-emerald-200 hover:bg-emerald-500/15",
+                  "inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-center text-xs font-medium text-emerald-200 hover:bg-emerald-500/15",
                   saving ? "opacity-60 cursor-not-allowed" : "",
                 ].join(" ")}
               >
@@ -333,16 +331,15 @@ const remaining = useMemo(() => {
               </button>
             </div>
           </div>
-        </div>
-      </header>
+      </section>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="min-w-0 space-y-6">
         {/* スナップショット */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-md">
-          <div className="grid gap-3 md:grid-cols-4">
+          <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-xl border border-slate-800 bg-slate-950/30 p-4">
               <p className="text-[11px] text-slate-400">顧客</p>
-              <p className="mt-2 text-sm font-semibold text-slate-100">
+              <p className="mt-2 break-words text-sm font-semibold text-slate-100">
                 {snap.memberName}
               </p>
               <p className="mt-1 text-[11px] text-slate-400 break-all">
@@ -383,22 +380,22 @@ const remaining = useMemo(() => {
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-3">
+        <section className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-3">
           {/* 左：設定 */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="min-w-0 space-y-5 xl:col-span-1">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5">
               <h2 className="text-sm font-semibold">督促設定</h2>
 
               <div className="mt-4 space-y-4 text-xs">
                 <div>
                   <p className="text-[11px] text-slate-400">チャネル</p>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div className="mt-2 grid min-w-0 grid-cols-3 gap-2">
                     {(["EMAIL", "PHONE", "LETTER"] as const).map((c) => (
                       <button
                         key={c}
                         onClick={() => setChannel(c)}
                         className={[
-                          "rounded-lg border px-3 py-2 text-xs",
+                          "min-w-0 rounded-lg border px-2 py-2 text-xs sm:px-3",
                           channel === c
                             ? "border-sky-500/60 bg-sky-500/10 text-sky-200"
                             : "border-slate-700 bg-slate-950/30 text-slate-200 hover:bg-slate-800",
@@ -412,13 +409,13 @@ const remaining = useMemo(() => {
 
                 <div>
                   <p className="text-[11px] text-slate-400">トーン</p>
-                  <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div className="mt-2 grid min-w-0 grid-cols-3 gap-2">
                     {(["SOFT", "NORMAL", "STRONG"] as const).map((t) => (
                       <button
                         key={t}
                         onClick={() => setTone(t)}
                         className={[
-                          "rounded-lg border px-3 py-2 text-xs",
+                          "min-w-0 rounded-lg border px-2 py-2 text-xs sm:px-3",
                           tone === t
                             ? "border-sky-500/60 bg-sky-500/10 text-sky-200"
                             : "border-slate-700 bg-slate-950/30 text-slate-200 hover:bg-slate-800",
@@ -446,19 +443,19 @@ const remaining = useMemo(() => {
           </div>
 
           {/* 右：プレビュー＋履歴 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="min-w-0 space-y-5 xl:col-span-2">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5">
               <h2 className="text-sm font-semibold">メール送信文面プレビュー</h2>
 
               <div className="mt-4 rounded-xl border border-slate-800 bg-slate-950/40 p-4">
                 <p className="text-[11px] text-slate-400">件名</p>
-                <p className="mt-1 text-xs text-slate-100 break-words">
+                <p className="mt-1 break-words text-xs text-slate-100 [overflow-wrap:anywhere]">
                   {tpl.subject}
                 </p>
 
                 <div className="mt-4">
                   <p className="text-[11px] text-slate-400">本文</p>
-                  <pre className="mt-2 whitespace-pre-wrap text-xs text-slate-200 leading-relaxed">
+                  <pre className="mt-2 max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-slate-200 [overflow-wrap:anywhere]">
                     {tpl.bodyText}
                   </pre>
                 </div>
@@ -478,7 +475,7 @@ const remaining = useMemo(() => {
                       key={l.id}
                       className="rounded-xl border border-slate-800 bg-slate-950/40 p-4"
                     >
-                      <p className="text-xs text-slate-200">
+                      <p className="break-words text-xs text-slate-200 [overflow-wrap:anywhere]">
                         {/* ✅ 履歴日時も yyyy-MM-dd に寄せたいなら formatDateYmd(l.at) にする */}
                         {l.at} / {channelLabel(l.channel)}
                         {l.tone ? ` / ${toneLabel(l.tone)}` : ""}
@@ -486,11 +483,11 @@ const remaining = useMemo(() => {
                           ? ` / 次回: ${formatDateYmd(l.nextActionDate)}`
                           : ""}
                       </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-100">
+                      <p className="mt-1 break-words text-sm font-semibold text-slate-100">
                         {l.title}
                       </p>
                       {l.memo && (
-                        <p className="mt-1 text-xs text-slate-400">{l.memo}</p>
+                        <p className="mt-1 break-words text-xs leading-relaxed text-slate-400">{l.memo}</p>
                       )}
                     </div>
                   ))

@@ -66,14 +66,14 @@ export default async function InvoiceDetailPage({
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_#0ea5e9_0,_transparent_55%),radial-gradient(circle_at_bottom,_#6366f1_0,_transparent_55%)] opacity-60" />
+    <div className="w-full min-w-0 max-w-full text-slate-50">
 
-      <header className="relative z-10 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-4">
+
+<header className="rounded-2xl border border-slate-800 bg-slate-900/60 shadow-sm">
+  <div className="w-full min-w-0 px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+              <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-slate-400">
                 <Link href="/dashboards/admin" className="hover:text-sky-300">
                   ダッシュボード
                 </Link>
@@ -82,11 +82,11 @@ export default async function InvoiceDetailPage({
                   請求書一覧
                 </Link>
                 <span>/</span>
-                <span className="truncate">{inv.invoiceNumber}</span>
+                <span className="min-w-0 break-all">{inv.invoiceNumber}</span>
               </div>
 
               <div className="mt-1 flex flex-wrap items-center gap-2">
-                <h1 className="text-lg font-semibold">{inv.invoiceNumber}</h1>
+                <h1 className="min-w-0 break-all text-lg font-semibold">{inv.invoiceNumber}</h1>
                 <span
                   className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] ${statusPillClass(
                     inv.statusName
@@ -137,7 +137,7 @@ export default async function InvoiceDetailPage({
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+      <main className="min-w-0 space-y-6 py-5 sm:py-6">
         {/* KPI */}
         <section className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5 shadow-md">
           <div className="grid gap-3 md:grid-cols-3">
@@ -165,9 +165,9 @@ export default async function InvoiceDetailPage({
           </div>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-3">
+        <section className="grid min-w-0 grid-cols-1 gap-6 lg:grid-cols-3">
           {/* 左 */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="min-w-0 space-y-6 lg:col-span-1">
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5">
               <h2 className="text-sm font-semibold">基本情報</h2>
               <dl className="mt-3 space-y-3 text-xs">
@@ -185,7 +185,7 @@ export default async function InvoiceDetailPage({
                 </div>
                 <div>
                   <dt className="text-[11px] text-slate-400">備考</dt>
-                  <dd className="mt-1 text-slate-300 whitespace-pre-wrap">
+                  <dd className="mt-1 whitespace-pre-wrap break-words text-slate-300">
                     {inv.remarks ?? "—"}
                   </dd>
                 </div>
@@ -210,7 +210,7 @@ export default async function InvoiceDetailPage({
                             {ymd(r.remindedAt)} / {r.method}
                           </p>
                           {r.note && (
-                            <p className="mt-1 text-[11px] text-slate-400 whitespace-pre-wrap">
+                            <p className="mt-1 whitespace-pre-wrap break-words text-[11px] text-slate-400">
                               {r.note}
                             </p>
                           )}
@@ -224,15 +224,41 @@ export default async function InvoiceDetailPage({
           </div>
 
           {/* 右 */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="min-w-0 space-y-6 lg:col-span-2">
             {/* 明細（Lite） */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5">
-<div className="flex items-center justify-between">
-  <h2 className="text-sm font-semibold">請求明細（Lite）</h2>
+<div className="flex flex-wrap items-center justify-between gap-2">
+  <h2 className="text-sm font-semibold">請求明細</h2>
   <PdfDownloadButton invoiceId={Number(inv.id)} />
 </div>
-              <div className="mt-4 overflow-hidden rounded-xl border border-slate-800 bg-slate-950/40">
-                <table className="min-w-full text-xs">
+              {/* スマートフォン：表全体ではなく明細ごとにカード表示 */}
+              <div className="mt-4 divide-y divide-slate-800 rounded-xl border border-slate-800 bg-slate-950/40 sm:hidden">
+                {items.map((it, idx) => (
+                  <dl key={idx} className="space-y-3 p-4 text-sm">
+                    <div className="min-w-0">
+                      <dt className="text-xs text-slate-400">項目</dt>
+                      <dd className="mt-1 break-words font-medium text-slate-100">{it.name}</dd>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <dt className="text-xs text-slate-400">数量</dt>
+                        <dd className="mt-1 tabular-nums text-slate-200">{it.qty}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs text-slate-400">単価</dt>
+                        <dd className="mt-1 tabular-nums text-slate-200">{formatCurrency(it.unitPrice)}</dd>
+                      </div>
+                    </div>
+                    <div className="border-t border-slate-800 pt-3">
+                      <dt className="text-xs text-slate-400">金額</dt>
+                      <dd className="mt-1 tabular-nums font-semibold text-slate-50">{formatCurrency(it.amount)}</dd>
+                    </div>
+                  </dl>
+                ))}
+              </div>
+              {/* タブレット・PC：表は領域内で横スクロール可能 */}
+              <div className="mt-4 hidden w-full min-w-0 max-w-full overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/40 sm:block">
+                <table className="w-full min-w-[560px] text-xs">
                   <thead className="bg-slate-900/90">
                     <tr className="text-left text-[11px] text-slate-400">
                       <th className="px-4 py-2 font-medium">項目</th>
@@ -261,7 +287,7 @@ export default async function InvoiceDetailPage({
 
             {/* 入金履歴（Allocations） */}
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-4 sm:p-5">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-semibold">入金履歴（割当）</h2>
 <Link
   href={`/payments/new?invoiceId=${inv.id}${from ? `&from=${encodeURIComponent(from)}` : ""}`}
@@ -287,7 +313,7 @@ export default async function InvoiceDetailPage({
                           <p className="text-xs text-slate-200">
                             {ymd(a.paymentDate)} / {methodLabel(a.method)}
                           </p>
-                          <p className="mt-1 text-[11px] text-slate-400">
+                          <p className="mt-1 break-words text-[11px] text-slate-400">
                             {a.payerName ? `名義：${a.payerName}` : "名義：—"}
                             {a.importBatchId ? ` / 取込：#${a.importBatchId}` : ""}
                           </p>
