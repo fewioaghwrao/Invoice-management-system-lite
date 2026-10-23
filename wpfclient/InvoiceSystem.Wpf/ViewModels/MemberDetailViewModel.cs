@@ -13,7 +13,11 @@ public sealed class MemberDetailViewModel : ViewModelBase
 {
     private readonly IMemberService _memberService;
     private readonly int _memberId;
-    private readonly Window _window;
+    /// <summary>
+    /// 画面を閉じる処理。引数は「保存・退会などで内容が変わったか」。
+    /// ウィンドウ表示の場合はウィンドウを閉じ、シェル内表示の場合は一覧へ戻る。
+    /// </summary>
+    private readonly Action<bool> _close;
 
     private int _id;
     private string _name = "";
@@ -31,14 +35,31 @@ public sealed class MemberDetailViewModel : ViewModelBase
     private string? _errorMessage;
 
     public MemberDetailViewModel(IMemberService memberService, int memberId, Window window)
+        : this(memberService, memberId, changed =>
+        {
+            if (changed)
+            {
+                window.DialogResult = true;
+            }
+
+            window.Close();
+        })
+    {
+    }
+
+    /// <summary>
+    /// ウィンドウを使わずに表示する場合（管理者用シェル内の画面など）。
+    /// onClose は「閉じる」「保存後」「退会後」に呼ばれ、引数は内容が変わったかどうか。
+    /// </summary>
+    public MemberDetailViewModel(IMemberService memberService, int memberId, Action<bool> onClose)
     {
         _memberService = memberService;
         _memberId = memberId;
-        _window = window;
+        _close = onClose;
 
         SaveCommand = new RelayCommand(async _ => await SaveAsync(), _ => CanSave());
         DisableCommand = new RelayCommand(async _ => await DisableAsync(), _ => CanDisable());
-        CloseCommand = new RelayCommand(_ => _window.Close(), _ => !IsBusy);
+        CloseCommand = new RelayCommand(_ => _close(false), _ => !IsBusy);
     }
 
     public int Id
@@ -283,8 +304,7 @@ public sealed class MemberDetailViewModel : ViewModelBase
             await _memberService.UpdateAsync(Id, request);
 
             MessageBox.Show("会員情報を保存しました。", "保存完了", MessageBoxButton.OK, MessageBoxImage.Information);
-            _window.DialogResult = true;
-            _window.Close();
+            _close(true);
         }
         catch (Exception ex)
         {
@@ -318,8 +338,7 @@ public sealed class MemberDetailViewModel : ViewModelBase
             await _memberService.DisableAsync(Id);
 
             MessageBox.Show("退会（無効化）を実行しました。", "完了", MessageBoxButton.OK, MessageBoxImage.Information);
-            _window.DialogResult = true;
-            _window.Close();
+            _close(true);
         }
         catch (Exception ex)
         {
@@ -352,7 +371,7 @@ public sealed class MemberDetailViewModel : ViewModelBase
     {
         var owner = Application.Current?.Windows
             .OfType<Window>()
-            .FirstOrDefault(w => w.IsActive) ?? _window;
+            .FirstOrDefault(w => w.IsActive) ?? Application.Current?.MainWindow;
 
         var dialog = new ConfirmDialogWindow(
             title: title,

@@ -1,0 +1,266 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.AdminInvoiceEditView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 請求書作成 / 編集（Next.js: app/invoices/new, [id]/edit + shared/InvoiceFormClient.tsx）。DataContext は AdminInvoiceEditViewModel。 -->
+    <UserControl.Resources>
+        <Style x:Key="SectionTitle2" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style x:Key="TotalRowLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        </Style>
+        <Style x:Key="TotalRowValue" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style x:Key="SmallIconButton" TargetType="Button" BasedOn="{StaticResource AdminOutlineButton}">
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Style="{StaticResource PageHeaderCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Style="{StaticResource BreadcrumbText}"/>
+                        <Button Content="請求書一覧" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbList_OnClick"/>
+                        <TextBlock Text=" / " Style="{StaticResource BreadcrumbText}"/>
+                        <TextBlock Text="{Binding ScreenTitle}" Style="{StaticResource BreadcrumbText}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Text="{Binding ScreenTitle}" Style="{StaticResource PageHeaderTitle}"/>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{StaticResource Sky300Brush}"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
+                    <TextBlock Text="請求情報と明細を入力してください。" Margin="0,6,0,0" Style="{StaticResource SmallMuted}"/>
+                    <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="{StaticResource Slate500Brush}">
+                        <Run Text="小計："/><Run Text="{Binding TotalAmountText, Mode=OneWay}"/><Run Text=" / 合計："/><Run Text="{Binding TotalAmountText, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BackButton" Content="← 一覧へ" Style="{StaticResource AdminOutlineButton}" Click="BackButton_OnClick"/>
+                    <Button Margin="8,0,0,0" Click="SaveButton_OnClick">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SkyButton}">
+                                <Setter Property="Content" Value="保存"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSaving}" Value="True">
+                                        <Setter Property="Content" Value="保存中..."/>
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsLoading}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Margin="0,16,0,0"
+                Style="{StaticResource RoseBanner}"
+                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource RoseBannerText}"/>
+        </Border>
+
+        <!-- ===== 基本情報 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <TextBlock Text="基本情報" Style="{StaticResource SectionTitle2}"/>
+
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="請求番号" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox x:Name="InvoiceNumberTextBox"
+                                 Style="{StaticResource AdminTextBox}"
+                                 Tag="例：INV-2026-001"
+                                 Text="{Binding InvoiceNumber, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="会員" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding Members}"
+                                  SelectedItem="{Binding SelectedMember}"
+                                  DisplayMemberPath="Name"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="4">
+                        <TextBlock Text="ステータス" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  DisplayMemberPath="Name"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="請求日" Style="{StaticResource AdminFieldLabel}"/>
+                        <Border Style="{StaticResource DateBox}">
+                            <DatePicker Style="{StaticResource DateBoxPicker}" SelectedDate="{Binding InvoiceDate}"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="支払期限" Style="{StaticResource AdminFieldLabel}"/>
+                        <Border Style="{StaticResource DateBox}">
+                            <DatePicker Style="{StaticResource DateBoxPicker}" SelectedDate="{Binding DueDate}"/>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="備考" Margin="0,16,0,4" Style="{StaticResource AdminFieldLabel}"/>
+                <TextBox Style="{StaticResource AdminTextBox}"
+                         Height="64"
+                         Padding="12,8"
+                         VerticalContentAlignment="Top"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         Tag="例：入金条件、担当者メモなど"
+                         Text="{Binding Remarks, UpdateSourceTrigger=PropertyChanged}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 請求明細 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="請求明細" Style="{StaticResource SectionTitle2}"/>
+                    <Button Grid.Column="1" Content="＋ 行追加" Style="{StaticResource AdminOutlineButton}" Click="AddLineButton_OnClick"/>
+                </Grid>
+
+                <ItemsControl x:Name="LineItems" ItemsSource="{Binding Lines}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- 1 行分: rounded-xl border-slate-800 bg-slate-950/40 p-4 -->
+                            <Border Margin="0,0,0,12" Style="{StaticResource StatBox}">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="2*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="項目" Style="{StaticResource AdminFieldLabel}"/>
+                                            <TextBox Style="{StaticResource AdminTextBox}"
+                                                     Tag="例：月額利用料（3月）"
+                                                     Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="数量" Style="{StaticResource AdminFieldLabel}"/>
+                                            <TextBox Style="{StaticResource AdminTextBox}"
+                                                     InputScope="Number"
+                                                     Text="{Binding Qty, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="単価" Style="{StaticResource AdminFieldLabel}"/>
+                                            <TextBox Style="{StaticResource AdminTextBox}"
+                                                     InputScope="Number"
+                                                     Text="{Binding UnitPrice, UpdateSourceTrigger=PropertyChanged}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource Slate300Brush}">
+                                            <Run Text="金額："/><Run Text="{Binding Amount, StringFormat='￥{0:N0}', Mode=OneWay}" FontWeight="SemiBold" Foreground="{StaticResource Slate50Brush}"/>
+                                        </TextBlock>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <Button Content="↑" ToolTip="1行上へ" Style="{StaticResource SmallIconButton}" Click="MoveUpButton_OnClick"/>
+                                            <Button Content="↓" ToolTip="1行下へ" Style="{StaticResource SmallIconButton}" Click="MoveDownButton_OnClick"/>
+                                            <Button Content="行削除" Click="RemoveLineButton_OnClick">
+                                                <Button.Style>
+                                                    <Style TargetType="Button" BasedOn="{StaticResource AdminOutlineButton}">
+                                                        <Style.Triggers>
+                                                            <!-- 明細が 1 行だけのときは削除できない -->
+                                                            <DataTrigger Binding="{Binding DataContext.Lines.Count, RelativeSource={RelativeSource AncestorType=ItemsControl}}" Value="1">
+                                                                <Setter Property="IsEnabled" Value="False"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Button.Style>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 合計: 右寄せの小ボックス -->
+                <Border Width="320"
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Right"
+                        Style="{StaticResource StatBox}">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="小計" Style="{StaticResource TotalRowLabel}"/>
+                            <TextBlock Text="{Binding TotalAmountText}" Style="{StaticResource TotalRowValue}"/>
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <TextBlock Text="税" Style="{StaticResource TotalRowLabel}"/>
+                            <TextBlock Text="￥0" Style="{StaticResource TotalRowValue}"/>
+                        </Grid>
+                        <Border Margin="0,10,0,0" BorderBrush="{StaticResource Slate800Brush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                            <Grid>
+                                <TextBlock Text="合計" FontWeight="SemiBold" Style="{StaticResource TotalRowLabel}" Foreground="{StaticResource Slate50Brush}"/>
+                                <TextBlock Text="{Binding TotalAmountText}" FontSize="14" FontWeight="SemiBold" Style="{StaticResource TotalRowValue}" Foreground="{StaticResource Slate50Brush}"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

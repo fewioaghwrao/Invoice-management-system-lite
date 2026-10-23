@@ -1,56 +1,44 @@
-﻿using InvoiceSystem.Wpf.Services;
-using InvoiceSystem.Wpf.ViewModels;
+﻿using InvoiceSystem.Wpf.ViewModels;
 using System;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace InvoiceSystem.Wpf.Views;
 
-public partial class AdminCollectionWindow : Window
+/// <summary>
+/// 督促画面（管理者用シェル内に表示）。DataContext は AdminCollectionViewModel。
+/// 本文コピー・督促記録の前に確認ダイアログを出し、結果をメッセージで知らせる。
+/// </summary>
+public partial class AdminCollectionView : UserControl
 {
     private readonly AdminCollectionViewModel _viewModel;
+    private readonly IAdminNavigator _navigator;
+    private readonly long _invoiceId;
+    private bool _initialized;
 
-    public AdminCollectionWindow(InvoiceService invoiceService, long invoiceId)
+    public AdminCollectionView(AdminCollectionViewModel viewModel, long invoiceId, IAdminNavigator navigator)
     {
         InitializeComponent();
 
-        _viewModel = new AdminCollectionViewModel(invoiceService, invoiceId);
+        _viewModel = viewModel;
+        _invoiceId = invoiceId;
+        _navigator = navigator;
         DataContext = _viewModel;
 
-        Loaded += AdminCollectionWindow_Loaded;
-    }
-
-    private async void AdminCollectionWindow_Loaded(object sender, RoutedEventArgs e)
-    {
-        await LoadSafelyAsync();
-    }
-
-    private async void ReloadButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        await LoadSafelyAsync();
-    }
-
-    private bool ShowConfirmDialog(
-        string title,
-        string message,
-        string confirmText,
-        ConfirmDialogWindow.DialogVisualType visualType = ConfirmDialogWindow.DialogVisualType.Default,
-        string? subMessage = null)
-    {
-        var dialog = new ConfirmDialogWindow(
-            title: title,
-            message: message,
-            confirmText: confirmText,
-            cancelText: "キャンセル",
-            visualType: visualType,
-            subMessage: subMessage)
+        Loaded += async (_, _) =>
         {
-            Owner = this
+            if (_initialized) return;
+            _initialized = true;
+            await LoadSafelyAsync();
         };
-
-        var result = dialog.ShowDialog();
-        return result == true && dialog.IsConfirmed;
     }
+
+    private void BreadcrumbDashboard_OnClick(object sender, RoutedEventArgs e) => _navigator.GoToDashboard();
+
+    private void BreadcrumbList_OnClick(object sender, RoutedEventArgs e) => _navigator.GoToInvoiceList();
+
+    private void BackToDetailButton_OnClick(object sender, RoutedEventArgs e) => _navigator.GoToInvoiceDetail(_invoiceId);
 
     private void CopyBodyButton_OnClick(object sender, RoutedEventArgs e)
     {
@@ -64,7 +52,7 @@ public partial class AdminCollectionWindow : Window
             return;
         }
 
-        var confirmed = ShowConfirmDialog(
+        var confirmed = _navigator.Confirm(
             title: "催促本文コピー",
             message: "催促本文をクリップボードにコピーしますか？",
             confirmText: "コピーする",
@@ -115,7 +103,7 @@ public partial class AdminCollectionWindow : Window
             $"次回アクション日：{_viewModel.NextActionDateTextForDialog}{Environment.NewLine}" +
             $"未回収残額：{_viewModel.RemainingText}";
 
-        var confirmed = ShowConfirmDialog(
+        var confirmed = _navigator.Confirm(
             title: "催促記録確認",
             message: "催促を実施済みとして記録します。よろしいですか？",
             confirmText: "記録する",
@@ -145,11 +133,6 @@ public partial class AdminCollectionWindow : Window
             "催促記録",
             MessageBoxButton.OK,
             MessageBoxImage.Information);
-    }
-
-    private void CloseButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        Close();
     }
 
     private async Task LoadSafelyAsync()

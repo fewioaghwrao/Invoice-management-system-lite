@@ -198,7 +198,7 @@ public partial class LoginWindow : Window
 
         if (normalizedRole == "ADMIN")
         {
-            var adminWindow = new AdminDashboardWindow(
+            var adminWindow = new AdminShellWindow(
                 _viewModel.CurrentUser,
                 _authService,
                 _invoiceService,
