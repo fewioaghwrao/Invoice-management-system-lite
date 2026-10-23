@@ -1,0 +1,386 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        ログイン前の画面（ログイン / 新規会員登録 / パスワード再設定）の共通スタイル。
+        Next.js (frontend/src/app/auth/*) の Tailwind 指定に合わせた配色・寸法。
+        slate-950 #020617 / slate-900 #0F172A / slate-800 #1E293B / slate-700 #334155
+        slate-400 #94A3B8 / slate-300 #CBD5E1 / slate-200 #E2E8F0 / slate-100 #F1F5F9 / slate-50 #F8FAFC
+        sky-300 #7DD3FC / sky-400 #38BDF8 / sky-500 #0EA5E9 / indigo-500 #6366F1
+        rounded-3xl=24 / rounded-2xl=16 / rounded-xl=12 / rounded-lg=8
+    -->
+    <SolidColorBrush x:Key="Slate800Brush" Color="#1E293B"/>
+    <SolidColorBrush x:Key="Slate700Brush" Color="#334155"/>
+    <SolidColorBrush x:Key="Slate400Brush" Color="#94A3B8"/>
+    <SolidColorBrush x:Key="Slate300Brush" Color="#CBD5E1"/>
+    <SolidColorBrush x:Key="Slate200Brush" Color="#E2E8F0"/>
+    <SolidColorBrush x:Key="Slate100Brush" Color="#F1F5F9"/>
+    <SolidColorBrush x:Key="Slate50Brush" Color="#F8FAFC"/>
+    <SolidColorBrush x:Key="Sky300Brush" Color="#7DD3FC"/>
+    <SolidColorBrush x:Key="Sky400Brush" Color="#38BDF8"/>
+    <SolidColorBrush x:Key="Sky500Brush" Color="#0EA5E9"/>
+    <!-- bg-slate-900/80 -->
+    <SolidColorBrush x:Key="CardBrush" Color="#CC0F172A"/>
+    <!-- bg-slate-900/60 -->
+    <SolidColorBrush x:Key="InputBgBrush" Color="#990F172A"/>
+    <!-- hover:bg-slate-800/80 -->
+    <SolidColorBrush x:Key="GhostHoverBrush" Color="#CC1E293B"/>
+    <!-- ring-sky-500/60 -->
+    <SolidColorBrush x:Key="FocusRingBrush" Color="#990EA5E9"/>
+    <SolidColorBrush x:Key="PlaceholderBrush" Color="#8A94A6"/>
+
+    <!-- bg-gradient-to-r from-sky-500 to-indigo-500 -->
+    <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0,0.5" EndPoint="1,0.5">
+        <GradientStop Color="#0EA5E9" Offset="0"/>
+        <GradientStop Color="#6366F1" Offset="1"/>
+    </LinearGradientBrush>
+
+    <!-- キーボード操作時だけ出るフォーカスリング（点線の既定表示を置き換え） -->
+    <Style x:Key="RoundedFocusVisual">
+        <Setter Property="Control.Template">
+            <Setter.Value>
+                <ControlTemplate>
+                    <Border Margin="-3"
+                            CornerRadius="14"
+                            BorderThickness="2"
+                            BorderBrush="{StaticResource FocusRingBrush}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 入力欄: rounded-xl border-slate-700 bg-slate-900/60 px-3 py-2.5 text-sm, focus:border-sky-500 ring-2 -->
+    <Style x:Key="ModernTextBox" TargetType="TextBox">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource Sky500Brush}"/>
+        <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Grid>
+                        <Border x:Name="Ring"
+                                Margin="-2"
+                                CornerRadius="14"
+                                BorderThickness="2"
+                                BorderBrush="{StaticResource FocusRingBrush}"
+                                Opacity="0"/>
+                        <Border x:Name="Bd"
+                                CornerRadius="12"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Grid Margin="{TemplateBinding Padding}">
+                                <TextBlock x:Name="Placeholder"
+                                           Text="{TemplateBinding Tag}"
+                                           Foreground="{StaticResource PlaceholderBrush}"
+                                           Margin="2,0,0,0"
+                                           VerticalAlignment="Center"
+                                           IsHitTestVisible="False"
+                                           Visibility="Collapsed"/>
+                                <ScrollViewer x:Name="PART_ContentHost"
+                                              VerticalAlignment="Center"
+                                              Focusable="False"
+                                              HorizontalScrollBarVisibility="Hidden"
+                                              VerticalScrollBarVisibility="Hidden"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Sky500Brush}"/>
+                            <Setter TargetName="Ring" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="ModernPasswordBox" TargetType="PasswordBox">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource Sky500Brush}"/>
+        <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="PasswordBox">
+                    <Grid>
+                        <Border x:Name="Ring"
+                                Margin="-2"
+                                CornerRadius="14"
+                                BorderThickness="2"
+                                BorderBrush="{StaticResource FocusRingBrush}"
+                                Opacity="0"/>
+                        <Border x:Name="Bd"
+                                CornerRadius="12"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Margin="{TemplateBinding Padding}"
+                                          VerticalAlignment="Center"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Sky500Brush}"/>
+                            <Setter TargetName="Ring" Property="Opacity" Value="1"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ログインボタン: グラデーション + shadow-lg shadow-sky-500/30 + hover:brightness-110 -->
+    <Style x:Key="PrimaryButton" TargetType="Button">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid x:Name="Root">
+                        <!-- 影は別レイヤーに付け、文字がぼやけないようにする -->
+                        <Border CornerRadius="12" Background="{StaticResource PrimaryGradientBrush}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#0EA5E9"
+                                                  BlurRadius="22"
+                                                  ShadowDepth="6"
+                                                  Direction="270"
+                                                  Opacity="0.35"/>
+                            </Border.Effect>
+                        </Border>
+                        <Border x:Name="Overlay" CornerRadius="12" Background="White" Opacity="0"/>
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Overlay" Property="Opacity" Value="0.10"/>
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Overlay" Property="Opacity" Value="0.04"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Root" Property="Opacity" Value="0.6"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 新規会員登録: rounded-xl border-slate-700 bg-slate-900/60 text-xs font-semibold text-slate-100 hover:bg-slate-800 -->
+    <Style x:Key="SecondaryButton" TargetType="Button">
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            CornerRadius="12"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"
+                                          RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Slate800Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.6"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- パスワード欄内の「表示/非表示」: rounded-lg px-2 text-xs font-medium text-slate-200 hover:bg-slate-800/80 -->
+    <Style x:Key="GhostButton" TargetType="Button">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            CornerRadius="8"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource GhostHoverBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- テキストリンク: text-xs text-sky-300 hover:text-sky-400 -->
+    <Style x:Key="LinkButton" TargetType="Button">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="4,2">
+                        <ContentPresenter/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource Sky400Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource Sky400Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- フッターの規約リンク（Web版ログイン画面には無いため控えめに表示） -->
+    <Style x:Key="FooterLinkButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="FieldLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <!-- ===== 新規登録・パスワード再設定で追加 ===== -->
+    <SolidColorBrush x:Key="Red400Brush" Color="#F87171"/>
+    <SolidColorBrush x:Key="Sky400DotBrush" Color="#38BDF8"/>
+
+    <!-- エラー: rounded-xl border-red-500/40 bg-red-500/10 text-red-200 -->
+    <Style x:Key="ErrorBanner" TargetType="Border">
+        <Setter Property="Background" Value="#1AEF4444"/>
+        <Setter Property="BorderBrush" Value="#66EF4444"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <Style x:Key="ErrorBannerText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="#FECACA"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- 成功: rounded-xl border-emerald-500/40 bg-emerald-500/10 text-emerald-200 -->
+    <Style x:Key="SuccessBanner" TargetType="Border" BasedOn="{StaticResource ErrorBanner}">
+        <Setter Property="Background" Value="#1A10B981"/>
+        <Setter Property="BorderBrush" Value="#6610B981"/>
+    </Style>
+    <Style x:Key="SuccessBannerText" TargetType="TextBlock" BasedOn="{StaticResource ErrorBannerText}">
+        <Setter Property="Foreground" Value="#A7F3D0"/>
+    </Style>
+
+    <!-- 入力欄下の補足: text-[10px] text-slate-400 -->
+    <Style x:Key="FieldHint" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- 画面上部のバッジ: rounded-full bg-slate-800 px-3 py-1 text-xs font-medium text-sky-300 -->
+    <Style x:Key="BrandPill" TargetType="Border">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="12,4"/>
+    </Style>
+    <Style x:Key="BrandPillText" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <Style x:Key="PageTitle" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style x:Key="PageDescription" TargetType="TextBlock">
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="LineHeight" Value="22"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- 「← ログインに戻る」 -->
+    <Style x:Key="BackLinkButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+</ResourceDictionary>

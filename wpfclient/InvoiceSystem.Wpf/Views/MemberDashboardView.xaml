@@ -1,0 +1,149 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.MemberDashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1000">
+
+    <!-- マイページ（Next.js: dashboards/member/page.tsx）。DataContext は MemberDashboardViewModel。 -->
+    <UserControl.Resources>
+        <!-- アイコンの丸: h-9 w-9 rounded-full border-slate-700 bg-slate-950/40 -->
+        <Style x:Key="CardIconCircle" TargetType="Border">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+            <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- mt-3 text-sm leading-relaxed text-slate-300/90 -->
+        <Style x:Key="CardDescription" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,12,0,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="LineHeight" Value="23"/>
+            <Setter Property="Foreground" Value="#E6CBD5E1"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="OpenPillText" TargetType="TextBlock">
+            <Setter Property="Text" Value="開く →"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <TextBlock Text="ご利用メニュー" Style="{StaticResource SectionTitle}"/>
+
+        <!-- PC は 3 列（gap-4） -->
+        <Grid Margin="0,20,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 請求書一覧（hover: border-sky-500/60） -->
+            <Button Grid.Column="0"
+                    Style="{StaticResource MenuCardButton}"
+                    Command="{Binding OpenInvoicesCommand}"
+                    AutomationProperties.Name="請求書一覧へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#990EA5E9"/>
+                </Button.Tag>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource CardIconCircle}">
+                            <TextBlock Text="&#xE8A5;" FontSize="16"
+                                       Style="{StaticResource IconGlyph}"
+                                       Foreground="{StaticResource Slate200Brush}"/>
+                        </Border>
+                        <TextBlock Text="請求書一覧" Style="{StaticResource CardTitle}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1"
+                               Text="請求書の金額・支払期限・入金状況を確認できます。"
+                               Style="{StaticResource CardDescription}"/>
+                    <Border Grid.Row="2" Margin="0,16,0,0" Style="{StaticResource OpenPill}">
+                        <TextBlock Style="{StaticResource OpenPillText}"/>
+                    </Border>
+                </Grid>
+            </Button>
+
+            <!-- 未入金の確認（hover: border-amber-500/60） -->
+            <Button Grid.Column="2"
+                    Style="{StaticResource MenuCardButton}"
+                    Command="{Binding OpenUnpaidCommand}"
+                    AutomationProperties.Name="未入金の確認へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#99F59E0B"/>
+                </Button.Tag>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource CardIconCircle}">
+                            <TextBlock Text="&#xE823;" FontSize="16"
+                                       Style="{StaticResource IconGlyph}"
+                                       Foreground="#FBBF24"/>
+                        </Border>
+                        <TextBlock Text="未入金の確認" Style="{StaticResource CardTitle}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1"
+                               Text="未入金の請求書と支払期限を確認できます。"
+                               Style="{StaticResource CardDescription}"/>
+                    <Border Grid.Row="2" Margin="0,16,0,0" Style="{StaticResource OpenPill}">
+                        <TextBlock Style="{StaticResource OpenPillText}"/>
+                    </Border>
+                </Grid>
+            </Button>
+
+            <!-- 登録情報（hover: border-emerald-500/60） -->
+            <Button Grid.Column="4"
+                    Style="{StaticResource MenuCardButton}"
+                    Command="{Binding OpenProfileCommand}"
+                    AutomationProperties.Name="登録情報へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#9910B981"/>
+                </Button.Tag>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal">
+                        <Border Style="{StaticResource CardIconCircle}">
+                            <TextBlock Text="&#xE77B;" FontSize="16"
+                                       Style="{StaticResource IconGlyph}"
+                                       Foreground="#A78BFA"/>
+                        </Border>
+                        <TextBlock Text="登録情報" Style="{StaticResource CardTitle}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1"
+                               Text="氏名・メールアドレス・住所などを確認・変更できます。"
+                               Style="{StaticResource CardDescription}"/>
+                    <Border Grid.Row="2" Margin="0,16,0,0" Style="{StaticResource OpenPill}">
+                        <TextBlock Style="{StaticResource OpenPillText}"/>
+                    </Border>
+                </Grid>
+            </Button>
+        </Grid>
+    </StackPanel>
+</UserControl>
