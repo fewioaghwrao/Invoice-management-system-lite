@@ -19,9 +19,19 @@ public class MemberListViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    /// <summary>詳細を開く処理（会員 ID を受け取る）。未指定の場合は何もしない。</summary>
+    private readonly Action<int>? _openDetail;
+
     public MemberListViewModel(IMemberService memberService)
+        : this(memberService, null)
+    {
+    }
+
+    /// <summary>詳細画面の開き方を外から指定する場合（管理者用シェルから画面切り替えで開く）。</summary>
+    public MemberListViewModel(IMemberService memberService, Action<int>? openDetail)
     {
         _memberService = memberService;
+        _openDetail = openDetail;
 
         SearchCommand = new RelayCommand(async _ => await SearchAsync(), _ => !IsLoading);
         ResetCommand = new RelayCommand(async _ => await ResetAsync(), _ => !IsLoading);
@@ -236,18 +246,12 @@ public class MemberListViewModel : INotifyPropertyChanged
         await LoadAsync();
     }
 
-    private async void OpenDetail(object? parameter)
+    private void OpenDetail(object? parameter)
     {
         if (parameter is not MemberRowViewModel member)
             return;
 
-        var window = new MemberDetailWindow(_memberService, member.Id);
-        var result = window.ShowDialog();
-
-        if (result == true)
-        {
-            await LoadAsync();
-        }
+        _openDetail?.Invoke(member.Id);
     }
 
     private bool CanDisableMember(object? parameter)

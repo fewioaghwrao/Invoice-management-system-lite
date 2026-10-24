@@ -1,0 +1,191 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.AdminMemberListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:helpers="clr-namespace:InvoiceSystem.Wpf.Helpers"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 会員一覧（Next.js: app/members/page.tsx）。DataContext は MemberListViewModel。 -->
+    <UserControl.Resources>
+        <helpers:MemberRoleColorConverter x:Key="RoleColor"/>
+        <helpers:ActiveColorConverter x:Key="ActiveColor"/>
+
+        <Style x:Key="ListHeaderText" TargetType="TextBlock" BasedOn="{StaticResource InnerTableHeaderText}">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+        <Style x:Key="ListCell" TargetType="TextBlock" BasedOn="{StaticResource InnerTableCell}">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="ダッシュボード" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbDashboard_OnClick"/>
+                    <TextBlock Text=" / 会員一覧" Style="{StaticResource BreadcrumbText}"/>
+                </StackPanel>
+                <TextBlock Text="会員一覧" Margin="0,6,0,0" Style="{StaticResource PageHeaderTitle}"/>
+                <TextBlock Text="会員の基本情報・ロール・有効状態を検索し、詳細を確認できます。" Margin="0,6,0,0" Style="{StaticResource SmallMuted}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 検索条件 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="キーワード（名前 / メール）" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}"
+                                 Tag="例：山田 / example@example.com"
+                                 Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}">
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding SearchCommand}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="ロール" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding RoleOptions}"
+                                  SelectedItem="{Binding SelectedRole}"
+                                  DisplayMemberPath="Label"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="ステータス" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  DisplayMemberPath="Label"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="6" VerticalAlignment="Bottom" Content="検索" Style="{StaticResource EmeraldSolidButton}" Command="{Binding SearchCommand}"/>
+                    <Button Grid.Column="8" VerticalAlignment="Bottom" Content="リセット" MinHeight="34" Style="{StaticResource AdminOutlineButton}" Command="{Binding ResetCommand}"/>
+                </Grid>
+
+                <Border Margin="0,16,0,0"
+                        Style="{StaticResource RoseBanner}"
+                        Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource RoseBannerText}"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 一覧 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}" Padding="0" ClipToBounds="True">
+            <StackPanel>
+                <Border Background="{StaticResource Slate950_40Brush}" CornerRadius="16,16,0,0" Padding="0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="70"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="1.6*"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="110"/>
+                            <ColumnDefinition Width="160"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="ID" Style="{StaticResource ListHeaderText}"/>
+                        <TextBlock Grid.Column="1" Text="名前" Style="{StaticResource ListHeaderText}"/>
+                        <TextBlock Grid.Column="2" Text="メールアドレス" Style="{StaticResource ListHeaderText}"/>
+                        <TextBlock Grid.Column="3" Text="ロール" Style="{StaticResource ListHeaderText}"/>
+                        <TextBlock Grid.Column="4" Text="状態" Style="{StaticResource ListHeaderText}"/>
+                        <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock Text="読み込み中..."
+                                       Margin="0,0,12,0"
+                                       FontSize="11"
+                                       Foreground="{StaticResource Sky300Brush}"
+                                       Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            <TextBlock Text="操作" Style="{StaticResource ListHeaderText}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <ItemsControl ItemsSource="{Binding Members}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Style="{StaticResource InnerTableRow}" Padding="0,10" MinHeight="54">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="70"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="1.6*"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="160"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <TextBlock Grid.Column="0" Text="{Binding Id}" Style="{StaticResource ListCell}"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" FontWeight="SemiBold" Foreground="{StaticResource Slate50Brush}" TextTrimming="CharacterEllipsis" Style="{StaticResource ListCell}"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Email}" TextTrimming="CharacterEllipsis" Style="{StaticResource ListCell}"/>
+
+                                    <Border Grid.Column="3" Margin="16,0,0,0" Tag="{Binding Role, Converter={StaticResource RoleColor}}" Style="{StaticResource ColorPill}">
+                                        <TextBlock Text="{Binding RoleText}" FontSize="11" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <Border Grid.Column="4" Margin="16,0,0,0" Tag="{Binding IsActive, Converter={StaticResource ActiveColor}}" Style="{StaticResource ColorPill}">
+                                        <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"/>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="5" Margin="16,0" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                        <Button Content="詳細"
+                                                Style="{StaticResource AdminOutlineButton}"
+                                                Command="{Binding DataContext.OpenDetailCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Content="退会"
+                                                Margin="8,0,0,0"
+                                                Visibility="{Binding CanDisable, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                                Style="{StaticResource RoseOutlineButton}"
+                                                Command="{Binding DataContext.DisableMemberCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="該当する会員はいません。">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource InnerTableEmpty}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Members.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== ページ送り ===== -->
+        <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding PageInfoText}" VerticalAlignment="Center" FontSize="12" FontWeight="Medium" Foreground="{StaticResource Slate300Brush}"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="← 前へ" MinWidth="72" Style="{StaticResource AdminOutlineButton}" Command="{Binding PrevPageCommand}"/>
+                <Button Content="次へ →" Margin="8,0,0,0" MinWidth="72" Style="{StaticResource AdminOutlineButton}" Command="{Binding NextPageCommand}"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

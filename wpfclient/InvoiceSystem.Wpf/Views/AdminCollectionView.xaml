@@ -1,0 +1,274 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.AdminCollectionView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 督促（Next.js: app/collections/[invoiceId]/CollectionsClient.tsx）。DataContext は AdminCollectionViewModel。 -->
+    <UserControl.Resources>
+        <Style x:Key="SectionTitle2" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        </Style>
+        <Style x:Key="SummaryValue" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="SummarySub" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style x:Key="PreviewLabel" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Style="{StaticResource PageHeaderCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Style="{StaticResource BreadcrumbText}"/>
+                        <Button Content="請求書一覧" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbList_OnClick"/>
+                        <TextBlock Text=" / " Style="{StaticResource BreadcrumbText}"/>
+                        <Button Content="{Binding InvoiceNumber}" Style="{StaticResource BreadcrumbButton}" Click="BackToDetailButton_OnClick"/>
+                        <TextBlock Text=" / 督促" Style="{StaticResource BreadcrumbText}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Style="{StaticResource PageHeaderTitle}">
+                            <Run Text="督促（"/><Run Text="{Binding InvoiceNumber, Mode=OneWay}"/><Run Text="）"/>
+                        </TextBlock>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{StaticResource Sky300Brush}"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
+                    <TextBlock Text="テンプレ選択 → 文面プレビュー → 履歴管理 → 次アクションまで一画面で管理します。"
+                               Margin="0,6,0,0"
+                               Style="{StaticResource SmallMuted}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="← 請求書詳細へ" Style="{StaticResource AdminOutlineButton}" Click="BackToDetailButton_OnClick"/>
+                    <Button Content="本文コピー" Margin="8,0,0,0" Style="{StaticResource AdminOutlineButton}" Click="CopyBodyButton_OnClick"/>
+                    <Button Margin="8,0,0,0"
+                            IsEnabled="{Binding CanRecord}"
+                            ToolTip="督促を実施済みとして履歴に記録します（未回収残額がある場合のみ）"
+                            ToolTipService.ShowOnDisabled="True"
+                            Click="RecordButton_OnClick">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource EmeraldOutlineButton}">
+                                <Setter Property="Content" Value="督促処理を受け付ける"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsSaving}" Value="True">
+                                        <Setter Property="Content" Value="記録中..."/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Margin="0,16,0,0"
+                Style="{StaticResource RoseBanner}"
+                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource RoseBannerText}"/>
+        </Border>
+
+        <!-- ===== 概要（4 列） ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource StatBox}">
+                    <StackPanel>
+                        <TextBlock Text="顧客" Style="{StaticResource StatLabel}"/>
+                        <TextBlock Text="{Binding MemberName}" Style="{StaticResource SummaryValue}"/>
+                        <TextBlock Text="{Binding MemberEmail}" Style="{StaticResource SummarySub}"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource StatBox}">
+                    <StackPanel>
+                        <TextBlock Text="支払期限" Style="{StaticResource StatLabel}"/>
+                        <TextBlock Text="{Binding DueDateText}" Style="{StaticResource SummaryValue}"/>
+                        <TextBlock Style="{StaticResource SummarySub}">
+                            <Run Text="請求日："/><Run Text="{Binding InvoiceDateText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource StatBox}">
+                    <StackPanel>
+                        <TextBlock Text="請求合計" Style="{StaticResource StatLabel}"/>
+                        <TextBlock Text="{Binding TotalText}" Style="{StaticResource SummaryValue}"/>
+                        <TextBlock Text="{Binding PaidTotalText}" Style="{StaticResource SummarySub}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 未回収残額: border-amber-500/40 bg-amber-500/10 -->
+                <Border Grid.Column="6" Style="{StaticResource StatBox}" BorderBrush="#66F59E0B" Background="#1AF59E0B">
+                    <StackPanel>
+                        <TextBlock Text="未回収残額" FontSize="11" Foreground="#FCD34D"/>
+                        <TextBlock Text="{Binding RemainingText}" Style="{StaticResource SummaryValue}" Foreground="#FCD34D"/>
+                        <TextBlock Text="次回対応日を決めて追う" Style="{StaticResource SummarySub}" Foreground="#FDE68A"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ===== 左: 督促設定 / 右: 文面プレビュー・督促履歴 ===== -->
+        <Grid Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 督促設定 -->
+            <Border Grid.Column="0" VerticalAlignment="Top" Style="{StaticResource PageHeaderCard}">
+                <StackPanel>
+                    <TextBlock Text="督促設定" Style="{StaticResource SectionTitle2}"/>
+
+                    <TextBlock Text="チャネル" Margin="0,14,0,6" Style="{StaticResource AdminFieldLabel}"/>
+                    <ListBox Style="{StaticResource SegmentListBox}"
+                             Margin="0,0,-8,0"
+                             ItemsSource="{Binding ChannelOptions}"
+                             DisplayMemberPath="Label"
+                             SelectedValuePath="Value"
+                             SelectedValue="{Binding SelectedChannel, Mode=TwoWay}"/>
+
+                    <TextBlock Text="トーン" Margin="0,14,0,6" Style="{StaticResource AdminFieldLabel}"/>
+                    <ListBox Style="{StaticResource SegmentListBox}"
+                             Margin="0,0,-8,0"
+                             ItemsSource="{Binding ToneOptions}"
+                             DisplayMemberPath="Label"
+                             SelectedValuePath="Value"
+                             SelectedValue="{Binding SelectedTone, Mode=TwoWay}"/>
+
+                    <TextBlock Text="次回アクション日" Margin="0,14,0,6" Style="{StaticResource AdminFieldLabel}"/>
+                    <Border Style="{StaticResource DateBox}">
+                        <DatePicker Style="{StaticResource DateBoxPicker}"
+                                    SelectedDate="{Binding NextActionDate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Border>
+
+                    <TextBlock Text="メモ（任意）" Margin="0,14,0,6" Style="{StaticResource AdminFieldLabel}"/>
+                    <TextBox Style="{StaticResource AdminTextBox}"
+                             Height="72"
+                             Padding="12,8"
+                             VerticalContentAlignment="Top"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             Tag="対応内容など（履歴に残ります）"
+                             Text="{Binding Memo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2">
+                <!-- メール送信文面プレビュー -->
+                <Border Style="{StaticResource PageHeaderCard}">
+                    <StackPanel>
+                        <TextBlock Text="メール送信文面プレビュー" Margin="0,0,0,12" Style="{StaticResource SectionTitle2}"/>
+                        <Border Style="{StaticResource StatBox}">
+                            <StackPanel>
+                                <TextBlock Text="件名" Style="{StaticResource PreviewLabel}"/>
+                                <TextBlock Text="{Binding SubjectPreview}"
+                                           Margin="0,4,0,0"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource Slate100Brush}"
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock Text="本文" Margin="0,16,0,0" Style="{StaticResource PreviewLabel}"/>
+                                <TextBox Text="{Binding BodyPreview, Mode=OneWay}"
+                                         Margin="0,6,0,0"
+                                         IsReadOnly="True"
+                                         TextWrapping="Wrap"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Padding="0"
+                                         FontSize="12"
+                                         Foreground="{StaticResource Slate100Brush}"
+                                         SelectionBrush="{StaticResource Sky500Brush}"
+                                         ToolTip="本文は選択してコピーすることもできます"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- 督促履歴 -->
+                <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+                    <StackPanel>
+                        <TextBlock Text="督促履歴" Margin="0,0,0,12" Style="{StaticResource SectionTitle2}"/>
+
+                        <ItemsControl ItemsSource="{Binding Logs}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8" Style="{StaticResource StatBox}" Padding="16,12">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource Slate100Brush}" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding AtText, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding ChannelLabel, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding ToneLabel, Mode=OneWay}"/>
+                                                </TextBlock>
+                                                <TextBlock Grid.Column="1" FontSize="11" Foreground="{StaticResource Slate400Brush}">
+                                                    <Run Text="次回："/><Run Text="{Binding NextActionDateText, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Title}" Margin="0,4,0,0" FontSize="12" Foreground="{StaticResource Slate200Brush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Memo}" Margin="0,4,0,0" FontSize="11" Foreground="{StaticResource Slate400Brush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Border>
+                            <Border.Style>
+                                <Style TargetType="Border" BasedOn="{StaticResource StatBox}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Logs.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <TextBlock Text="履歴はまだありません。" FontSize="12" Foreground="{StaticResource Slate400Brush}"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

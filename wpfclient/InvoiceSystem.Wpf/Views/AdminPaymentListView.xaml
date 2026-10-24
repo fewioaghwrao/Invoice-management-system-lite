@@ -1,0 +1,283 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.AdminPaymentListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:helpers="clr-namespace:InvoiceSystem.Wpf.Helpers"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 入金一覧（Next.js: app/payments/page.tsx）。DataContext は PaymentListViewModel。 -->
+    <UserControl.Resources>
+        <helpers:UpperCaseConverter x:Key="UpperCase"/>
+
+        <Style x:Key="ListHeaderText" TargetType="TextBlock" BasedOn="{StaticResource InnerTableHeaderText}">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+        <Style x:Key="ListCell" TargetType="TextBlock" BasedOn="{StaticResource InnerTableCell}">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Style="{StaticResource PageHeaderCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / 入金一覧" Style="{StaticResource BreadcrumbText}"/>
+                    </StackPanel>
+                    <TextBlock Text="入金一覧" Margin="0,6,0,0" Style="{StaticResource PageHeaderTitle}"/>
+                    <TextBlock Text="入金明細と請求書への割当状況（未割当・一部割当・割当済）を確認できます。"
+                               Margin="0,6,0,0"
+                               Style="{StaticResource SmallMuted}"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="＋ 入金登録"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource EmeraldSolidButton}"
+                        Click="CreateButton_OnClick"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== 検索条件 + 合計 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="年" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding YearOptions}"
+                                  SelectedItem="{Binding SelectedYear}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StringFormat={}{0}年}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="月" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding MonthOptions}"
+                                  SelectedItem="{Binding SelectedMonth}"
+                                  DisplayMemberPath="Label"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="割当ステータス" Style="{StaticResource AdminFieldLabel}"/>
+                        <ComboBox Style="{StaticResource AdminComboBox}"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  DisplayMemberPath="Label"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="6">
+                        <TextBlock Text="検索（入金ID / 名義 / 請求書番号）" Style="{StaticResource AdminFieldLabel}" TextTrimming="CharacterEllipsis"/>
+                        <TextBox Style="{StaticResource AdminTextBox}"
+                                 Tag="例: 123 / クライアントC / INV-…"
+                                 Text="{Binding Keyword, UpdateSourceTrigger=PropertyChanged}"
+                                 KeyDown="KeywordTextBox_OnKeyDown"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="8"
+                            VerticalAlignment="Bottom"
+                            Content="検索"
+                            Style="{StaticResource AdminOutlineButton}"
+                            MinHeight="34"
+                            Click="SearchButton_OnClick"/>
+                    <Button Grid.Column="10"
+                            VerticalAlignment="Bottom"
+                            Content="リセット"
+                            Style="{StaticResource AdminOutlineButton}"
+                            MinHeight="34"
+                            Click="ResetButton_OnClick"/>
+                </Grid>
+
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Style="{StaticResource StatBox}">
+                        <StackPanel>
+                            <TextBlock Text="入金合計" Style="{StaticResource StatLabel}"/>
+                            <TextBlock Text="{Binding TotalAmountText}" Style="{StaticResource StatValue}" Foreground="#6EE7B7"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Style="{StaticResource StatBox}">
+                        <StackPanel>
+                            <TextBlock Text="割当済み合計" Style="{StaticResource StatLabel}"/>
+                            <TextBlock Text="{Binding AllocatedTotalText}" Style="{StaticResource StatValue}"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="4" Style="{StaticResource StatBox}">
+                        <StackPanel>
+                            <TextBlock Text="未割当合計" Style="{StaticResource StatLabel}"/>
+                            <TextBlock Text="{Binding UnallocatedTotalText}" Style="{StaticResource StatValue}" Foreground="{StaticResource Amber300Brush}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <Border Margin="0,16,0,0"
+                        Style="{StaticResource RoseBanner}"
+                        Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource RoseBannerText}"/>
+                </Border>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 一覧 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding ResultCountText}" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource Slate100Brush}"/>
+                    <TextBlock Grid.Column="1"
+                               Margin="12,0,0,0"
+                               Text="読み込み中..."
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{StaticResource Sky300Brush}"
+                               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <TextBlock Grid.Column="2" Text="入金詳細→割当へ遷移できます" VerticalAlignment="Center" FontSize="11" Foreground="{StaticResource Slate400Brush}"/>
+                </Grid>
+
+                <Border Style="{StaticResource InnerTable}">
+                    <StackPanel>
+                        <Border Style="{StaticResource InnerTableHeader}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="*" MinWidth="100"/>
+                                    <ColumnDefinition Width="100"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="110"/>
+                                    <ColumnDefinition Width="90"/>
+                                    <ColumnDefinition Width="1.6*" MinWidth="150"/>
+                                    <ColumnDefinition Width="80"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="入金ID" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="1" Text="入金日" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="2" Text="入金名義" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="3" Text="割当状態" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="4" Text="入金額" HorizontalAlignment="Right" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="5" Text="割当済" HorizontalAlignment="Right" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="6" Text="未割当" HorizontalAlignment="Right" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="7" Text="請求書" Style="{StaticResource ListHeaderText}"/>
+                                <TextBlock Grid.Column="8" Text="操作" HorizontalAlignment="Right" Style="{StaticResource ListHeaderText}"/>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding Payments}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource InnerTableRow}" Padding="0,10">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="*" MinWidth="100"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="110"/>
+                                                <ColumnDefinition Width="90"/>
+                                                <ColumnDefinition Width="1.6*" MinWidth="150"/>
+                                                <ColumnDefinition Width="80"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <TextBlock Grid.Column="0" Text="{Binding PaymentIdText}" FontWeight="SemiBold" Foreground="{StaticResource Slate100Brush}" Style="{StaticResource ListCell}"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding PaymentDateText}" Style="{StaticResource ListCell}"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding PayerName, TargetNullValue=—}" TextTrimming="CharacterEllipsis" Style="{StaticResource ListCell}"/>
+
+                                            <Border Grid.Column="3"
+                                                    Margin="16,0,0,0"
+                                                    Tag="{Binding Status, Converter={StaticResource UpperCase}}"
+                                                    Style="{StaticResource AllocationStatusPill}">
+                                                <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"/>
+                                            </Border>
+
+                                            <TextBlock Grid.Column="4" Text="{Binding Amount, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="#6EE7B7" Style="{StaticResource ListCell}"/>
+                                            <TextBlock Grid.Column="5" Text="{Binding AllocatedAmount, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="{StaticResource Slate100Brush}" Style="{StaticResource ListCell}"/>
+                                            <TextBlock Grid.Column="6" Text="{Binding UnallocatedAmount, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="{StaticResource Amber300Brush}" Style="{StaticResource ListCell}"/>
+
+                                            <Button Grid.Column="7"
+                                                    Margin="16,0"
+                                                    VerticalAlignment="Center"
+                                                    Content="{Binding InvoiceNumbersText}"
+                                                    ToolTip="請求書の詳細を開く（複数ある場合は先頭の請求書）"
+                                                    Foreground="{StaticResource Sky300Brush}"
+                                                    Style="{StaticResource CellLinkButton}"
+                                                    Click="InvoiceLinkButton_OnClick"/>
+
+                                            <Button Grid.Column="8"
+                                                    Margin="0,0,16,0"
+                                                    HorizontalAlignment="Right"
+                                                    Content="詳細"
+                                                    Style="{StaticResource AdminOutlineButton}"
+                                                    Click="DetailButton_OnClick"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="該当する入金はありません。">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock" BasedOn="{StaticResource InnerTableEmpty}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Payments.Count}" Value="0">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <!-- ページ送り -->
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding CurrentPageText}" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource Slate400Brush}"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="← 前へ" MinWidth="72" IsEnabled="{Binding CanMovePrev}" Style="{StaticResource AdminOutlineButton}" Click="PrevPageButton_OnClick"/>
+                        <Button Content="次へ →" Margin="8,0,0,0" MinWidth="72" IsEnabled="{Binding CanMoveNext}" Style="{StaticResource AdminOutlineButton}" Click="NextPageButton_OnClick"/>
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

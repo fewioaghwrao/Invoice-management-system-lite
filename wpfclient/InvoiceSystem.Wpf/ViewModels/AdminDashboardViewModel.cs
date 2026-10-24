@@ -46,11 +46,50 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
                 _selectedYear = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(SelectedYearText));
+                OnPropertyChanged(nameof(PreviousYearText));
+                OnPropertyChanged(nameof(NextYearText));
             }
         }
     }
 
     public string SelectedYearText => $"{SelectedYear} 年";
+
+    /// <summary>ヘッダーの年切り替え用（例: "← 2025"）。</summary>
+    public string PreviousYearText => $"← {SelectedYear - 1}";
+
+    /// <summary>ヘッダーの年切り替え用（例: "2027 →"）。</summary>
+    public string NextYearText => $"{SelectedYear + 1} →";
+
+    /// <summary>
+    /// グラフ内にタイトル・サブタイトルを描画するか。
+    /// 画面側で見出しを別に表示する場合は false にする。
+    /// </summary>
+    public bool IncludeChartTitles { get; set; } = true;
+
+    private int _selectedQuarter;
+
+    /// <summary>グラフの表示期間。0 = 全期間、1〜4 = 四半期。</summary>
+    public int SelectedQuarter
+    {
+        get => _selectedQuarter;
+        private set
+        {
+            if (_selectedQuarter != value)
+            {
+                _selectedQuarter = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    private IReadOnlyList<AdminMonthlySalesDto> _lastMonthlySales = Array.Empty<AdminMonthlySalesDto>();
+
+    /// <summary>グラフを四半期で絞り込む（0 = 全期間）。再取得はせず、読み込み済みのデータで描き直す。</summary>
+    public void SetQuarter(int quarter)
+    {
+        SelectedQuarter = Math.Clamp(quarter, 0, 4);
+        BuildMonthlySalesPlot(_lastMonthlySales);
+    }
 
     private bool _isLoading;
     public bool IsLoading
@@ -225,7 +264,8 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
                 });
             }
 
-            BuildMonthlySalesPlot(summary.MonthlySales);
+            _lastMonthlySales = (summary.MonthlySales ?? new List<AdminMonthlySalesDto>()).ToList();
+            BuildMonthlySalesPlot(_lastMonthlySales);
 
             WorstCustomers.Clear();
             foreach (var item in worst.Rows)
@@ -261,10 +301,13 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
 
     private void BuildMonthlySalesPlot(IEnumerable<AdminMonthlySalesDto> monthlySales)
     {
+        var firstMonth = SelectedQuarter == 0 ? 1 : (SelectedQuarter - 1) * 3 + 1;
+        var lastMonth = SelectedQuarter == 0 ? 12 : firstMonth + 2;
+
         var model = new PlotModel
         {
-            Title = "月別売上（請求金額ベース）",
-            Subtitle = $"{SelectedYear}年 1月〜12月",
+            Title = IncludeChartTitles ? "月別売上（請求金額ベース）" : null,
+            Subtitle = IncludeChartTitles ? $"{SelectedYear}年 {firstMonth}月〜{lastMonth}月" : null,
             TextColor = OxyColor.Parse("#E5E7EB"),
             PlotAreaBorderColor = OxyColor.Parse("#334155"),
             Background = OxyColors.Transparent,
@@ -288,23 +331,29 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
             }
         }
 
-        var maxValue = monthlyMap.Values.DefaultIfEmpty(0m).Max();
+        var maxValue = monthlyMap
+            .Where(x => x.Key >= firstMonth && x.Key <= lastMonth)
+            .Select(x => x.Value)
+            .DefaultIfEmpty(0m)
+            .Max();
         var axisMax = CalculateAxisMaximum(maxValue);
 
         // 横軸（月）
         var xAxis = new LinearAxis
         {
             Position = AxisPosition.Bottom,
-            Minimum = 1,
-            Maximum = 12,
+            Minimum = firstMonth,
+            Maximum = lastMonth,
             AbsoluteMinimum = 1,
             AbsoluteMaximum = 12,
             MajorStep = 1,
             MinorStep = 1,
             TextColor = OxyColor.Parse("#CBD5E1"),
-            TicklineColor = OxyColor.Parse("#475569"),
+            TicklineColor = OxyColors.Transparent,
             AxislineColor = OxyColor.Parse("#475569"),
-            MajorGridlineStyle = LineStyle.None,
+            AxislineStyle = LineStyle.Solid,
+            MajorGridlineStyle = LineStyle.Dash,
+            MajorGridlineColor = OxyColor.Parse("#1E293B"),
             MinorGridlineStyle = LineStyle.None,
             IsPanEnabled = false,
             IsZoomEnabled = false,
@@ -323,14 +372,13 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
             Maximum = axisMax,
             AbsoluteMinimum = 0,
             TextColor = OxyColor.Parse("#CBD5E1"),
-            TicklineColor = OxyColor.Parse("#475569"),
+            TicklineColor = OxyColors.Transparent,
             AxislineColor = OxyColor.Parse("#475569"),
-            MajorGridlineStyle = LineStyle.Solid,
+            AxislineStyle = LineStyle.Solid,
+            MajorGridlineStyle = LineStyle.Dash,
             MinorGridlineStyle = LineStyle.None,
             MajorGridlineColor = OxyColor.Parse("#1E293B"),
-            StringFormat = "#,0",
-            Title = "円",
-            TitleColor = OxyColor.Parse("#94A3B8"),
+            LabelFormatter = FormatManYen,
             FontSize = 11,
             IsPanEnabled = false,
             IsZoomEnabled = false
@@ -381,6 +429,19 @@ public class AdminDashboardViewModel : INotifyPropertyChanged
     private static double RoundUp(double value, double unit)
     {
         return Math.Ceiling(value / unit) * unit;
+    }
+
+    /// <summary>縦軸の目盛りを「15万」のように万円単位で表示する。</summary>
+    private static string FormatManYen(double value)
+    {
+        if (Math.Abs(value) < 0.5)
+        {
+            return "0";
+        }
+
+        return Math.Abs(value) >= 10000
+            ? $"{value / 10000:0.#}万"
+            : value.ToString("#,0", CultureInfo.InvariantCulture);
     }
 
     private static IPlotController CreateFixedPlotController()

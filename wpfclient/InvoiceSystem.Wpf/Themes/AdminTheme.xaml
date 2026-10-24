@@ -1,0 +1,642 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        管理者用画面の共通スタイル。
+        Next.js (frontend/src/components/admin/*, app/dashboards/admin) の Tailwind 指定に合わせた配色・寸法。
+        会員用のスタイル（MemberTheme.xaml → AuthTheme.xaml）も使うため、ここでも読み込んでおく。
+    -->
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="/InvoiceSystem.Wpf;component/Themes/MemberTheme.xaml"/>
+    </ResourceDictionary.MergedDictionaries>
+
+    <!-- bg-slate-900/85 -->
+    <SolidColorBrush x:Key="KpiCardBrush" Color="#D90F172A"/>
+    <!-- bg-slate-900/90（表の見出し） -->
+    <SolidColorBrush x:Key="Slate900_90Brush" Color="#E60F172A"/>
+    <!-- bg-slate-950/80（ヘッダー） -->
+    <SolidColorBrush x:Key="Slate950_80Brush" Color="#CC020617"/>
+    <!-- hover:bg-slate-800/60（表の行） -->
+    <SolidColorBrush x:Key="Slate800_60Brush" Color="#991E293B"/>
+    <!-- divide-slate-800/80 -->
+    <SolidColorBrush x:Key="Slate800_80Brush" Color="#CC1E293B"/>
+    <SolidColorBrush x:Key="Sky200Brush" Color="#BAE6FD"/>
+    <SolidColorBrush x:Key="Amber300Brush" Color="#FCD34D"/>
+
+    <!-- 左メニュー項目: rounded-xl border px-3 py-2.5 text-sm font-medium
+         通常: border-slate-800 bg-slate-900/60 text-slate-300 / hover: border-slate-600 bg-slate-800 text-slate-50
+         選択中: border-sky-500/40 bg-sky-500/10 text-sky-100 -->
+    <Style x:Key="AdminNavItem" TargetType="Button">
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Background" Value="{StaticResource PanelSoftBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            CornerRadius="12"
+                            BorderThickness="1"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            Background="{TemplateBinding Background}"
+                            Padding="12,0">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Slate600Brush}"/>
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Slate800Brush}"/>
+                            <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <Style x:Key="AdminNavItemActive" TargetType="Button" BasedOn="{StaticResource AdminNavItem}">
+        <Setter Property="Foreground" Value="#E0F2FE"/>
+        <Setter Property="Background" Value="#1A0EA5E9"/>
+        <Setter Property="BorderBrush" Value="#660EA5E9"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#E0F2FE"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- ヘッダーの年切り替え（← 2025 / 2027 →）: text-xs text-slate-300 hover:text-sky-300 -->
+    <Style x:Key="YearStepButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Opacity" Value="0.5"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- パネル内の「すべて表示 →」など: text-xs text-sky-300 hover:text-sky-200 -->
+    <Style x:Key="PanelLinkButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+        <Setter Property="FontSize" Value="12"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 表内のリンク（請求番号 / 顧客名）: 下線は hover 時のみ -->
+    <Style x:Key="CellLinkButton" TargetType="Button">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent">
+                        <TextBlock x:Name="Text"
+                                   Text="{Binding Content, RelativeSource={RelativeSource TemplatedParent}}"
+                                   TextTrimming="CharacterEllipsis"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Text" Property="TextDecorations" Value="Underline"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Text" Property="TextDecorations" Value="Underline"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 四半期の切り替え: rounded-full px-2.5 py-1 text-[10px]
+         通常: text-slate-300 hover:bg-slate-800 / 選択中: bg-sky-500 text-slate-950 -->
+    <Style x:Key="QuarterPill" TargetType="RadioButton">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="RadioButton">
+                    <Border x:Name="Bd" CornerRadius="999" Background="Transparent" Padding="10,4">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Slate800Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Sky500Brush}"/>
+                            <Setter Property="Foreground" Value="#020617"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocused" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Sky300Brush}"/>
+                            <Setter TargetName="Bd" Property="BorderThickness" Value="1"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- KPI カード: rounded-2xl border bg-slate-900/85 p-4（枠線の色は各カードで指定） -->
+    <Style x:Key="KpiCard" TargetType="Border">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource KpiCardBrush}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+    <Style x:Key="KpiLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+    </Style>
+    <Style x:Key="KpiValue" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,8,0,0"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style x:Key="KpiHint" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,8,0,0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- パネル内の表: rounded-xl border-slate-800 bg-slate-950/40 -->
+    <Style x:Key="InnerTable" TargetType="Border">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <!-- 見出し行: bg-slate-900/90 text-slate-400 font-medium text-xs -->
+    <Style x:Key="InnerTableHeader" TargetType="Border">
+        <Setter Property="Background" Value="{StaticResource Slate900_90Brush}"/>
+        <Setter Property="CornerRadius" Value="12,12,0,0"/>
+        <Setter Property="Padding" Value="0,12"/>
+    </Style>
+    <Style x:Key="InnerTableHeaderText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="Margin" Value="12,0"/>
+    </Style>
+    <!-- データ行: divide-slate-800/80 / hover:bg-slate-800/60 -->
+    <Style x:Key="InnerTableRow" TargetType="Border">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800_80Brush}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0,12"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource Slate800_60Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="InnerTableCell" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="12,0"/>
+    </Style>
+    <Style x:Key="InnerTableEmpty" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,24"/>
+    </Style>
+
+    <!-- ===== 請求書一覧 / 詳細 / 督促 ===== -->
+
+    <!-- ページ見出しカード: rounded-2xl border-slate-800 bg-slate-900/80 p-5 -->
+    <Style x:Key="PageHeaderCard" TargetType="Border" BasedOn="{StaticResource Panel}">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+    <Style x:Key="PageHeaderTitle" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- パンくず: text-[11px] text-slate-400 -->
+    <Style x:Key="BreadcrumbButton" TargetType="Button" BasedOn="{StaticResource LinkButton}">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="BreadcrumbText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- 汎用の小ボタン: rounded-lg border px-3 py-1.5 text-xs font-medium（色は派生スタイルで変更） -->
+    <Style x:Key="AdminOutlineButton" TargetType="Button">
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="Tag" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border x:Name="Bd"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            Background="{TemplateBinding Background}"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <!-- hover 時の背景は Tag で指定（既定: bg-slate-800） -->
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="Bd" Property="Opacity" Value="0.45"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 督促: border-amber-500/40 bg-amber-500/10 text-amber-200 hover:bg-amber-500/15 -->
+    <Style x:Key="AmberOutlineButton" TargetType="Button" BasedOn="{StaticResource AdminOutlineButton}">
+        <Setter Property="Foreground" Value="#FDE68A"/>
+        <Setter Property="Background" Value="#1AF59E0B"/>
+        <Setter Property="BorderBrush" Value="#66F59E0B"/>
+        <Setter Property="Tag">
+            <Setter.Value>
+                <SolidColorBrush Color="#26F59E0B"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#FEF3C7"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 督促処理を受け付ける: border-emerald-500/40 bg-emerald-500/10 text-emerald-200 -->
+    <Style x:Key="EmeraldOutlineButton" TargetType="Button" BasedOn="{StaticResource AdminOutlineButton}">
+        <Setter Property="Foreground" Value="#A7F3D0"/>
+        <Setter Property="Background" Value="#1A10B981"/>
+        <Setter Property="BorderBrush" Value="#6610B981"/>
+        <Setter Property="Tag">
+            <Setter.Value>
+                <SolidColorBrush Color="#2610B981"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#D1FAE5"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 新規作成 / 検索: rounded-lg bg-sky-600 text-xs font-medium text-slate-50 hover:bg-sky-500 shadow-sky-500/30 -->
+    <Style x:Key="SkyButton" TargetType="Button">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="16,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="Background" Value="#0284C7"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Grid>
+                        <Border CornerRadius="8" Background="{TemplateBinding Background}">
+                            <Border.Effect>
+                                <DropShadowEffect Color="#0EA5E9" BlurRadius="12" ShadowDepth="3" Direction="270" Opacity="0.3"/>
+                            </Border.Effect>
+                        </Border>
+                        <Border x:Name="Bd" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource Sky500Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6"/>
+                            <Setter Property="Cursor" Value="Arrow"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 入力欄（管理画面）: rounded-lg border-slate-700 bg-slate-950/60 px-3 py-2 text-xs / focus:border-sky-500 / Tag = プレースホルダー -->
+    <Style x:Key="AdminTextBox" TargetType="TextBox">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource Sky500Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_60Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="TextBox">
+                    <Border x:Name="Bd"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}">
+                        <Grid Margin="{TemplateBinding Padding}">
+                            <TextBlock x:Name="Placeholder"
+                                       Text="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}"
+                                       Foreground="{StaticResource Slate500Brush}"
+                                       Margin="2,0,0,0"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                       IsHitTestVisible="False"
+                                       Visibility="Collapsed"/>
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"/>
+                        </Grid>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="Placeholder" Property="Visibility" Value="Visible"/>
+                        </Trigger>
+                        <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Sky500Brush}"/>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.6"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 項目名: text-[11px] font-medium text-slate-300 -->
+    <Style x:Key="AdminFieldLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <!-- 日付入力（Web 版と同じく白い入力欄） -->
+    <Style x:Key="DateBox" TargetType="Border">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Padding" Value="6,0"/>
+    </Style>
+    <Style x:Key="DateBoxPicker" TargetType="DatePicker">
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#0F172A"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="SelectedDateFormat" Value="Short"/>
+    </Style>
+
+    <!-- 小さな状態バッジ（請求書ステータス）: rounded-full px-2 py-0.5 text-[11px] font-semibold -->
+    <Style x:Key="StatusPill" TargetType="Border">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,2"/>
+    </Style>
+
+    <!-- 選択肢ボタン（督促のチャネル / トーン）: rounded-lg border-slate-700 bg-slate-950/40
+         選択中: border-sky-500/60 bg-sky-500/15 text-sky-100 -->
+    <Style x:Key="SegmentListBox" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="1"/>
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="Margin" Value="0,0,8,0"/>
+                    <Setter Property="FontSize" Value="12"/>
+                    <Setter Property="FontWeight" Value="Medium"/>
+                    <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+                    <Setter Property="Cursor" Value="Hand"/>
+                    <Setter Property="FocusVisualStyle" Value="{StaticResource RoundedFocusVisual}"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border x:Name="Bd"
+                                        Height="34"
+                                        CornerRadius="8"
+                                        BorderThickness="1"
+                                        BorderBrush="{StaticResource Slate700Brush}"
+                                        Background="{StaticResource Slate950_40Brush}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource Slate800Brush}"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Bd" Property="BorderBrush" Value="#990EA5E9"/>
+                                        <Setter TargetName="Bd" Property="Background" Value="#260EA5E9"/>
+                                        <Setter Property="Foreground" Value="#E0F2FE"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 小さめの選択欄（ステータスなど） -->
+    <Style x:Key="AdminComboBox" TargetType="ComboBox" BasedOn="{StaticResource FilterComboBox}">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_60Brush}"/>
+    </Style>
+
+    <!-- 見出し付きの小ボックス: rounded-xl border-slate-800 bg-slate-950/40 p-4 -->
+    <Style x:Key="StatBox" TargetType="Border">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+    <Style x:Key="StatLabel" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+    </Style>
+    <Style x:Key="StatValue" TargetType="TextBlock">
+        <Setter Property="Margin" Value="0,6,0,0"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- ===== 入金 ===== -->
+
+    <!-- ＋入金登録 / 割当を保存 / 登録して割当へ: rounded-lg bg-emerald-600 text-xs font-semibold text-white hover:bg-emerald-500 -->
+    <Style x:Key="EmeraldSolidButton" TargetType="Button" BasedOn="{StaticResource SkyButton}">
+        <Setter Property="Background" Value="#059669"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
+
+    <!-- 割当状態バッジ（割当済 / 一部割当 / 未割当）。Tag に Status（ALLOCATED / PARTIAL / UNALLOCATED）を入れる -->
+    <Style x:Key="AllocationStatusPill" TargetType="Border" BasedOn="{StaticResource StatusPill}">
+        <Setter Property="Background" Value="#1A64748B"/>
+        <Setter Property="BorderBrush" Value="#66475569"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="ALLOCATED">
+                <Setter Property="Background" Value="#1A10B981"/>
+                <Setter Property="BorderBrush" Value="#6610B981"/>
+                <Setter Property="TextElement.Foreground" Value="#6EE7B7"/>
+            </Trigger>
+            <Trigger Property="Tag" Value="PARTIAL">
+                <Setter Property="Background" Value="#1AF59E0B"/>
+                <Setter Property="BorderBrush" Value="#66F59E0B"/>
+                <Setter Property="TextElement.Foreground" Value="#FCD34D"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 入力欄下の補足: text-[11px] text-slate-500 -->
+    <Style x:Key="AdminFieldHint" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate500Brush}"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- ===== 会員 / 売上 ===== -->
+
+    <!-- 退会: border-rose-500/40 bg-rose-500/10 text-rose-200 -->
+    <Style x:Key="RoseOutlineButton" TargetType="Button" BasedOn="{StaticResource AdminOutlineButton}">
+        <Setter Property="Foreground" Value="#FECDD3"/>
+        <Setter Property="Background" Value="#1AF43F5E"/>
+        <Setter Property="BorderBrush" Value="#66F43F5E"/>
+        <Setter Property="Tag">
+            <Setter.Value>
+                <SolidColorBrush Color="#26F43F5E"/>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#FFE4E6"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 色付きバッジ（Tag の値で色を切り替える）
+         emerald: 一般会員 / 有効 / 入金済
+         sky:     管理者 / 一部入金
+         amber:   未入金
+         rose:    無効
+         それ以外: slate -->
+    <Style x:Key="ColorPill" TargetType="Border" BasedOn="{StaticResource StatusPill}">
+        <Setter Property="Background" Value="#1A64748B"/>
+        <Setter Property="BorderBrush" Value="#66475569"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Style.Triggers>
+            <Trigger Property="Tag" Value="emerald">
+                <Setter Property="Background" Value="#1A10B981"/>
+                <Setter Property="BorderBrush" Value="#6610B981"/>
+                <Setter Property="TextElement.Foreground" Value="#6EE7B7"/>
+            </Trigger>
+            <Trigger Property="Tag" Value="sky">
+                <Setter Property="Background" Value="#1A0EA5E9"/>
+                <Setter Property="BorderBrush" Value="#660EA5E9"/>
+                <Setter Property="TextElement.Foreground" Value="#7DD3FC"/>
+            </Trigger>
+            <Trigger Property="Tag" Value="amber">
+                <Setter Property="Background" Value="#1AF59E0B"/>
+                <Setter Property="BorderBrush" Value="#66F59E0B"/>
+                <Setter Property="TextElement.Foreground" Value="#FCD34D"/>
+            </Trigger>
+            <Trigger Property="Tag" Value="rose">
+                <Setter Property="Background" Value="#1AF43F5E"/>
+                <Setter Property="BorderBrush" Value="#66F43F5E"/>
+                <Setter Property="TextElement.Foreground" Value="#FDA4AF"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 読み取り専用の値（ロール / 状態など）: 入力欄と同じ形で、少し沈んだ色 -->
+    <Style x:Key="ReadOnlyField" TargetType="Border">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_30Brush}"/>
+        <Setter Property="Padding" Value="12,0"/>
+    </Style>
+    <Style x:Key="ReadOnlyFieldText" TargetType="TextBlock">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+</ResourceDictionary>

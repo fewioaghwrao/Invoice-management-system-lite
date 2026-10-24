@@ -1,0 +1,133 @@
+﻿<UserControl x:Class="InvoiceSystem.Wpf.Views.AdminMemberDetailView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 会員詳細・編集（Next.js: app/members/[id]/page.tsx + shared/MemberFormClient.tsx）。DataContext は MemberDetailViewModel。 -->
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Style="{StaticResource PageHeaderCard}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Style="{StaticResource BreadcrumbButton}" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Style="{StaticResource BreadcrumbText}"/>
+                        <Button Content="会員一覧" Style="{StaticResource BreadcrumbButton}" Command="{Binding CloseCommand}"/>
+                        <TextBlock Text=" / 会員詳細" Style="{StaticResource BreadcrumbText}"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Text="会員詳細・編集" Style="{StaticResource PageHeaderTitle}"/>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{StaticResource Sky300Brush}"
+                                   Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </StackPanel>
+                    <TextBlock Text="会員情報の確認・編集と、アカウントの有効状態を確認できます。" Margin="0,6,0,0" Style="{StaticResource SmallMuted}"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="← 一覧へ"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource AdminOutlineButton}"
+                        Command="{Binding CloseCommand}"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== 入力 ===== -->
+        <Border Margin="0,24,0,0" Style="{StaticResource PageHeaderCard}">
+            <StackPanel>
+                <Border Margin="0,0,0,16"
+                        Style="{StaticResource RoseBanner}"
+                        Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Style="{StaticResource RoseBannerText}"/>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="名前" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="メール" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text="※管理画面編集のためメール認証は行いません（デモ用）。" Style="{StaticResource AdminFieldHint}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="郵便番号" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}" Text="{Binding PostalCode, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="住所" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}" Text="{Binding Address, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Grid.Column="0">
+                        <TextBlock Text="電話番号" Style="{StaticResource AdminFieldLabel}"/>
+                        <TextBox Style="{StaticResource AdminTextBox}" Text="{Binding Phone, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Grid.Column="2">
+                        <TextBlock Text="ロール" Style="{StaticResource AdminFieldLabel}"/>
+                        <Border Style="{StaticResource ReadOnlyField}">
+                            <TextBlock Text="{Binding RoleText}" Style="{StaticResource ReadOnlyFieldText}"/>
+                        </Border>
+                        <TextBlock Text="※デモの故障防止のためロールは固定です（管理者選択も不可）。" Style="{StaticResource AdminFieldHint}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="6" Grid.Column="0">
+                        <TextBlock Text="状態" Style="{StaticResource AdminFieldLabel}"/>
+                        <Border Style="{StaticResource ReadOnlyField}">
+                            <TextBlock Text="{Binding StatusText}" Style="{StaticResource ReadOnlyFieldText}"/>
+                        </Border>
+                        <TextBlock Text="※状態変更は「退会（無効化）」操作で行います。" Style="{StaticResource AdminFieldHint}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 戻る / 退会（無効化） / 保存 -->
+                <Grid Margin="0,24,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="戻る" MinWidth="64" Style="{StaticResource AdminOutlineButton}" Command="{Binding CloseCommand}"/>
+                    <Button Grid.Column="2"
+                            Content="退会（無効化）"
+                            MinHeight="34"
+                            Padding="16,0"
+                            Style="{StaticResource RoseOutlineButton}"
+                            Command="{Binding DisableCommand}"/>
+                    <Button Grid.Column="3"
+                            Margin="8,0,0,0"
+                            Content="保存"
+                            Style="{StaticResource EmeraldSolidButton}"
+                            Command="{Binding SaveCommand}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
