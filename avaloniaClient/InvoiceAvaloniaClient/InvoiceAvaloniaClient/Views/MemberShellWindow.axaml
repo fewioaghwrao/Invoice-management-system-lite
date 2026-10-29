@@ -1,0 +1,155 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="InvoiceAvaloniaClient.Views.MemberShellWindow"
+        x:CompileBindings="False"
+        Title="マイページ - Invoice Management System"
+        Icon="/Assets/favicon.ico"
+        Width="1280"
+        Height="820"
+        MinWidth="1120"
+        MinHeight="600"
+        WindowStartupLocation="CenterScreen"
+        Background="#09090B">
+
+    <!--
+        会員用のシェル。ヘッダー / 左メニュー / フッターは共通で、中央の PageHost だけを差し替える。
+        Next.js の app/account/layout.tsx（左メニュー付き）と dashboards/member（左メニューなし）に合わせている。
+        DataContext は MemberDashboardViewModel（ヘッダーのユーザー表示とログアウトに使用）。
+    -->
+    <Grid Background="{DynamicResource MemberBackgroundBrush}" RowDefinitions="Auto,*,Auto">
+
+        <!-- ===== ヘッダー: border-b border-slate-800 bg-slate-950/40 ===== -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource Slate950_40Brush}"
+                BorderBrush="{DynamicResource Slate800Brush}"
+                BorderThickness="0,0,0,1">
+            <Grid x:Name="HeaderInner" MaxWidth="1440" Margin="32,20" ColumnDefinitions="*,Auto">
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="PageTitleText"
+                               Text="マイページ"
+                               FontSize="18"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Slate100Brush}"/>
+                    <TextBlock x:Name="PageDescriptionText"
+                               Text="請求書やお支払い状況を確認できます。"
+                               Margin="0,4,0,0"
+                               FontSize="14"
+                               Foreground="{DynamicResource Slate400Brush}"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- ロール / 氏名 / ログアウト -->
+                <StackPanel Grid.Column="1"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <Border Background="#F3F4F6"
+                            CornerRadius="999"
+                            Padding="8,4"
+                            VerticalAlignment="Center">
+                        <TextBlock FontSize="14" Foreground="#4B5563">
+                            <Run Text="ロール: "/>
+                            <Run Text="{Binding RoleLabel, Mode=OneWay}"/>
+                        </TextBlock>
+                    </Border>
+
+                    <TextBlock Text="{Binding DisplayName}"
+                               Margin="8,0,12,0"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               Foreground="{DynamicResource Slate500Brush}"/>
+
+                    <Button Content="ログアウト"
+                            Classes="LogoutButton"
+                            Command="{Binding LogoutCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== メイン ===== -->
+        <ScrollViewer x:Name="MainScrollViewer"
+                      Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid x:Name="MainInner" MaxWidth="1440" Margin="32,32" ColumnDefinitions="216,24,*">
+
+                <!-- 左メニュー: rounded-2xl border-slate-800 bg-slate-900/70 p-2 -->
+                <Border x:Name="Sidebar"
+                        Grid.Column="0"
+                        VerticalAlignment="Top"
+                        Classes="Panel"
+                        Padding="8,8,8,2">
+                    <StackPanel>
+                        <RadioButton x:Name="NavDashboard"
+                                     GroupName="MemberNav"
+                                     Classes="NavItem"
+                                     Click="NavDashboard_OnClick">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE80F;" Width="20" Margin="0,0,10,0"
+                                           Classes="IconGlyph"
+                                           Foreground="{DynamicResource Slate300Brush}"/>
+                                <TextBlock Text="マイページ" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+
+                        <RadioButton x:Name="NavInvoices"
+                                     GroupName="MemberNav"
+                                     Classes="NavItem"
+                                     Click="NavInvoices_OnClick">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE8A5;" Width="20" Margin="0,0,10,0"
+                                           Classes="IconGlyph"
+                                           Foreground="{DynamicResource Slate200Brush}"/>
+                                <TextBlock Text="請求書一覧" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+
+                        <RadioButton x:Name="NavUnpaid"
+                                     GroupName="MemberNav"
+                                     Classes="NavItem"
+                                     Click="NavUnpaid_OnClick">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE823;" Width="20" Margin="0,0,10,0"
+                                           Classes="IconGlyph"
+                                           Foreground="#FBBF24"/>
+                                <TextBlock Text="未入金の確認" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+
+                        <RadioButton x:Name="NavProfile"
+                                     GroupName="MemberNav"
+                                     Classes="NavItem"
+                                     Click="NavProfile_OnClick">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="&#xE77B;" Width="20" Margin="0,0,10,0"
+                                           Classes="IconGlyph"
+                                           Foreground="#A78BFA"/>
+                                <TextBlock Text="登録情報" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </RadioButton>
+                    </StackPanel>
+                </Border>
+
+                <!-- 各画面をここに差し込む -->
+                <ContentControl x:Name="PageHost"
+                                Grid.Column="2"
+                                Focusable="False"/>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ===== フッター: border-t border-slate-800 bg-slate-950/30 text-xs text-slate-500 ===== -->
+        <Border Grid.Row="2"
+                Background="{DynamicResource Slate950_30Brush}"
+                BorderBrush="{DynamicResource Slate800Brush}"
+                BorderThickness="0,1,0,0">
+            <TextBlock x:Name="FooterInner"
+                       MaxWidth="1440"
+                       Margin="32,16"
+                       Text="Invoice Management System"
+                       FontSize="12"
+                       Foreground="{DynamicResource Slate500Brush}"/>
+        </Border>
+    </Grid>
+</Window>

@@ -1,0 +1,171 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+        mc:Ignorable="d"
+        x:Class="InvoiceAvaloniaClient.Views.LoginWindow"
+        x:CompileBindings="False"
+        Title="ログイン - Invoice Management System"
+        Icon="/Assets/favicon.ico"
+        Width="960"
+        Height="720"
+        MinWidth="520"
+        MinHeight="560"
+        WindowStartupLocation="CenterScreen"
+        Background="#020617">
+
+    <!--
+        ログイン前の画面をまとめたウィンドウ。
+        ログイン / 新規会員登録 / パスワード再設定 を別ウィンドウにせず、このウィンドウ内で切り替える。
+        スタイルは Themes/AppTheme.axaml（App.axaml で読み込み）。
+    -->
+    <Grid>
+        <!-- 背景: bg-slate-950 + 上（sky-500）と下（indigo-500）のぼかし -->
+        <Grid IsHitTestVisible="False" Opacity="0.45">
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                        <GradientStop Color="#0EA5E9" Offset="0"/>
+                        <GradientStop Color="#000EA5E9" Offset="0.45"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                        <GradientStop Color="#006366F1" Offset="0.55"/>
+                        <GradientStop Color="#6366F1" Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
+        <ScrollViewer x:Name="PageScrollViewer"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="16,32" VerticalAlignment="Center">
+
+                <!-- ===== ログイン ===== -->
+                <!-- 外側カード: max-w-3xl rounded-3xl border-slate-800 bg-slate-900/80 p-8 shadow-2xl -->
+                <Border x:Name="LoginPage"
+                        MaxWidth="768"
+                        CornerRadius="24"
+                        Background="{DynamicResource CardBrush}"
+                        BorderBrush="{DynamicResource Slate800Brush}"
+                        BorderThickness="1"
+                        BoxShadow="0 20 50 0 #59000000"
+                        Padding="32">
+                    <StackPanel>
+                        <Border Classes="BrandPill">
+                            <TextBlock Text="Invoice Management System" Classes="BrandPillText"/>
+                        </Border>
+
+                        <TextBlock Text="ログイン" Margin="0,16,0,0" Classes="PageTitle"/>
+
+                        <TextBlock Text="請求・入金情報を確認するため、ログインしてください。"
+                                   Margin="0,8,0,0"
+                                   Classes="PageDescription"/>
+
+                        <!-- 内側カード: rounded-2xl bg-slate-900/80 p-6 shadow-lg -->
+                        <Border Margin="0,40,0,0"
+                                CornerRadius="16"
+                                Background="{DynamicResource CardBrush}"
+                                BoxShadow="0 6 18 0 #4D000000"
+                                Padding="24">
+                            <StackPanel>
+
+                                <!-- 新規登録完了などのお知らせ（コードビハインドで表示） -->
+                                <Border x:Name="NoticeBorder"
+                                        Margin="0,0,0,16"
+                                        Classes="SuccessBanner"
+                                        IsVisible="False">
+                                    <TextBlock x:Name="NoticeTextBlock" Classes="SuccessBannerText"/>
+                                </Border>
+
+                                <!-- メールアドレス -->
+                                <TextBlock Text="メールアドレス" Classes="FieldLabel"/>
+                                <TextBox x:Name="EmailTextBox"
+                                         Classes="ModernTextBox"
+                                         PlaceholderText="example@example.com"
+                                         Text="{Binding Email}"/>
+
+                                <!-- パスワード（入力欄の右端に表示/非表示ボタン） -->
+                                <TextBlock Text="パスワード" Margin="0,16,0,4" Classes="FieldLabel"/>
+                                <Grid>
+                                    <TextBox x:Name="PasswordBox"
+                                             Classes="ModernTextBox"
+                                             Padding="12,0,72,0"
+                                             PasswordChar="●"
+                                             PlaceholderText="••••••••"
+                                             Text="{Binding Password}"/>
+
+                                    <Button x:Name="TogglePasswordButton"
+                                            Classes="GhostButton"
+                                            Content="表示"
+                                            HorizontalAlignment="Right"
+                                            VerticalAlignment="Stretch"
+                                            Margin="0,5,8,5"
+                                            Click="TogglePasswordButton_OnClick"/>
+                                </Grid>
+
+                                <!-- エラー -->
+                                <Border Margin="0,16,0,0"
+                                        Classes="ErrorBanner"
+                                        IsVisible="{Binding HasError}">
+                                    <TextBlock Text="{Binding ErrorMessage}" Classes="ErrorBannerText"/>
+                                </Border>
+
+                                <!-- ログイン（Enter キーでも実行） -->
+                                <Button Margin="0,20,0,0"
+                                        Classes="PrimaryButton"
+                                        IsDefault="{Binding #LoginPage.IsVisible}"
+                                        Command="{Binding LoginCommand}"
+                                        Content="{Binding IsBusy, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='ログイン中...|ログイン'}"/>
+
+                                <!-- 新規会員登録 -->
+                                <TextBlock Text="初めてご利用の方はこちら"
+                                           Margin="0,16,0,8"
+                                           HorizontalAlignment="Center"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource Slate300Brush}"/>
+
+                                <Button Content="新規会員登録"
+                                        Classes="SecondaryButton"
+                                        Click="RegisterButton_OnClick"/>
+
+                                <!-- パスワード再設定 -->
+                                <Button Content="パスワードをお忘れの方はこちら"
+                                        Margin="0,12,0,0"
+                                        Classes="LinkButton"
+                                        Click="ForgotPasswordButton_OnClick"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- ===== 新規会員登録 / パスワード再設定（コードビハインドで差し込む） ===== -->
+                <ContentControl x:Name="SubPageHost"
+                                Focusable="False"
+                                IsVisible="False"/>
+
+                <!-- 利用規約 / プライバシーポリシー（全画面共通・ブラウザで開く） -->
+                <StackPanel Margin="0,16,0,0"
+                            Orientation="Horizontal"
+                            HorizontalAlignment="Center">
+                    <Button Content="利用規約"
+                            Classes="FooterLinkButton"
+                            Click="OpenTermsButton_OnClick"/>
+                    <TextBlock Text="·"
+                               Margin="4,0"
+                               VerticalAlignment="Center"
+                               FontSize="11"
+                               Foreground="{DynamicResource Slate400Brush}"/>
+                    <Button Content="プライバシーポリシー"
+                            Classes="FooterLinkButton"
+                            Click="OpenPrivacyPolicyButton_OnClick"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Window>

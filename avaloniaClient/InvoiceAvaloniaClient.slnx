@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="InvoiceAvaloniaClient/InvoiceAvaloniaClient.Desktop/InvoiceAvaloniaClient.Desktop.csproj" />
+  <Project Path="InvoiceAvaloniaClient/InvoiceAvaloniaClient/InvoiceAvaloniaClient.csproj" />
+  <Project Path="InvoiceAvaloniaClient/InvoiceAvaloniaClient.Tests/InvoiceAvaloniaClient.Tests.csproj" />
+</Solution>

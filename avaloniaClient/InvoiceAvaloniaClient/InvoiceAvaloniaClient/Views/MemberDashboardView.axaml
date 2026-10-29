@@ -1,0 +1,134 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1000"
+             x:Class="InvoiceAvaloniaClient.Views.MemberDashboardView"
+             x:CompileBindings="False">
+
+    <!-- マイページ（Next.js: dashboards/member/page.tsx）。DataContext は MemberDashboardViewModel。 -->
+    <UserControl.Styles>
+        <!-- アイコンの丸: h-9 w-9 rounded-full border-slate-700 bg-slate-950/40 -->
+        <Style Selector="Border.CardIconCircle">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="CornerRadius" Value="18"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Background" Value="#66020617"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+        <Style Selector="TextBlock.CardTitle">
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#F1F5F9"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- mt-3 text-sm leading-relaxed text-slate-300/90 -->
+        <Style Selector="TextBlock.CardDescription">
+            <Setter Property="Margin" Value="0,12,0,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="LineHeight" Value="23"/>
+            <Setter Property="Foreground" Value="#E6CBD5E1"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style Selector="TextBlock.OpenPillText">
+            <Setter Property="Text" Value="開く →"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <TextBlock Text="ご利用メニュー" Classes="SectionTitle"/>
+
+        <!-- PC は 3 列（gap-4） -->
+        <Grid Margin="0,20,0,0" ColumnDefinitions="*,16,*,16,*">
+
+            <!-- 請求書一覧（hover: border-sky-500/60） -->
+            <Button Grid.Column="0"
+                    Classes="MenuCardButton"
+                    Command="{Binding OpenInvoicesCommand}"
+                    AutomationProperties.Name="請求書一覧へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#990EA5E9"/>
+                </Button.Tag>
+                <Grid RowDefinitions="Auto,Auto,*">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Classes="CardIconCircle">
+                            <TextBlock Text="&#xE8A5;" FontSize="16"
+                                       Classes="IconGlyph"
+                                       Foreground="{DynamicResource Slate200Brush}"/>
+                        </Border>
+                        <TextBlock Text="請求書一覧" Classes="CardTitle"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1"
+                               Text="請求書の金額・支払期限・入金状況を確認できます。"
+                               Classes="CardDescription"/>
+
+                    <Border Grid.Row="2" Margin="0,16,0,0" Classes="OpenPill">
+                        <TextBlock Classes="OpenPillText"/>
+                    </Border>
+                </Grid>
+            </Button>
+
+            <!-- 未入金の確認（hover: border-amber-500/60） -->
+            <Button Grid.Column="2"
+                    Classes="MenuCardButton"
+                    Command="{Binding OpenUnpaidCommand}"
+                    AutomationProperties.Name="未入金の確認へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#99F59E0B"/>
+                </Button.Tag>
+                <Grid RowDefinitions="Auto,Auto,*">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Classes="CardIconCircle">
+                            <TextBlock Text="&#xE823;" FontSize="16"
+                                       Classes="IconGlyph"
+                                       Foreground="#FBBF24"/>
+                        </Border>
+                        <TextBlock Text="未入金の確認" Classes="CardTitle"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1"
+                               Text="未入金の請求書と支払期限を確認できます。"
+                               Classes="CardDescription"/>
+
+                    <Border Grid.Row="2" Margin="0,16,0,0" Classes="OpenPill">
+                        <TextBlock Classes="OpenPillText"/>
+                    </Border>
+                </Grid>
+            </Button>
+
+            <!-- 登録情報（hover: border-emerald-500/60） -->
+            <Button Grid.Column="4"
+                    Classes="MenuCardButton"
+                    Command="{Binding OpenProfileCommand}"
+                    AutomationProperties.Name="登録情報へ">
+                <Button.Tag>
+                    <SolidColorBrush Color="#9910B981"/>
+                </Button.Tag>
+                <Grid RowDefinitions="Auto,Auto,*">
+                    <StackPanel Orientation="Horizontal">
+                        <Border Classes="CardIconCircle">
+                            <TextBlock Text="&#xE77B;" FontSize="16"
+                                       Classes="IconGlyph"
+                                       Foreground="#A78BFA"/>
+                        </Border>
+                        <TextBlock Text="登録情報" Classes="CardTitle"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="1"
+                               Text="氏名・メールアドレス・住所などを確認・変更できます。"
+                               Classes="CardDescription"/>
+
+                    <Border Grid.Row="2" Margin="0,16,0,0" Classes="OpenPill">
+                        <TextBlock Classes="OpenPillText"/>
+                    </Border>
+                </Grid>
+            </Button>
+        </Grid>
+    </StackPanel>
+</UserControl>

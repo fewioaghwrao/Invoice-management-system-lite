@@ -1,0 +1,327 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminDashboardView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:controls="using:InvoiceAvaloniaClient.Controls"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 管理者ダッシュボード（Next.js: app/dashboards/admin/page.tsx）。DataContext は AdminDashboardViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="Border.DashPanel">
+            <Setter Property="Padding" Value="20"/>
+        </Style>
+        <Style Selector="TextBlock.PanelTitle">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- 読み込み中 / エラー -->
+        <TextBlock Margin="0,0,0,12"
+                   Text="読み込み中..."
+                   FontSize="12"
+                   Foreground="{DynamicResource Sky300Brush}"
+                   IsVisible="{Binding IsLoading}"/>
+
+        <Border Margin="0,0,0,20"
+                Classes="RoseBanner"
+                IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- ===== 主要指標（5 列 / gap-3） ===== -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- border-sky-500/40 -->
+            <Border Grid.Column="0" Classes="KpiCard" BorderBrush="#660EA5E9">
+                <StackPanel>
+                    <TextBlock Text="売上合計（請求金額）" Classes="KpiLabel"/>
+                    <TextBlock Text="{Binding TotalSalesText}" Classes="KpiValue"/>
+                    <TextBlock Text="発行済み請求書の合計" Classes="KpiHint"/>
+                </StackPanel>
+            </Border>
+
+            <!-- border-amber-400/40 / text-amber-300 -->
+            <Border Grid.Column="2" Classes="KpiCard" BorderBrush="#66FBBF24">
+                <StackPanel>
+                    <TextBlock Text="未入金額" Classes="KpiLabel"/>
+                    <TextBlock Text="{Binding UnpaidAmountText}" Classes="KpiValue" Foreground="{DynamicResource Amber300Brush}"/>
+                    <TextBlock Text="未回収残額の合計" Classes="KpiHint"/>
+                </StackPanel>
+            </Border>
+
+            <!-- border-slate-700 -->
+            <Border Grid.Column="4" Classes="KpiCard" BorderBrush="{DynamicResource Slate700Brush}">
+                <StackPanel>
+                    <TextBlock Text="請求書数" Classes="KpiLabel"/>
+                    <TextBlock Text="{Binding InvoiceCountText}" Classes="KpiValue"/>
+                    <TextBlock Text="対象年の請求書" Classes="KpiHint"/>
+                </StackPanel>
+            </Border>
+
+            <!-- border-emerald-500/40 / text-emerald-300 -->
+            <Border Grid.Column="6" Classes="KpiCard" BorderBrush="#6610B981">
+                <StackPanel>
+                    <TextBlock Text="入金数" Classes="KpiLabel"/>
+                    <TextBlock Text="{Binding PaymentCountText}" Classes="KpiValue" Foreground="#6EE7B7"/>
+                    <TextBlock Text="登録された入金明細" Classes="KpiHint"/>
+                </StackPanel>
+            </Border>
+
+            <!-- border-indigo-500/40 / text-indigo-200 -->
+            <Border Grid.Column="8" Classes="KpiCard" BorderBrush="#666366F1">
+                <StackPanel>
+                    <TextBlock Text="回収率" Classes="KpiLabel"/>
+                    <TextBlock Text="{Binding RecoveryRateText}" Classes="KpiValue" Foreground="#C7D2FE"/>
+                    <TextBlock Text="入金済み合計 ÷ 請求合計" Classes="KpiHint"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===== 未入金一覧 / 月別売上（2 列 / gap-5） ===== -->
+        <Grid Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 未入金一覧（Top5） -->
+            <Border Grid.Column="0" Classes="Panel DashPanel">
+                <StackPanel>
+                    <Grid Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="未入金一覧（Top5）" Classes="PanelTitle"/>
+                        <Button Grid.Column="1"
+                                Content="すべて表示 →"
+                                Classes="PanelLinkButton"
+                                Click="OpenInvoiceListButton_OnClick"/>
+                    </Grid>
+
+                    <Border Classes="InnerTable">
+                        <StackPanel>
+                            <Border Classes="InnerTableHeader">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="110"/>
+                                        <ColumnDefinition Width="110"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="請求番号" Classes="InnerTableHeaderText"/>
+                                    <TextBlock Grid.Column="1" Text="顧客" Classes="InnerTableHeaderText"/>
+                                    <TextBlock Grid.Column="2" Text="未入金額" HorizontalAlignment="Right" Classes="InnerTableHeaderText"/>
+                                </Grid>
+                            </Border>
+
+                            <ItemsControl ItemsSource="{Binding UnpaidInvoices}" Focusable="False">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Classes="InnerTableRow">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="110"/>
+                                                    <ColumnDefinition Width="110"/>
+                                                </Grid.ColumnDefinitions>
+
+                                                <StackPanel Grid.Column="0" Margin="12,0" VerticalAlignment="Center">
+                                                    <Button Content="{Binding InvoiceNumber}"
+                                                            Tag="{Binding InvoiceId}"
+                                                            ToolTip.Tip="請求書の詳細を開く"
+                                                            Classes="CellLinkButton"
+                                                            Click="UnpaidInvoiceButton_OnClick"/>
+                                                    <TextBlock Text="期限超過"
+                                                               Margin="0,4,0,0"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource Amber300Brush}"
+                                                               IsVisible="{Binding IsOverdue}"/>
+                                                </StackPanel>
+
+                                                <TextBlock Grid.Column="1"
+                                                           Text="{Binding ClientName}"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           Classes="InnerTableCell"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Text="{Binding RemainingTotal, StringFormat='￥{0:N0}'}"
+                                                           HorizontalAlignment="Right"
+                                                           FontWeight="Medium"
+                                                           Foreground="{DynamicResource Slate100Brush}"
+                                                           Classes="InnerTableCell"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+
+                            <TextBlock Text="未入金の請求書はありません。"
+                           Classes="InnerTableEmpty"
+                           IsVisible="{Binding UnpaidInvoices.Count, Converter={x:Static helpers:IntEqualsConverter.Instance}, ConverterParameter=0}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- 月別売上（請求金額ベース） -->
+            <Border Grid.Column="2" Classes="Panel DashPanel">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="月別売上（請求金額ベース）" Classes="PanelTitle"/>
+                            <TextBlock Margin="0,4,0,0"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource Slate400Brush}"
+                                       TextWrapping="Wrap">
+                                <Run Text="{Binding SelectedYear, Mode=OneWay}"/><Run Text="年の請求書金額ベースの売上推移です。四半期ごとに絞り込みできます。"/>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <!-- 四半期の切り替え: rounded-full bg-slate-900/80 px-1 py-1 -->
+                        <Border Grid.Column="1"
+                                VerticalAlignment="Top"
+                                CornerRadius="999"
+                                Background="{DynamicResource CardBrush}"
+                                Padding="4">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="QuarterAll" Content="全期間" Tag="0" GroupName="Quarter" IsChecked="True"
+                                             Classes="QuarterPill" Click="QuarterButton_OnClick"/>
+                                <RadioButton Content="Q1" Tag="1" GroupName="Quarter"
+                                             Classes="QuarterPill" Click="QuarterButton_OnClick"/>
+                                <RadioButton Content="Q2" Tag="2" GroupName="Quarter"
+                                             Classes="QuarterPill" Click="QuarterButton_OnClick"/>
+                                <RadioButton Content="Q3" Tag="3" GroupName="Quarter"
+                                             Classes="QuarterPill" Click="QuarterButton_OnClick"/>
+                                <RadioButton Content="Q4" Tag="4" GroupName="Quarter"
+                                             Classes="QuarterPill" Click="QuarterButton_OnClick"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- グラフ本体: rounded-xl bg-slate-950/40 px-3 py-3 -->
+                    <Border Grid.Row="1"
+                            Margin="0,16,0,0"
+                            MinHeight="224"
+                            CornerRadius="12"
+                            Background="{DynamicResource Slate950_40Brush}"
+                            Padding="8">
+                        <!-- WPF 版の OxyPlot の代わりに自前の折れ線グラフ（Controls/MonthlyLineChart.cs） -->
+                        <controls:MonthlyLineChart Data="{Binding MonthlySalesChart}" MinHeight="208"/>
+                    </Border>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- ===== 回収率ワースト顧客 TOP5 ===== -->
+        <Border Margin="0,24,0,0" Classes="Panel DashPanel">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="回収率ワースト顧客 TOP5" Classes="PanelTitle"/>
+                    <Button Grid.Column="1"
+                            Content="顧客別集計を見る →"
+                            Classes="PanelLinkButton"
+                            Click="OpenSalesByMemberButton_OnClick"/>
+                </Grid>
+                <TextBlock Text="未回収残額がある顧客を、回収率の低い順に表示しています。"
+                           Margin="0,12,0,12"
+                           Classes="SmallMuted"/>
+
+                <Border Classes="InnerTable">
+                    <StackPanel>
+                        <Border Classes="InnerTableHeader">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="顧客" Classes="InnerTableHeaderText"/>
+                                <TextBlock Grid.Column="1" Text="回収率" HorizontalAlignment="Right" Classes="InnerTableHeaderText"/>
+                                <TextBlock Grid.Column="2" Text="未回収" HorizontalAlignment="Right" Classes="InnerTableHeaderText"/>
+                                <TextBlock Grid.Column="3" Text="請求合計" HorizontalAlignment="Right" Classes="InnerTableHeaderText"/>
+                            </Grid>
+                        </Border>
+
+                        <ItemsControl ItemsSource="{Binding WorstCustomers}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="InnerTableRow">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+
+                                            <Button Grid.Column="0"
+                                                    Margin="12,0"
+                                                    Content="{Binding MemberName}"
+                                                    Tag="{Binding}"
+                                                    ToolTip.Tip="この顧客の売上一覧を開く"
+                                                    Foreground="{DynamicResource Slate100Brush}"
+                                                    Classes="CellLinkButton"
+                                                    Click="WorstCustomerButton_OnClick"/>
+                                            <TextBlock Grid.Column="1"
+                                                       Text="{Binding RecoveryRate, StringFormat='{}{0:F1}%'}"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource Sky200Brush}"
+                                                       Classes="InnerTableCell"/>
+                                            <TextBlock Grid.Column="2"
+                                                       Text="{Binding RemainingTotal, StringFormat='￥{0:N0}'}"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource Amber300Brush}"
+                                                       Classes="InnerTableCell"/>
+                                            <TextBlock Grid.Column="3"
+                                                       Text="{Binding InvoiceTotal, StringFormat='￥{0:N0}'}"
+                                                       HorizontalAlignment="Right"
+                                                       Foreground="{DynamicResource Slate100Brush}"
+                                                       Classes="InnerTableCell"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <TextBlock Text="未回収残額のある顧客はありません。"
+                           Classes="InnerTableEmpty"
+                           IsVisible="{Binding WorstCustomers.Count, Converter={x:Static helpers:IntEqualsConverter.Instance}, ConverterParameter=0}"/>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

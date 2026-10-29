@@ -1,0 +1,66 @@
+
+# =====================================
+# .NET / Avalonia
+# =====================================
+
+# Build outputs
+**/bin/
+**/obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
+
+# VS Code (local settings)
+.vscode/
+
+# JetBrains Rider
+.idea/
+*.DotSettings.user
+
+# =====================================
+# Test / Coverage
+# =====================================
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
+
+# =====================================
+# Logs / Temporary files
+# =====================================
+*.log
+*.tmp
+*.temp
+*.cache
+
+# =====================================
+# Local configuration / Secrets
+# =====================================
+.env
+.env.*
+!.env.example
+!.env.sample
+appsettings.Development.local.json
+*.pfx
+*.p12
+*.keystore
+
+# =====================================
+# Publish / Packages
+# =====================================
+publish/
+artifacts/
+*.nupkg
+*.snupkg
+
+# =====================================
+# OS generated files
+# =====================================
+.DS_Store
+Thumbs.db
+Desktop.ini

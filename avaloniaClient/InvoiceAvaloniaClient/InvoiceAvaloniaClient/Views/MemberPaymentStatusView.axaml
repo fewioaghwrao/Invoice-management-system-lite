@@ -1,0 +1,197 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.MemberPaymentStatusView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1100">
+
+    <!-- 未入金の確認（Next.js: account/unpaid/page.tsx）。DataContext は MemberPaymentStatusViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.SummaryLabel">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate400Brush}"/>
+        </Style>
+        <Style Selector="TextBlock.SummaryValue">
+            <Setter Property="Margin" Value="0,4,0,0"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- 上部導線 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <TextBlock Text="未入金の確認"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource Slate100Brush}"/>
+                <TextBlock Text="未入金 / 一部入金の請求書をまとめて確認できます。"
+                           Margin="0,4,0,0"
+                           Classes="SmallMuted"/>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="{DynamicResource Sky300Brush}"
+                           Text="{Binding LoadingMessage}"
+                           IsVisible="{Binding LoadingVisibility}"/>
+                <Button Content="請求書一覧へ →"
+                        FontSize="12"
+                        Classes="PlainLinkButton"
+                        Click="OpenInvoiceListButton_OnClick"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- 期限超過のお知らせ -->
+        <Border Margin="0,24,0,0"
+                Classes="AmberBannerBright"
+                IsVisible="{Binding OverdueBannerVisibility}">
+            <StackPanel>
+                <TextBlock Text="⚠ お支払いの遅れている請求があります"
+                           FontSize="16"
+                           FontWeight="SemiBold"
+                           Foreground="#FDE68A"/>
+                <TextBlock Text="期限超過の行にラベルが表示されています。"
+                           Margin="0,4,0,0"
+                           FontSize="12"
+                           Foreground="#CCFDE68A"/>
+            </StackPanel>
+        </Border>
+
+        <!-- サマリー（3 列 / gap-3） -->
+        <Grid Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Padding="16" Classes="Panel">
+                <StackPanel>
+                    <TextBlock Text="未払い件数" Classes="SummaryLabel"/>
+                    <TextBlock Text="{Binding UnpaidCountText}" Classes="SummaryValue"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="2" Padding="16" Classes="Panel">
+                <StackPanel>
+                    <TextBlock Text="未払い残額合計" Classes="SummaryLabel"/>
+                    <TextBlock Text="{Binding RemainingTotalText}" Classes="SummaryValue"/>
+                    <TextBlock Text="※入金割当から算出しております。" Margin="0,4,0,0" Classes="TinyMuted"/>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Column="4" Padding="16" Classes="Panel">
+                <StackPanel>
+                    <TextBlock Text="期限超過" Classes="SummaryLabel"/>
+                    <TextBlock Text="{Binding OverdueCountText}" Classes="SummaryValue"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- 未払い一覧 -->
+        <Border Margin="0,24,0,0" Classes="Panel" ClipToBounds="True">
+            <StackPanel>
+                <Grid Margin="16,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="未払い一覧" FontSize="12" Foreground="{DynamicResource Slate300Brush}"/>
+                    <TextBlock Grid.Column="1" Text="※ PDFは既定のアプリで開きます" Classes="TinyMuted"/>
+                </Grid>
+
+                <Border Classes="TableHeaderRow"
+                        BorderBrush="{DynamicResource Slate800Brush}"
+                        BorderThickness="0,1,0,0">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="210"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="150"/>
+                            <ColumnDefinition Width="140"/>
+                            <ColumnDefinition Width="150"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="請求書番号" Classes="TableHeaderText"/>
+                        <TextBlock Grid.Column="1" Text="支払期限" Classes="TableHeaderText"/>
+                        <TextBlock Grid.Column="2" Text="残額" HorizontalAlignment="Right" Classes="TableHeaderText"/>
+                        <TextBlock Grid.Column="3" Text="ステータス" Classes="TableHeaderText"/>
+                        <TextBlock Grid.Column="4" Text="操作" HorizontalAlignment="Right" Classes="TableHeaderText"/>
+                    </Grid>
+                </Border>
+
+                <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="TableRow">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" MinWidth="210"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="140"/>
+                                        <ColumnDefinition Width="150"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Margin="12,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding InvoiceNumber}"
+                                                   FontSize="14"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{DynamicResource Slate100Brush}"
+                                                   TextTrimming="CharacterEllipsis"/>
+                                        <Border Classes="OverdueBadge"
+                                                IsVisible="{Binding OverdueBadgeVisibility}">
+                                            <TextBlock Classes="OverdueBadgeText"/>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <TextBlock Grid.Column="1" Text="{Binding DueAtText}" Classes="TableCellText"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding RemainingAmountText}" HorizontalAlignment="Right" Classes="TableCellStrong"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding StatusName}" Classes="TableCellText"/>
+
+                                    <StackPanel Grid.Column="4"
+                                                Margin="12,0"
+                                                Orientation="Horizontal"
+                                                HorizontalAlignment="Right"
+                                                VerticalAlignment="Center">
+                                        <Button Content="詳細"
+                                                Classes="DetailLinkButton"
+                                                Command="{Binding $parent[ItemsControl].DataContext.OpenDetailCommand}"
+                                                CommandParameter="{Binding}"/>
+                                        <Button Margin="8,0,0,0"
+                                                Classes="PlainLinkButton"
+                                                ToolTip.Tip="PDF表示"
+                                                Command="{Binding $parent[ItemsControl].DataContext.OpenPdfCommand}"
+                                                CommandParameter="{Binding}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8A5;" Margin="0,0,4,0" Classes="IconGlyph"/>
+                                                <TextBlock Text="PDF" VerticalAlignment="Center"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="未払いの請求書はありません。"
+                           Classes="TableEmptyText"
+                           IsVisible="{Binding Rows.Count, Converter={x:Static helpers:IntEqualsConverter.Instance}, ConverterParameter=0}"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

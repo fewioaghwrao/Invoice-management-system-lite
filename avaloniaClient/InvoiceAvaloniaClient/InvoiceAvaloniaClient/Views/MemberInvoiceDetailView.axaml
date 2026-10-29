@@ -1,0 +1,174 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.MemberInvoiceDetailView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1100">
+
+    <!-- 請求書詳細（Next.js: account/invoices/[id]/page.tsx）。DataContext は MemberInvoiceDetailViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="Border.AmountBox">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Slate800Brush}"/>
+            <Setter Property="Background" Value="{DynamicResource Slate950_30Brush}"/>
+            <Setter Property="Padding" Value="16"/>
+        </Style>
+        <Style Selector="TextBlock.AmountLabel">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate400Brush}"/>
+        </Style>
+        <Style Selector="TextBlock.AmountValue">
+            <Setter Property="Margin" Value="0,4,0,0"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- 上部導線 -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <Button x:Name="BackButton"
+                    Content="← 請求書一覧へ戻る"
+                    FontSize="12"
+                    VerticalAlignment="Center"
+                    Classes="PlainLinkButton"
+                    Command="{Binding BackCommand}"/>
+
+            <TextBlock Grid.Column="1"
+                       Margin="12,0"
+                       HorizontalAlignment="Right"
+                       VerticalAlignment="Center"
+                       FontSize="12"
+                       Foreground="{DynamicResource Sky300Brush}"
+                       Text="{Binding LoadingMessage}"
+                       IsVisible="{Binding LoadingVisibility}"/>
+
+            <Button Grid.Column="2"
+                    Classes="SmallOutlineButton"
+                    Command="{Binding OpenPdfCommand}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="&#xE8A5;" Margin="0,0,6,0" FontSize="12" Classes="IconGlyph"/>
+                    <TextBlock Text="PDF表示" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <!-- 取得エラー -->
+        <Border Margin="0,24,0,0"
+                Classes="RoseBanner"
+                IsVisible="{Binding ErrorMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- 本体: rounded-2xl border-slate-800 bg-slate-900/70 p-6 -->
+        <Border Margin="0,24,0,0" Padding="24" Classes="Panel">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="請求書番号" FontSize="11" Foreground="{DynamicResource Slate400Brush}"/>
+                        <TextBlock Text="{Binding InvoiceNumber}"
+                                   Margin="0,4,0,0"
+                                   FontSize="18"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource Slate100Brush}"/>
+
+                        <StackPanel Margin="0,12,0,0" Orientation="Horizontal">
+                            <!-- ステータス: rounded-full bg-slate-950/40 border-slate-700 text-[11px] text-slate-200 -->
+                            <Border CornerRadius="999"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource Slate700Brush}"
+                                    Background="{DynamicResource Slate950_40Brush}"
+                                    Padding="8,3">
+                                <TextBlock Text="{Binding StatusName}"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Slate200Brush}"/>
+                            </Border>
+
+                            <!-- 期限超過: bg-amber-500/10 border-amber-500/30 text-amber-300 -->
+                            <Border Margin="8,0,0,0"
+                                    CornerRadius="999"
+                                    BorderThickness="1"
+                                    BorderBrush="#4DF59E0B"
+                                    Background="#1AF59E0B"
+                                    Padding="8,3"
+                                    IsVisible="{Binding OverdueVisibility}">
+                                <TextBlock Text="⚠ 期限超過"
+                                           FontSize="11"
+                                           FontWeight="SemiBold"
+                                           Foreground="#FCD34D"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1">
+                        <TextBlock HorizontalAlignment="Right" FontSize="12" Foreground="{DynamicResource Slate200Brush}">
+                            <Run Text="請求日：" Foreground="{DynamicResource Slate400Brush}"/><Run Text="{Binding InvoiceDateText, Mode=OneWay}"/>
+                        </TextBlock>
+                        <TextBlock Margin="0,4,0,0" HorizontalAlignment="Right" FontSize="12" Foreground="{DynamicResource Slate200Brush}">
+                            <Run Text="支払期限：" Foreground="{DynamicResource Slate400Brush}"/><Run Text="{Binding DueDateText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 金額（3 列 / gap-3） -->
+                <Grid Margin="0,20,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Classes="AmountBox">
+                        <StackPanel>
+                            <TextBlock Text="請求金額" Classes="AmountLabel"/>
+                            <TextBlock Text="{Binding TotalAmountText}" Classes="AmountValue"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Classes="AmountBox">
+                        <StackPanel>
+                            <TextBlock Text="入金済み" Classes="AmountLabel"/>
+                            <TextBlock Text="{Binding PaidAmountText}" Classes="AmountValue"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Column="4" Classes="AmountBox">
+                        <StackPanel>
+                            <TextBlock Text="残額" Classes="AmountLabel"/>
+                            <TextBlock Text="{Binding RemainingAmountText}" Classes="AmountValue"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- 備考 -->
+                <TextBlock Text="備考"
+                           Margin="0,20,0,0"
+                           FontSize="11"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource Slate200Brush}"/>
+                <Border Margin="0,8,0,0" Classes="AmountBox">
+                    <TextBlock Text="{Binding Remarks}"
+                               FontSize="14"
+                               Foreground="{DynamicResource Slate200Brush}"
+                               TextWrapping="Wrap"/>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

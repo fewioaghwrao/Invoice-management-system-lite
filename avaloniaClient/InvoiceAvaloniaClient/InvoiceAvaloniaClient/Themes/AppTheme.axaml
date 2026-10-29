@@ -1,0 +1,1184 @@
+﻿<Styles xmlns="https://github.com/avaloniaui"
+        x:CompileBindings="False"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!--
+        アプリ全体の共通スタイル（WPF 版の Themes/AuthTheme.xaml・MemberTheme.xaml・AdminTheme.xaml をまとめたもの）。
+        WPF 版の Style="{StaticResource 名前}" は、Avalonia では Classes="名前" で指定する。
+        Next.js 版（Tailwind）の配色・寸法に合わせている。
+        slate-950 #020617 / slate-900 #0F172A / slate-800 #1E293B / slate-700 #334155 / slate-600 #475569 / slate-500 #64748B
+        slate-400 #94A3B8 / slate-300 #CBD5E1 / slate-200 #E2E8F0 / slate-100 #F1F5F9 / slate-50 #F8FAFC
+        sky-200 #BAE6FD / sky-300 #7DD3FC / sky-400 #38BDF8 / sky-500 #0EA5E9 / indigo-500 #6366F1
+    -->
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <!-- ===== 色 ===== -->
+            <SolidColorBrush x:Key="Slate800Brush" Color="#1E293B"/>
+            <SolidColorBrush x:Key="Slate700Brush" Color="#334155"/>
+            <SolidColorBrush x:Key="Slate600Brush" Color="#475569"/>
+            <SolidColorBrush x:Key="Slate500Brush" Color="#64748B"/>
+            <SolidColorBrush x:Key="Slate400Brush" Color="#94A3B8"/>
+            <SolidColorBrush x:Key="Slate300Brush" Color="#CBD5E1"/>
+            <SolidColorBrush x:Key="Slate200Brush" Color="#E2E8F0"/>
+            <SolidColorBrush x:Key="Slate100Brush" Color="#F1F5F9"/>
+            <SolidColorBrush x:Key="Slate50Brush" Color="#F8FAFC"/>
+            <SolidColorBrush x:Key="WhiteBrush" Color="#FFFFFF"/>
+            <SolidColorBrush x:Key="Sky200Brush" Color="#BAE6FD"/>
+            <SolidColorBrush x:Key="Sky300Brush" Color="#7DD3FC"/>
+            <SolidColorBrush x:Key="Sky400Brush" Color="#38BDF8"/>
+            <SolidColorBrush x:Key="Sky500Brush" Color="#0EA5E9"/>
+            <SolidColorBrush x:Key="Amber300Brush" Color="#FCD34D"/>
+            <SolidColorBrush x:Key="Red400Brush" Color="#F87171"/>
+            <SolidColorBrush x:Key="Sky400DotBrush" Color="#38BDF8"/>
+
+            <!-- bg-slate-900/80 -->
+            <SolidColorBrush x:Key="CardBrush" Color="#CC0F172A"/>
+            <!-- bg-slate-900/60 -->
+            <SolidColorBrush x:Key="InputBgBrush" Color="#990F172A"/>
+            <!-- hover:bg-slate-800/80 -->
+            <SolidColorBrush x:Key="GhostHoverBrush" Color="#CC1E293B"/>
+            <!-- ring-sky-500/60 -->
+            <SolidColorBrush x:Key="FocusRingBrush" Color="#990EA5E9"/>
+            <SolidColorBrush x:Key="PlaceholderBrush" Color="#8A94A6"/>
+            <!-- bg-slate-900/70 -->
+            <SolidColorBrush x:Key="PanelBrush" Color="#B30F172A"/>
+            <!-- bg-slate-900/60 -->
+            <SolidColorBrush x:Key="PanelSoftBrush" Color="#990F172A"/>
+            <SolidColorBrush x:Key="Slate950_30Brush" Color="#4D020617"/>
+            <SolidColorBrush x:Key="Slate950_40Brush" Color="#66020617"/>
+            <SolidColorBrush x:Key="Slate950_60Brush" Color="#99020617"/>
+            <SolidColorBrush x:Key="Slate950_80Brush" Color="#CC020617"/>
+            <SolidColorBrush x:Key="KpiCardBrush" Color="#D90F172A"/>
+            <SolidColorBrush x:Key="Slate900_90Brush" Color="#E60F172A"/>
+            <SolidColorBrush x:Key="Slate800_60Brush" Color="#991E293B"/>
+            <SolidColorBrush x:Key="Slate800_80Brush" Color="#CC1E293B"/>
+
+            <!-- bg-gradient-to-r from-sky-500 to-indigo-500 -->
+            <LinearGradientBrush x:Key="PrimaryGradientBrush" StartPoint="0%,50%" EndPoint="100%,50%">
+                <GradientStop Color="#0EA5E9" Offset="0"/>
+                <GradientStop Color="#6366F1" Offset="1"/>
+            </LinearGradientBrush>
+            <!-- hover:brightness-110 -->
+            <LinearGradientBrush x:Key="PrimaryGradientHoverBrush" StartPoint="0%,50%" EndPoint="100%,50%">
+                <GradientStop Color="#26AFEE" Offset="0"/>
+                <GradientStop Color="#7679F4" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- 会員画面の背景: bg-gradient-to-b from-zinc-950 via-zinc-900 to-zinc-950 -->
+            <LinearGradientBrush x:Key="MemberBackgroundBrush" StartPoint="50%,0%" EndPoint="50%,100%">
+                <GradientStop Color="#09090B" Offset="0"/>
+                <GradientStop Color="#18181B" Offset="0.5"/>
+                <GradientStop Color="#09090B" Offset="1"/>
+            </LinearGradientBrush>
+
+            <!-- アイコン用フォント（Windows 11: Segoe Fluent Icons / Windows 10: Segoe MDL2 Assets） -->
+            <FontFamily x:Key="IconFont">Segoe Fluent Icons, Segoe MDL2 Assets</FontFamily>
+
+            <!-- 画面全体の文字フォント -->
+            <FontFamily x:Key="AppFont">Segoe UI, Yu Gothic UI, Meiryo UI, Meiryo</FontFamily>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <!-- ============================================================
+         共通
+         ============================================================ -->
+
+    <Style Selector="Window">
+        <Setter Property="FontFamily" Value="{StaticResource AppFont}"/>
+    </Style>
+
+    <!-- スクロールバーは細く暗めに -->
+    <Style Selector="ScrollBar">
+        <Setter Property="Opacity" Value="0.85"/>
+    </Style>
+
+    <!-- ============================================================
+         文字（TextBlock）
+         ============================================================ -->
+
+    <Style Selector="TextBlock.FieldLabel">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <Style Selector="TextBlock.ErrorBannerText">
+        <Setter Property="Foreground" Value="#FECACA"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.SuccessBannerText">
+        <Setter Property="Foreground" Value="#A7F3D0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.FieldHint">
+        <Setter Property="FontSize" Value="10"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.BrandPillText">
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+    </Style>
+
+    <Style Selector="TextBlock.PageTitle">
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="FontSize" Value="24"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.PageDescription">
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="LineHeight" Value="22"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.SectionTitle">
+        <Setter Property="FontSize" Value="16"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+    </Style>
+    <Style Selector="TextBlock.SmallMuted">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.TinyMuted">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate500Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.IconGlyph">
+        <Setter Property="FontFamily" Value="{StaticResource IconFont}"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="TextAlignment" Value="Center"/>
+    </Style>
+
+    <Style Selector="TextBlock.RoseBannerText">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#FECDD3"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <Style Selector="TextBlock.OverdueBadgeText">
+        <Setter Property="Text" Value="⚠ 期限超過"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="#FDE68A"/>
+    </Style>
+
+    <!-- 表 -->
+    <Style Selector="TextBlock.TableHeaderText">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="12,0"/>
+    </Style>
+    <Style Selector="TextBlock.TableCellText, TextBlock.TableCellStrong">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="12,0"/>
+    </Style>
+    <Style Selector="TextBlock.TableCellStrong">
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+    </Style>
+    <Style Selector="TextBlock.TableEmptyText">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,40"/>
+    </Style>
+
+    <Style Selector="TextBlock.CompactLabel">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    <Style Selector="TextBlock.FilterLabel">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+
+    <!-- 管理者: KPI -->
+    <Style Selector="TextBlock.KpiLabel">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+    </Style>
+    <Style Selector="TextBlock.KpiValue">
+        <Setter Property="Margin" Value="0,8,0,0"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.KpiHint">
+        <Setter Property="Margin" Value="0,8,0,0"/>
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- 管理者: パネル内の表 -->
+    <Style Selector="TextBlock.InnerTableHeaderText">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="Margin" Value="12,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.InnerTableCell">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="12,0"/>
+    </Style>
+    <Style Selector="TextBlock.InnerTableEmpty">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Margin" Value="0,24"/>
+    </Style>
+
+    <Style Selector="TextBlock.PageHeaderTitle">
+        <Setter Property="FontSize" Value="18"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.BreadcrumbText">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBlock.AdminFieldLabel">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Margin" Value="0,0,0,4"/>
+    </Style>
+    <Style Selector="TextBlock.StatLabel">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+    </Style>
+    <Style Selector="TextBlock.StatValue">
+        <Setter Property="Margin" Value="0,6,0,0"/>
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.AdminFieldHint">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate500Brush}"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+    <Style Selector="TextBlock.ReadOnlyFieldText">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+
+    <!-- ============================================================
+         枠（Border）
+         ============================================================ -->
+
+    <!-- 画面上部のバッジ: rounded-full bg-slate-800 px-3 py-1 -->
+    <Style Selector="Border.BrandPill">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="Padding" Value="12,4"/>
+    </Style>
+
+    <!-- エラー: rounded-xl border-red-500/40 bg-red-500/10 -->
+    <Style Selector="Border.ErrorBanner">
+        <Setter Property="Background" Value="#1AEF4444"/>
+        <Setter Property="BorderBrush" Value="#66EF4444"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <!-- 成功: rounded-xl border-emerald-500/40 bg-emerald-500/10 -->
+    <Style Selector="Border.SuccessBanner">
+        <Setter Property="Background" Value="#1A10B981"/>
+        <Setter Property="BorderBrush" Value="#6610B981"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+
+    <!-- パネル: rounded-2xl border-slate-800 bg-slate-900/70 -->
+    <Style Selector="Border.Panel, Border.PageHeaderCard">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+    </Style>
+    <!-- ページ見出しカード: bg-slate-900/80 p-5 -->
+    <Style Selector="Border.PageHeaderCard">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="Padding" Value="20"/>
+    </Style>
+
+    <!-- 期限超過バナー -->
+    <Style Selector="Border.AmberBanner, Border.AmberBannerBright">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#6678350F"/>
+        <Setter Property="Background" Value="#66451A03"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+    <Style Selector="Border.AmberBannerBright">
+        <Setter Property="BorderBrush" Value="#4DF59E0B"/>
+        <Setter Property="Background" Value="#1AF59E0B"/>
+    </Style>
+
+    <!-- エラー（会員画面）: border-rose-500/30 bg-rose-500/10 -->
+    <Style Selector="Border.RoseBanner">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#4DF43F5E"/>
+        <Setter Property="Background" Value="#1AF43F5E"/>
+        <Setter Property="Padding" Value="12"/>
+    </Style>
+
+    <!-- 「⚠ 期限超過」ラベル -->
+    <Style Selector="Border.OverdueBadge">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#6678350F"/>
+        <Setter Property="Background" Value="#1AF59E0B"/>
+        <Setter Property="Padding" Value="8,2"/>
+        <Setter Property="Margin" Value="0,4,0,0"/>
+    </Style>
+
+    <!-- 表（会員画面） -->
+    <Style Selector="Border.TableHeaderRow">
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="Padding" Value="4,0"/>
+        <Setter Property="MinHeight" Value="44"/>
+    </Style>
+    <Style Selector="Border.TableRow">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="4,12"/>
+    </Style>
+    <Style Selector="Border.TableRow:pointerover">
+        <Setter Property="Background" Value="{StaticResource Slate950_30Brush}"/>
+    </Style>
+
+    <!-- 「開く →」 -->
+    <Style Selector="Border.OpenPill">
+        <Setter Property="HorizontalAlignment" Value="Right"/>
+        <Setter Property="VerticalAlignment" Value="Bottom"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="Padding" Value="12,6"/>
+    </Style>
+
+    <!-- KPI カード -->
+    <Style Selector="Border.KpiCard">
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Background" Value="{StaticResource KpiCardBrush}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- パネル内の表（管理者） -->
+    <Style Selector="Border.InnerTable">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="ClipToBounds" Value="True"/>
+    </Style>
+    <Style Selector="Border.InnerTableHeader">
+        <Setter Property="Background" Value="{StaticResource Slate900_90Brush}"/>
+        <Setter Property="CornerRadius" Value="12,12,0,0"/>
+        <Setter Property="Padding" Value="0,12"/>
+    </Style>
+    <Style Selector="Border.InnerTableRow">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800_80Brush}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Padding" Value="0,12"/>
+    </Style>
+    <Style Selector="Border.InnerTableRow:pointerover">
+        <Setter Property="Background" Value="{StaticResource Slate800_60Brush}"/>
+    </Style>
+
+    <!-- 日付入力の枠（Web 版と同じく白い入力欄） -->
+    <Style Selector="Border.DateBox">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+
+    <!-- 小さな状態バッジ: rounded-full px-2 py-0.5 text-[11px] font-semibold -->
+    <Style Selector="Border.StatusPill, Border.AllocationStatusPill, Border.ColorPill">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="CornerRadius" Value="999"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="8,2"/>
+    </Style>
+
+    <!-- 割当状態バッジ（Tag = ALLOCATED / PARTIAL / UNALLOCATED）・色付きバッジ（Tag = emerald / sky / amber / rose） -->
+    <Style Selector="Border.AllocationStatusPill, Border.ColorPill">
+        <Setter Property="Background" Value="#1A64748B"/>
+        <Setter Property="BorderBrush" Value="#66475569"/>
+        <Setter Property="TextElement.Foreground" Value="{StaticResource Slate300Brush}"/>
+    </Style>
+    <Style Selector="Border.AllocationStatusPill[Tag=ALLOCATED], Border.ColorPill[Tag=emerald]">
+        <Setter Property="Background" Value="#1A10B981"/>
+        <Setter Property="BorderBrush" Value="#6610B981"/>
+        <Setter Property="TextElement.Foreground" Value="#6EE7B7"/>
+    </Style>
+    <Style Selector="Border.AllocationStatusPill[Tag=PARTIAL], Border.ColorPill[Tag=amber]">
+        <Setter Property="Background" Value="#1AF59E0B"/>
+        <Setter Property="BorderBrush" Value="#66F59E0B"/>
+        <Setter Property="TextElement.Foreground" Value="#FCD34D"/>
+    </Style>
+    <Style Selector="Border.ColorPill[Tag=sky]">
+        <Setter Property="Background" Value="#1A0EA5E9"/>
+        <Setter Property="BorderBrush" Value="#660EA5E9"/>
+        <Setter Property="TextElement.Foreground" Value="#7DD3FC"/>
+    </Style>
+    <Style Selector="Border.ColorPill[Tag=rose]">
+        <Setter Property="Background" Value="#1AF43F5E"/>
+        <Setter Property="BorderBrush" Value="#66F43F5E"/>
+        <Setter Property="TextElement.Foreground" Value="#FDA4AF"/>
+    </Style>
+
+    <!-- 見出し付きの小ボックス -->
+    <Style Selector="Border.StatBox">
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="Padding" Value="16"/>
+    </Style>
+
+    <!-- 読み取り専用の値 -->
+    <Style Selector="Border.ReadOnlyField">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_30Brush}"/>
+        <Setter Property="Padding" Value="12,0"/>
+    </Style>
+
+    <!-- ============================================================
+         ボタン（Button）
+         Fluent テーマのホバー時の色を使わず、各クラスの色を使うための共通設定
+         ============================================================ -->
+
+    <Style Selector="Button.PrimaryButton, Button.SecondaryButton, Button.GhostButton, Button.LinkButton, Button.FooterLinkButton, Button.BackLinkButton, Button.LogoutButton, Button.MenuCardButton, Button.BlueButton, Button.PlainLinkButton, Button.DetailLinkButton, Button.PagerButton, Button.SmallOutlineButton, Button.EmeraldButton, Button.RoseSoftButton, Button.AdminNavItem, Button.YearStepButton, Button.PanelLinkButton, Button.CellLinkButton, Button.BreadcrumbButton, Button.AdminOutlineButton, Button.AmberOutlineButton, Button.EmeraldOutlineButton, Button.RoseOutlineButton, Button.SkyButton, Button.EmeraldSolidButton, Button.DialogButton">
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <!-- WPF と同じく、既定ではセルいっぱいに広げる（リンク系は各スタイルで上書き） -->
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.PrimaryButton /template/ ContentPresenter#PART_ContentPresenter, Button.SecondaryButton /template/ ContentPresenter#PART_ContentPresenter, Button.GhostButton /template/ ContentPresenter#PART_ContentPresenter, Button.LinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.FooterLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.BackLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.LogoutButton /template/ ContentPresenter#PART_ContentPresenter, Button.MenuCardButton /template/ ContentPresenter#PART_ContentPresenter, Button.BlueButton /template/ ContentPresenter#PART_ContentPresenter, Button.PlainLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.DetailLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.PagerButton /template/ ContentPresenter#PART_ContentPresenter, Button.SmallOutlineButton /template/ ContentPresenter#PART_ContentPresenter, Button.EmeraldButton /template/ ContentPresenter#PART_ContentPresenter, Button.RoseSoftButton /template/ ContentPresenter#PART_ContentPresenter, Button.AdminNavItem /template/ ContentPresenter#PART_ContentPresenter, Button.YearStepButton /template/ ContentPresenter#PART_ContentPresenter, Button.PanelLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.CellLinkButton /template/ ContentPresenter#PART_ContentPresenter, Button.BreadcrumbButton /template/ ContentPresenter#PART_ContentPresenter, Button.AdminOutlineButton /template/ ContentPresenter#PART_ContentPresenter, Button.AmberOutlineButton /template/ ContentPresenter#PART_ContentPresenter, Button.EmeraldOutlineButton /template/ ContentPresenter#PART_ContentPresenter, Button.RoseOutlineButton /template/ ContentPresenter#PART_ContentPresenter, Button.SkyButton /template/ ContentPresenter#PART_ContentPresenter, Button.EmeraldSolidButton /template/ ContentPresenter#PART_ContentPresenter, Button.DialogButton /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{Binding $parent[Button].Background}"/>
+        <Setter Property="BorderBrush" Value="{Binding $parent[Button].BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="{Binding $parent[Button].BorderThickness}"/>
+        <Setter Property="Foreground" Value="{Binding $parent[Button].Foreground}"/>
+        <Setter Property="CornerRadius" Value="{Binding $parent[Button].CornerRadius}"/>
+    </Style>
+    <Style Selector="Button.PrimaryButton:disabled, Button.SecondaryButton:disabled, Button.BlueButton:disabled, Button.SkyButton:disabled, Button.EmeraldSolidButton:disabled, Button.DialogButton:disabled, Button.PlainLinkButton:disabled, Button.YearStepButton:disabled">
+        <Setter Property="Opacity" Value="0.6"/>
+        <Setter Property="Cursor" Value="Arrow"/>
+    </Style>
+    <Style Selector="Button.SmallOutlineButton:disabled, Button.EmeraldButton:disabled, Button.RoseSoftButton:disabled">
+        <Setter Property="Opacity" Value="0.5"/>
+        <Setter Property="Cursor" Value="Arrow"/>
+    </Style>
+    <Style Selector="Button.AdminOutlineButton:disabled, Button.AmberOutlineButton:disabled, Button.EmeraldOutlineButton:disabled, Button.RoseOutlineButton:disabled">
+        <Setter Property="Opacity" Value="0.45"/>
+        <Setter Property="Cursor" Value="Arrow"/>
+    </Style>
+
+    <!-- 確認ダイアログのボタン -->
+    <Style Selector="Button.DialogButton">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.DialogButton:pointerover">
+        <Setter Property="Opacity" Value="0.9"/>
+    </Style>
+
+    <!-- ログインボタン: グラデーション + hover:brightness-110 -->
+    <Style Selector="Button.PrimaryButton">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Background" Value="{StaticResource PrimaryGradientBrush}"/>
+    </Style>
+    <Style Selector="Button.PrimaryButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource PrimaryGradientHoverBrush}"/>
+    </Style>
+
+    <!-- 新規会員登録: rounded-xl border-slate-700 bg-slate-900/60 text-xs font-semibold -->
+    <Style Selector="Button.SecondaryButton">
+        <Setter Property="Height" Value="40"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <Style Selector="Button.SecondaryButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+    </Style>
+
+    <!-- パスワード欄内の「表示/非表示」 -->
+    <Style Selector="Button.GhostButton">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Padding" Value="8,0"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Focusable" Value="False"/>
+    </Style>
+    <Style Selector="Button.GhostButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource GhostHoverBrush}"/>
+    </Style>
+
+    <!-- テキストリンク: text-xs text-sky-300 hover:text-sky-400 -->
+    <Style Selector="Button.LinkButton, Button.FooterLinkButton, Button.BackLinkButton, Button.PlainLinkButton, Button.DetailLinkButton, Button.YearStepButton, Button.PanelLinkButton, Button.BreadcrumbButton">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="MinHeight" Value="0"/>
+    </Style>
+    <Style Selector="Button.LinkButton:pointerover, Button.LinkButton:focus-visible">
+        <Setter Property="Foreground" Value="{StaticResource Sky400Brush}"/>
+    </Style>
+
+    <!-- フッターの規約リンク -->
+    <Style Selector="Button.FooterLinkButton">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+    </Style>
+    <Style Selector="Button.FooterLinkButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+    </Style>
+
+    <!-- 「← ログインに戻る」 -->
+    <Style Selector="Button.BackLinkButton">
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+    </Style>
+    <Style Selector="Button.BackLinkButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+    </Style>
+
+    <!-- 文字だけのボタン（条件クリア など）: text-slate-300 hover:text-white -->
+    <Style Selector="Button.PlainLinkButton">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+    </Style>
+    <Style Selector="Button.PlainLinkButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+    </Style>
+
+    <!-- 表内の「詳細」: font-semibold text-sky-300 hover:text-sky-200 -->
+    <Style Selector="Button.DetailLinkButton">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <Style Selector="Button.DetailLinkButton:pointerover">
+        <Setter Property="Foreground" Value="#BAE6FD"/>
+    </Style>
+
+    <!-- ヘッダーの年切り替え -->
+    <Style Selector="Button.YearStepButton">
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+    </Style>
+    <Style Selector="Button.YearStepButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+    </Style>
+
+    <!-- パネル内の「すべて表示 →」 -->
+    <Style Selector="Button.PanelLinkButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+    </Style>
+
+    <!-- パンくず -->
+    <Style Selector="Button.BreadcrumbButton">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+        <Setter Property="Padding" Value="0"/>
+    </Style>
+    <Style Selector="Button.BreadcrumbButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource Sky300Brush}"/>
+    </Style>
+
+    <!-- 表内のリンク（請求番号 / 顧客名）: 下線は hover 時のみ -->
+    <Style Selector="Button.CellLinkButton">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+    </Style>
+    <Style Selector="Button.CellLinkButton:pointerover /template/ ContentPresenter#PART_ContentPresenter TextBlock">
+        <Setter Property="TextDecorations" Value="Underline"/>
+    </Style>
+
+    <!-- ログアウト: text-red-400 border-red-500/40 rounded-md hover:bg-red-500/10 -->
+    <Style Selector="Button.LogoutButton">
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Red400Brush}"/>
+        <Setter Property="BorderBrush" Value="#66EF4444"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="12,4"/>
+    </Style>
+    <Style Selector="Button.LogoutButton:pointerover">
+        <Setter Property="Background" Value="#1AEF4444"/>
+        <Setter Property="Foreground" Value="#FCA5A5"/>
+    </Style>
+
+    <!-- マイページのメニューカード（hover で枠線をアクセント色: Tag で指定） -->
+    <Style Selector="Button.MenuCardButton">
+        <Setter Property="MinHeight" Value="144"/>
+        <Setter Property="Padding" Value="20"/>
+        <Setter Property="Background" Value="{StaticResource PanelSoftBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="16"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="RenderTransform" Value="translateY(0px)"/>
+        <Setter Property="Transitions">
+            <Transitions>
+                <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12"/>
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="Button.MenuCardButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource CardBrush}"/>
+        <Setter Property="BorderBrush" Value="{Binding $self.Tag}"/>
+        <Setter Property="RenderTransform" Value="translateY(-2px)"/>
+    </Style>
+    <Style Selector="Button.MenuCardButton:pressed">
+        <Setter Property="RenderTransform" Value="translateY(0px)"/>
+    </Style>
+
+    <!-- 検索: rounded-xl bg-blue-600 px-5 text-sm font-semibold hover:bg-blue-700 -->
+    <Style Selector="Button.BlueButton">
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="MinWidth" Value="68"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="Background" Value="#2563EB"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="20,0"/>
+    </Style>
+    <Style Selector="Button.BlueButton:pointerover">
+        <Setter Property="Background" Value="#1D4ED8"/>
+    </Style>
+
+    <!-- 前へ / 次へ -->
+    <Style Selector="Button.PagerButton">
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="16,0"/>
+    </Style>
+    <Style Selector="Button.PagerButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource Slate950_30Brush}"/>
+    </Style>
+    <Style Selector="Button.PagerButton:disabled">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate500Brush}"/>
+        <Setter Property="Cursor" Value="Arrow"/>
+    </Style>
+
+    <!-- 小さめの枠付きボタン（PDF表示）: rounded-lg border-slate-700 bg-slate-950/30 px-3 py-2 text-xs -->
+    <Style Selector="Button.SmallOutlineButton, Button.EmeraldButton, Button.RoseSoftButton">
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_30Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="12,8"/>
+    </Style>
+    <Style Selector="Button.SmallOutlineButton:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate600Brush}"/>
+    </Style>
+
+    <!-- 保存: bg-emerald-600 hover:bg-emerald-500 -->
+    <Style Selector="Button.EmeraldButton">
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+        <Setter Property="Background" Value="#059669"/>
+        <Setter Property="BorderBrush" Value="#059669"/>
+        <Setter Property="Padding" Value="16,8"/>
+    </Style>
+    <Style Selector="Button.EmeraldButton:pointerover">
+        <Setter Property="Background" Value="#10B981"/>
+        <Setter Property="BorderBrush" Value="#10B981"/>
+    </Style>
+
+    <!-- 退会する: border-rose-500/40 bg-rose-500/10 text-rose-200 -->
+    <Style Selector="Button.RoseSoftButton">
+        <Setter Property="FontWeight" Value="Normal"/>
+        <Setter Property="Foreground" Value="#FECDD3"/>
+        <Setter Property="Background" Value="#1AF43F5E"/>
+        <Setter Property="BorderBrush" Value="#66F43F5E"/>
+        <Setter Property="Padding" Value="16,8"/>
+    </Style>
+    <Style Selector="Button.RoseSoftButton:pointerover">
+        <Setter Property="Background" Value="#26F43F5E"/>
+    </Style>
+
+    <!-- 管理者の左メニュー項目 -->
+    <Style Selector="Button.AdminNavItem">
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Margin" Value="0,0,0,8"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Background" Value="{StaticResource PanelSoftBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="Button.AdminNavItem:pointerover">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate600Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+    </Style>
+    <!-- 選択中: border-sky-500/40 bg-sky-500/10 text-sky-100 -->
+    <Style Selector="Button.AdminNavItem.active, Button.AdminNavItem.active:pointerover">
+        <Setter Property="Foreground" Value="#E0F2FE"/>
+        <Setter Property="Background" Value="#1A0EA5E9"/>
+        <Setter Property="BorderBrush" Value="#660EA5E9"/>
+    </Style>
+
+    <!-- 汎用の小ボタン（管理者）: rounded-lg border px-3 py-1.5 text-xs font-medium -->
+    <Style Selector="Button.AdminOutlineButton, Button.AmberOutlineButton, Button.EmeraldOutlineButton, Button.RoseOutlineButton">
+        <Setter Property="MinHeight" Value="32"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Button.AdminOutlineButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource Sky200Brush}"/>
+    </Style>
+
+    <!-- 督促: border-amber-500/40 bg-amber-500/10 text-amber-200 -->
+    <Style Selector="Button.AmberOutlineButton">
+        <Setter Property="Foreground" Value="#FDE68A"/>
+        <Setter Property="Background" Value="#1AF59E0B"/>
+        <Setter Property="BorderBrush" Value="#66F59E0B"/>
+    </Style>
+    <Style Selector="Button.AmberOutlineButton:pointerover">
+        <Setter Property="Background" Value="#26F59E0B"/>
+        <Setter Property="Foreground" Value="#FEF3C7"/>
+    </Style>
+
+    <!-- 督促処理を受け付ける: border-emerald-500/40 bg-emerald-500/10 text-emerald-200 -->
+    <Style Selector="Button.EmeraldOutlineButton">
+        <Setter Property="Foreground" Value="#A7F3D0"/>
+        <Setter Property="Background" Value="#1A10B981"/>
+        <Setter Property="BorderBrush" Value="#6610B981"/>
+    </Style>
+    <Style Selector="Button.EmeraldOutlineButton:pointerover">
+        <Setter Property="Background" Value="#2610B981"/>
+        <Setter Property="Foreground" Value="#D1FAE5"/>
+    </Style>
+
+    <!-- 退会: border-rose-500/40 bg-rose-500/10 text-rose-200 -->
+    <Style Selector="Button.RoseOutlineButton">
+        <Setter Property="Foreground" Value="#FECDD3"/>
+        <Setter Property="Background" Value="#1AF43F5E"/>
+        <Setter Property="BorderBrush" Value="#66F43F5E"/>
+    </Style>
+    <Style Selector="Button.RoseOutlineButton:pointerover">
+        <Setter Property="Background" Value="#26F43F5E"/>
+        <Setter Property="Foreground" Value="#FFE4E6"/>
+    </Style>
+
+    <!-- 新規作成 / 検索: rounded-lg bg-sky-600 text-xs font-medium hover:bg-sky-500 -->
+    <Style Selector="Button.SkyButton, Button.EmeraldSolidButton">
+        <Setter Property="MinHeight" Value="34"/>
+        <Setter Property="Padding" Value="16,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="Background" Value="#0284C7"/>
+        <Setter Property="CornerRadius" Value="8"/>
+    </Style>
+    <Style Selector="Button.SkyButton:pointerover">
+        <Setter Property="Background" Value="{StaticResource Sky500Brush}"/>
+    </Style>
+    <!-- ＋入金登録 / 割当を保存: bg-emerald-600 hover:bg-emerald-500 -->
+    <Style Selector="Button.EmeraldSolidButton">
+        <Setter Property="Background" Value="#059669"/>
+        <Setter Property="Foreground" Value="#FFFFFF"/>
+    </Style>
+    <Style Selector="Button.EmeraldSolidButton:pointerover">
+        <Setter Property="Background" Value="#10B981"/>
+    </Style>
+
+    <!-- ============================================================
+         ラジオボタン（RadioButton）
+         ============================================================ -->
+
+    <!-- 会員の左メニュー項目 -->
+    <Style Selector="RadioButton.NavItem">
+        <Setter Property="MinHeight" Value="44"/>
+        <Setter Property="Margin" Value="0,0,0,6"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd"
+                        CornerRadius="12"
+                        BorderThickness="1"
+                        BorderBrush="Transparent"
+                        Background="Transparent"
+                        Padding="12,0">
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Foreground="{TemplateBinding Foreground}"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.NavItem:pointerover">
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+    </Style>
+    <Style Selector="RadioButton.NavItem:pointerover /template/ Border#Bd">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="Background" Value="{StaticResource GhostHoverBrush}"/>
+    </Style>
+    <Style Selector="RadioButton.NavItem:checked">
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+    </Style>
+    <Style Selector="RadioButton.NavItem:checked /template/ Border#Bd">
+        <Setter Property="BorderBrush" Value="#800EA5E9"/>
+        <Setter Property="Background" Value="#B3334155"/>
+    </Style>
+
+    <!-- 四半期の切り替え: rounded-full px-2.5 py-1 text-[10px] -->
+    <Style Selector="RadioButton.QuarterPill">
+        <Setter Property="FontSize" Value="11"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate300Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd" CornerRadius="999" Background="Transparent" Padding="10,4">
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      Foreground="{TemplateBinding Foreground}"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RadioButton.QuarterPill:pointerover /template/ Border#Bd">
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+    </Style>
+    <Style Selector="RadioButton.QuarterPill:checked">
+        <Setter Property="Foreground" Value="#020617"/>
+    </Style>
+    <Style Selector="RadioButton.QuarterPill:checked /template/ Border#Bd">
+        <Setter Property="Background" Value="{StaticResource Sky500Brush}"/>
+    </Style>
+
+    <!-- ============================================================
+         入力（TextBox）
+         Tag の代わりに PlaceholderText でプレースホルダーを指定する
+         ============================================================ -->
+
+    <Style Selector="TextBox.ModernTextBox, TextBox.FilterTextBox, TextBox.CompactTextBox, TextBox.AdminTextBox">
+        <Setter Property="Foreground" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate50Brush}"/>
+        <Setter Property="SelectionBrush" Value="{StaticResource Sky500Brush}"/>
+        <Setter Property="SelectionForegroundBrush" Value="White"/>
+        <Setter Property="Background" Value="{StaticResource InputBgBrush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="MinHeight" Value="0"/>
+    </Style>
+    <Style Selector="TextBox.ModernTextBox /template/ Border#PART_BorderElement, TextBox.FilterTextBox /template/ Border#PART_BorderElement, TextBox.CompactTextBox /template/ Border#PART_BorderElement, TextBox.AdminTextBox /template/ Border#PART_BorderElement">
+        <Setter Property="Background" Value="{Binding $parent[TextBox].Background}"/>
+        <Setter Property="BorderBrush" Value="{Binding $parent[TextBox].BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="{Binding $parent[TextBox].BorderThickness}"/>
+        <Setter Property="CornerRadius" Value="{Binding $parent[TextBox].CornerRadius}"/>
+    </Style>
+    <Style Selector="TextBox.ModernTextBox /template/ TextBlock#PART_Placeholder, TextBox.FilterTextBox /template/ TextBlock#PART_Placeholder, TextBox.ModernTextBox /template/ TextBlock#PART_Watermark, TextBox.FilterTextBox /template/ TextBlock#PART_Watermark">
+        <Setter Property="Foreground" Value="{StaticResource PlaceholderBrush}"/>
+    </Style>
+    <Style Selector="TextBox.CompactTextBox /template/ TextBlock#PART_Placeholder, TextBox.AdminTextBox /template/ TextBlock#PART_Placeholder, TextBox.CompactTextBox /template/ TextBlock#PART_Watermark, TextBox.AdminTextBox /template/ TextBlock#PART_Watermark">
+        <Setter Property="Foreground" Value="{StaticResource Slate500Brush}"/>
+    </Style>
+    <Style Selector="TextBox.ModernTextBox:disabled, TextBox.FilterTextBox:disabled, TextBox.CompactTextBox:disabled, TextBox.AdminTextBox:disabled">
+        <Setter Property="Opacity" Value="0.6"/>
+    </Style>
+
+    <!-- 入力欄: rounded-xl border-slate-700 bg-slate-900/60 px-3 text-sm, focus:border-sky-500 -->
+    <Style Selector="TextBox.ModernTextBox">
+        <Setter Property="Height" Value="42"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="12"/>
+    </Style>
+    <!-- 検索欄: bg-slate-950/40 min-h-11 -->
+    <Style Selector="TextBox.FilterTextBox">
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+    </Style>
+    <Style Selector="TextBox.ModernTextBox:focus /template/ Border#PART_BorderElement, TextBox.FilterTextBox:focus /template/ Border#PART_BorderElement, TextBox.AdminTextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="{StaticResource Sky500Brush}"/>
+    </Style>
+
+    <!-- 登録情報の入力欄: rounded-lg bg-slate-950/60 text-xs focus:border-emerald-500 -->
+    <Style Selector="TextBox.CompactTextBox">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="SelectionBrush" Value="#10B981"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_60Brush}"/>
+    </Style>
+    <Style Selector="TextBox.CompactTextBox:focus /template/ Border#PART_BorderElement">
+        <Setter Property="BorderBrush" Value="#10B981"/>
+    </Style>
+
+    <!-- 入力欄（管理画面）: rounded-lg bg-slate-950/60 text-xs -->
+    <Style Selector="TextBox.AdminTextBox">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="Padding" Value="12,0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="CaretBrush" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_60Brush}"/>
+    </Style>
+    <!-- 複数行の入力（備考・メモなど） -->
+    <Style Selector="TextBox.AdminTextBox.multiline">
+        <Setter Property="Height" Value="NaN"/>
+        <Setter Property="Padding" Value="12,8"/>
+        <Setter Property="VerticalContentAlignment" Value="Top"/>
+        <Setter Property="AcceptsReturn" Value="True"/>
+        <Setter Property="TextWrapping" Value="Wrap"/>
+    </Style>
+
+    <!-- ============================================================
+         選択欄（ComboBox）
+         ============================================================ -->
+
+    <!-- 絞り込み用: rounded-xl border-slate-700 bg-slate-950/40 min-h-11 text-sm -->
+    <Style Selector="ComboBox.FilterComboBox, ComboBox.AdminComboBox">
+        <Setter Property="Height" Value="44"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="FontSize" Value="14"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_40Brush}"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="12,0,8,0"/>
+        <Setter Property="MaxDropDownHeight" Value="320"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox /template/ Border#Background, ComboBox.AdminComboBox /template/ Border#Background">
+        <Setter Property="Background" Value="{Binding $parent[ComboBox].Background}"/>
+        <Setter Property="BorderBrush" Value="{Binding $parent[ComboBox].BorderBrush}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox:pointerover /template/ Border#Background, ComboBox.AdminComboBox:pointerover /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{StaticResource Slate600Brush}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox:focus-within /template/ Border#Background, ComboBox.AdminComboBox:focus-within /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{StaticResource Sky500Brush}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox /template/ ContentControl#ContentPresenter, ComboBox.AdminComboBox /template/ ContentControl#ContentPresenter">
+        <Setter Property="Foreground" Value="{Binding $parent[ComboBox].Foreground}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox /template/ PathIcon#DropDownGlyph, ComboBox.AdminComboBox /template/ PathIcon#DropDownGlyph">
+        <Setter Property="Foreground" Value="{StaticResource Slate400Brush}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox /template/ Border#PopupBorder, ComboBox.AdminComboBox /template/ Border#PopupBorder">
+        <Setter Property="Background" Value="#0F172A"/>
+        <Setter Property="BorderBrush" Value="{StaticResource Slate700Brush}"/>
+        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="Padding" Value="4"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox ComboBoxItem, ComboBox.AdminComboBox ComboBoxItem">
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="10,8"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox ComboBoxItem:pointerover /template/ ContentPresenter, ComboBox.AdminComboBox ComboBoxItem:pointerover /template/ ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate100Brush}"/>
+    </Style>
+    <Style Selector="ComboBox.FilterComboBox ComboBoxItem:selected /template/ ContentPresenter, ComboBox.AdminComboBox ComboBoxItem:selected /template/ ContentPresenter">
+        <Setter Property="Background" Value="#330EA5E9"/>
+        <Setter Property="Foreground" Value="{StaticResource WhiteBrush}"/>
+    </Style>
+
+    <!-- 小さめの選択欄（ステータスなど） -->
+    <Style Selector="ComboBox.AdminComboBox">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Background" Value="{StaticResource Slate950_60Brush}"/>
+    </Style>
+
+    <!-- ============================================================
+         日付（CalendarDatePicker）: WPF 版の DatePicker（白い入力欄）
+         ============================================================ -->
+
+    <Style Selector="CalendarDatePicker.DateBoxPicker">
+        <Setter Property="Height" Value="34"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Foreground" Value="#0F172A"/>
+        <Setter Property="Background" Value="#FFFFFF"/>
+        <Setter Property="BorderBrush" Value="#CBD5E1"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="SelectedDateFormat" Value="Custom"/>
+        <Setter Property="CustomDateFormatString" Value="yyyy/MM/dd"/>
+    </Style>
+    <Style Selector="CalendarDatePicker.DateBoxPicker /template/ TextBox#PART_TextBox">
+        <Setter Property="Foreground" Value="#0F172A"/>
+        <Setter Property="CaretBrush" Value="#0F172A"/>
+    </Style>
+
+    <!-- ============================================================
+         選択肢ボタン（ListBox.SegmentListBox）: 督促のチャネル / トーン
+         ============================================================ -->
+
+    <Style Selector="ListBox.SegmentListBox">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <UniformGrid Rows="1"/>
+            </ItemsPanelTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="ListBox.SegmentListBox ListBoxItem">
+        <Setter Property="Margin" Value="0,0,8,0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="FontWeight" Value="Medium"/>
+        <Setter Property="Foreground" Value="{StaticResource Slate200Brush}"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="Bd"
+                        Height="34"
+                        CornerRadius="8"
+                        BorderThickness="1"
+                        BorderBrush="{StaticResource Slate700Brush}"
+                        Background="{StaticResource Slate950_40Brush}">
+                    <ContentPresenter Name="PART_ContentPresenter"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      Foreground="{TemplateBinding Foreground}"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="ListBox.SegmentListBox ListBoxItem:pointerover /template/ Border#Bd">
+        <Setter Property="Background" Value="{StaticResource Slate800Brush}"/>
+    </Style>
+    <Style Selector="ListBox.SegmentListBox ListBoxItem:selected">
+        <Setter Property="Foreground" Value="#E0F2FE"/>
+    </Style>
+    <Style Selector="ListBox.SegmentListBox ListBoxItem:selected /template/ Border#Bd">
+        <Setter Property="BorderBrush" Value="#990EA5E9"/>
+        <Setter Property="Background" Value="#260EA5E9"/>
+    </Style>
+</Styles>

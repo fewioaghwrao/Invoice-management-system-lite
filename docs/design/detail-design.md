@@ -44,11 +44,13 @@ Invoice Management System Lite
 ### 1.5 システム構成概要
 
 本システムは、フロントエンドとバックエンドを分離したWebアプリケーション構成とする。
+また、同じバックエンドAPIをデスクトップクライアント（WPF / Avalonia）からも利用する。
 
 ```text
-[ Frontend: Next.js / Vercel・Azure Static Web Apps ]
+[ Frontend: Next.js / Vercel・Azure Static Web Apps ]   [ Desktop Client: WPF / Avalonia ]
+        |                                                      |
+        +----------------- HTTPS / REST API / JWT -------------+
         |
-        | HTTPS / REST API / JWT
         v
 [ https://api.oybusin.com ]
         |
@@ -64,6 +66,9 @@ Invoice Management System Lite
 ```
 
 フロントエンドは画面表示、入力受付、画面遷移、API呼び出しを担当する。
+
+デスクトップクライアント（WPF / Avalonia）は、Web版と同等の業務画面をデスクトップアプリとして提供し、同じAPIを呼び出す。
+Avalonia版はWPF版のViewModel / Service / Modelを移植し、UI層のみをAvalonia UIへ置き換えている。
 
 バックエンドは認証・認可、業務ロジック、データベースアクセス、PDF生成、CSV生成を担当する。
 
@@ -85,6 +90,7 @@ Invoice Management System Lite
 | 区分      | 技術                                  |
 | ------- | ----------------------------------- |
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
+| デスクトップクライアント | C# / WPF / .NET 10、C# / Avalonia UI 12 / .NET 10（MVVM） |
 | バックエンド  | ASP.NET Core / .NET 10 / Minimal API |
 | データアクセス | Entity Framework Core               |
 | データベース  | PostgreSQL 16                       |
@@ -182,7 +188,8 @@ Invoice Management System Lite
 | フロントエンド画面             | `frontend/src/app/**/*.tsx`, `frontend/src/app/**/route.ts`                                                             |
 | API通信                 | `frontend/src/lib/*.ts`, `frontend/src/hooks/*.ts`, `frontend/src/proxy.ts`                                             |
 | 図                     | `docs/diagram/er-diagram.drawio.png`, `docs/diagram/admin-diagram.drawio.png`, `docs/diagram/member-diagram.drawio.png` |
-| CI                    | `.github/workflows/ci.yml`                                                                                              |
+| デスクトップクライアント | `wpfclient/InvoiceSystem.Wpf/**`, `avaloniaClient/InvoiceAvaloniaClient/**`（画面詳細は各 README を参照） |
+| CI                    | `.github/workflows/ci.yml`, `.github/workflows/dotnet-wpf-tests.yml`, `.github/workflows/avalonia-tests.yml` |
 | バックエンド単体テスト | `backend/InvoiceSystem.Tests/Services/**/*.cs` |
 | バックエンド統合テスト | `backend/InvoiceSystem.Tests/Integration/**/*.cs` |
 
@@ -2742,6 +2749,9 @@ PDF・CSV出力機能はLite版として最小限の構成としている。
 | 型定義                | バックエンドDTOに対応するTypeScript型を定義し、画面側のデータ構造を明確化する                           |
 | レスポンシブ対応           | 管理画面・会員画面ともにPC/スマートフォン表示を考慮する                                           |
 
+※ 本章はNext.jsによるWebフロントエンドの画面設計を対象とする。
+デスクトップクライアントの画面構成・ViewModel構成は、[WPFクライアントREADME](../../wpfclient/README.md) および [AvaloniaクライアントREADME](../../avaloniaClient/README.md) を参照する。
+
 ---
 
 ### 8.2 ルーティング構成
@@ -3698,6 +3708,7 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 | 異常系       | 存在しないデータ、権限不足などに対して適切なHTTPステータスを返すことを確認する    |
 | 業務ロジック    | 入金割当による請求ステータス再計算が正しく行われることを確認する             |
 | フロントエンド画面 | 主要画面の表示、ユーザー操作、エラー表示、遷移が正しく動作することを確認する       |
+| デスクトップクライアント | ViewModelの画面状態、入力検証、Request DTO生成、Service呼び出しが正しく動作することを確認する |
 | CI        | push / pull request 時にビルド・テストが自動実行されることを確認する |
 
 テストは、以下の分類で実施する。
@@ -3707,6 +3718,7 @@ Client ComponentからAPIを呼び出す場合は、`api.client.ts` の共通関
 | バックエンド統合テスト   | API、認証、認可、HTTPステータス      |
 | バックエンドサービステスト | 業務ロジック、DB更新、ステータス再計算     |
 | フロントエンドテスト    | Reactコンポーネント、画面表示、ユーザー操作 |
+| デスクトップクライアントテスト | WPF / AvaloniaクライアントのViewModel |
 | CIテスト         | GitHub Actionsによる自動実行    |
 
 ---
@@ -4236,6 +4248,7 @@ JestはNext.js向け設定として `next/jest` を利用する。
 ### 9.16 CI設計
 
 本システムでは、GitHub ActionsによりフロントエンドとバックエンドのCIを実行する。
+あわせて、デスクトップクライアント（WPF / Avalonia）は個別のワークフローでビルド・テストを実行する（9.18.4 参照）。
 
 CIは以下のタイミングで実行する。
 
@@ -4268,7 +4281,7 @@ CIは以下のタイミングで実行する。
 
 ### 9.18 バックエンドCI
 
-バックエンドCIでは、.NET 8 と PostgreSQL 16 を使用する。
+バックエンドCIでは、.NET 10 と PostgreSQL 16 を使用する。
 `dotnet test` では、サービス単体テストとバックエンド統合テストの両方を実行する。
 統合テストでは、Testing環境の設定、JWT設定、PostgreSQLテストDB、テストデータSeedを使用してAPIの疎通を確認する。
 
@@ -4312,6 +4325,21 @@ CI上では、PostgreSQL 16コンテナをサービスとして起動する。
 backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 ```
 
+#### 9.18.4 デスクトップクライアントCI
+
+デスクトップクライアントは、クライアントごとにワークフローを分けて実行する。
+対象フォルダの変更時のみ実行し、Web / API のみの変更では実行しない。
+
+| 項目 | WPFクライアント | Avaloniaクライアント |
+| -- | -- | -- |
+| ワークフロー | `.github/workflows/dotnet-wpf-tests.yml` | `.github/workflows/avalonia-tests.yml` |
+| 実行環境 | windows-latest / .NET 10 | windows-latest / .NET 10 |
+| トリガー | `main` / `feature/**` へのpush、`main` へのpull request | `main` / `feature/**` へのpush、`main` へのpull request |
+| 対象パス | `wpfclient/**` | `avaloniaClient/**` |
+| 実行内容 | restore、build（Release）、test | restore、build（Release）、test |
+| テストプロジェクト | `wpfclient/InvoiceSystem.Wpf.Tests` | `avaloniaClient/InvoiceAvaloniaClient/InvoiceAvaloniaClient.Tests` |
+| テスト結果 | `wpf-test-results`（.trx） | `avalonia-test-results`（.trx） |
+
 ---
 
 ### 9.19 テスト対象の整理
@@ -4330,7 +4358,8 @@ backend/InvoiceSystem.Tests/InvoiceSystem.Tests.csproj
 | Frontend Payment Page    | Payments、PaymentNew、PaymentDetail | 入金一覧、ページング、認証トークン                 |
 | Frontend Member Page     | Members                           | 会員一覧、ロール、有効状態                     |
 | Frontend Collection Page | Collections                       | 督促文面、履歴、コピー、登録                    |
-| CI                       | GitHub Actions                    | restore、build、test、frontend build |
+| Desktop ViewModel        | WPF / Avalonia クライアントの各ViewModel | 画面状態、検索条件、入力検証、Request DTO生成、Service呼び出し |
+| CI                       | GitHub Actions                    | restore、build、test、frontend build、デスクトップクライアントのbuild / test |
 
 ---
 

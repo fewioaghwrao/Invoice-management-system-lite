@@ -1,0 +1,134 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminMemberDetailView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 会員詳細・編集（Next.js: app/members/[id]/page.tsx + shared/MemberFormClient.tsx）。DataContext は MemberDetailViewModel。 -->
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="会員一覧" Classes="BreadcrumbButton" Command="{Binding CloseCommand}"/>
+                        <TextBlock Text=" / 会員詳細" Classes="BreadcrumbText"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Text="会員詳細・編集" Classes="PageHeaderTitle"/>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Sky300Brush}"
+                                   IsVisible="{Binding IsLoading}"/>
+                    </StackPanel>
+                    <TextBlock Text="会員情報の確認・編集と、アカウントの有効状態を確認できます。" Margin="0,6,0,0" Classes="SmallMuted"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="← 一覧へ"
+                        VerticalAlignment="Center"
+                        Classes="AdminOutlineButton"
+                        Command="{Binding CloseCommand}"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== 入力 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <Border Margin="0,0,0,16"
+                        Classes="RoseBanner"
+                        IsVisible="{Binding HasError}">
+                    <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="名前" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox" Text="{Binding Name}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="メール" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox" Text="{Binding Email}"/>
+                        <TextBlock Text="※管理画面編集のためメール認証は行いません（デモ用）。" Classes="AdminFieldHint"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="郵便番号" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox" Text="{Binding PostalCode}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="住所" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox" Text="{Binding Address}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Grid.Column="0">
+                        <TextBlock Text="電話番号" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox" Text="{Binding Phone}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="4" Grid.Column="2">
+                        <TextBlock Text="ロール" Classes="AdminFieldLabel"/>
+                        <Border Classes="ReadOnlyField">
+                            <TextBlock Text="{Binding RoleText}" Classes="ReadOnlyFieldText"/>
+                        </Border>
+                        <TextBlock Text="※デモの故障防止のためロールは固定です（管理者選択も不可）。" Classes="AdminFieldHint"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="6" Grid.Column="0">
+                        <TextBlock Text="状態" Classes="AdminFieldLabel"/>
+                        <Border Classes="ReadOnlyField">
+                            <TextBlock Text="{Binding StatusText}" Classes="ReadOnlyFieldText"/>
+                        </Border>
+                        <TextBlock Text="※状態変更は「退会（無効化）」操作で行います。" Classes="AdminFieldHint"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 戻る / 退会（無効化） / 保存 -->
+                <Grid Margin="0,24,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Content="戻る" MinWidth="64" Classes="AdminOutlineButton" Command="{Binding CloseCommand}"/>
+                    <Button Grid.Column="2"
+                            Content="退会（無効化）"
+                            MinHeight="34"
+                            Padding="16,0"
+                            Classes="RoseOutlineButton"
+                            Command="{Binding DisableCommand}"/>
+                    <Button Grid.Column="3"
+                            Margin="8,0,0,0"
+                            Content="保存"
+                            Classes="EmeraldSolidButton"
+                            Command="{Binding SaveCommand}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
