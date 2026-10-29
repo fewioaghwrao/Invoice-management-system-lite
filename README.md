@@ -2,17 +2,19 @@
 
 [![Web / API CI](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/ci.yml)
 [![WPF Tests](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/dotnet-wpf-tests.yml)
+[![Avalonia Tests](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/avalonia-tests.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/avalonia-tests.yml)
 [![Azure Static Web Apps](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/azure-static-web-apps-delightful-dune-0bf9e7300.yml)
 
 ## 概要
 
-**請求・入金管理業務を題材として、Web版とWPFデスクトップ版の
-2種類のクライアントを実装した業務向けアプリケーションです。**
+**請求・入金管理業務を題材として、Web版・WPFデスクトップ版・Avaloniaデスクトップ版の
+3種類のクライアントを実装した業務向けアプリケーションです。**
 
 共通の ASP.NET Core Web API に対して、以下のクライアントを実装しています。
 
 - Next.jsによるWebクライアント
 - C# / WPFによるWindowsデスクトップクライアント
+- C# / Avalonia UIによるクロスプラットフォーム対応デスクトップクライアント（WPF版から移植）
 
 請求書管理、入金登録、入金割当、会員管理、売上集計などの
 業務ロジックはバックエンドAPIに集約し、異なるUI技術から
@@ -62,12 +64,13 @@ WebアプリとデスクトップアプリのUI・操作性の違いも比較で
 ## アプリケーション構成
 
 本リポジトリでは、共通のバックエンドAPIに対して、
-Web版とWPF版の2種類のクライアントを実装しています。
+Web版・WPF版・Avalonia版の3種類のクライアントを実装しています。
 
 | 区分 | 技術 | 配置先 | 用途 |
 |---|---|---|---|
 | Webクライアント | Next.js / TypeScript | `frontend/` | ブラウザから利用するWeb版 |
 | WPFクライアント | C# / WPF / .NET 10 | `wpfclient/` | Windows向けデスクトップ版 |
+| Avaloniaクライアント | C# / Avalonia UI 12 / .NET 10 | `avaloniaClient/` | Avalonia版デスクトップクライアント（WPF版から移植） |
 | バックエンドAPI | ASP.NET Core / .NET 10 | `backend/InvoiceSystem.Api/` | 認証・認可・業務ロジック・DBアクセス |
 | Reminder Batch | .NET 10 Console / Docker / systemd | `backend/InvoiceSystem.Batch/` | 督促メールの外部ジョブ実行 |
 | データベース | PostgreSQL 16 | Docker / VPS | 請求・入金・会員情報の永続化 |
@@ -77,6 +80,7 @@ Web版とWPF版の2種類のクライアントを実装しています。
 - [Webフロントエンド](./frontend/README.md)
 - [バックエンドAPI](./backend/README.md)
 - [WPFデスクトップクライアント](./wpfclient/README.md)
+- [Avaloniaデスクトップクライアント](./avaloniaClient/README.md)
 
 ### 関連ツール
 
@@ -130,7 +134,7 @@ Invoice Management System の請求・入金・入金割当データを利用し
 ## アーキテクチャ構成
 
 本システムでは、ASP.NET Core Web APIを共通のバックエンドとして、
-2種類のクライアントから利用するマルチクライアント構成を採用しています。
+3種類のクライアントから利用するマルチクライアント構成を採用しています。
 
 ### Next.js Webクライアント
 
@@ -145,6 +149,13 @@ Invoice Management System の請求・入金・入金割当データを利用し
 - MVVMベース構成
 - DataGridを中心とした業務画面
 - HttpClientによるバックエンド連携
+
+### Avaloniaデスクトップクライアント
+
+- WPF版のViewModel / Service / Modelを移植し、UI層をAvalonia UIへ置き換え
+- クロスプラットフォームのUIフレームワーク（現在はDesktop版のみ対象）
+- 月別売上グラフはOxyPlotに代えて自作コントロールで描画
+- Avalonia.Headlessを利用したViewModelテスト
 
 ### ASP.NET Core Web API
 
@@ -239,6 +250,20 @@ DataGridを中心としたデスクトップ向けUIで操作できます。
 
 WPF版の画面、MVVM構成、テスト内容については、
 [WPFクライアントREADME](./wpfclient/README.md)を参照してください。
+
+---
+
+## スクリーンショット(Avaloniaデスクトップクライアント)
+
+WPF版をAvalonia UIへ移植したデスクトップクライアントです。
+画面構成・配色・機能はWPF版と同等で、同じバックエンドAPIを利用します。
+
+### 管理者ダッシュボード
+
+![Avalonia管理者ダッシュボード](./avaloniaClient/docs/images/管理者ダッシュボード.png)
+
+WPF版からの変更点、画面一覧、テスト内容については、
+[AvaloniaクライアントREADME](./avaloniaClient/README.md)を参照してください。
 
 ---
 
@@ -366,6 +391,9 @@ WPF版の画面、MVVM構成、テスト内容については、
 - HttpClient
 - OxyPlot
 - xUnit
+- Avalonia UI 12（Avalonia版）
+- CommunityToolkit.Mvvm（Avalonia版）
+- Avalonia.Headless / xUnit v3（Avalonia版）
 
 ### Backend
 - ASP.NET Core（.NET 10）
@@ -650,6 +678,15 @@ Request DTOの生成、Service呼び出しなどを中心に検証していま�
 
 詳細は[WPFクライアントのテスト方針](./wpfclient/README.md#テスト)を参照してください。
 
+### Avaloniaクライアント
+
+WPF版のViewModelテストをAvalonia版へ移植し、Avalonia.Headless上のxUnit v3テストとして実行しています。
+
+- ワークフロー：`.github/workflows/avalonia-tests.yml`
+- `avaloniaClient/**` の変更時に、Windows環境でbuild / testを自動実行
+
+詳細は[Avaloniaクライアントのテスト](./avaloniaClient/README.md#テスト)を参照してください。
+
 ---
 ## リポジトリ構成
 
@@ -659,6 +696,7 @@ invoice-management-system-lite/
 │  └─ workflows/
 │     ├─ ci.yml
 │     ├─ dotnet-wpf-tests.yml
+│     ├─ avalonia-tests.yml
 │     └─ azure-static-web-apps-*.yml
 │
 ├─ frontend/                         # Next.js Webクライアント
@@ -685,6 +723,16 @@ invoice-management-system-lite/
 │  ├─ docs/
 │  │  └─ images/
 │  ├─ InvoiceSystem.Wpf.slnx
+│  └─ README.md
+│
+├─ avaloniaClient/                   # Avaloniaデスクトップクライアント
+│  ├─ InvoiceAvaloniaClient/
+│  │  ├─ InvoiceAvaloniaClient/         # 共通プロジェクト（画面・ロジック）
+│  │  ├─ InvoiceAvaloniaClient.Desktop/ # Desktop版の起動プロジェクト
+│  │  └─ InvoiceAvaloniaClient.Tests/   # ViewModelテスト
+│  ├─ docs/
+│  │  └─ images/
+│  ├─ InvoiceAvaloniaClient.slnx
 │  └─ README.md
 │
 ├─ docs/
@@ -729,7 +777,7 @@ invoice-management-system-lite/
 - ログイン、ダッシュボード、請求書、入金、会員、督促画面などの確認
 
 ### CI
-- GitHub Actions により、フロントエンド・バックエンドの build / test を自動実行
+- GitHub Actions により、フロントエンド・バックエンド・WPF / Avaloniaクライアントの build / test を自動実行
 
 ---
 

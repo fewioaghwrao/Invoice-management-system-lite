@@ -18,23 +18,34 @@ Invoice Management System (Lite) における設計方針・構成意図を整�
 
 ## 2. システム全体構成
 ```bash
-[ Web Client (Next.js) ]       [ Desktop Client (WPF) ]
-            |                              |
-            +---------- REST API ----------+
-                       (JWT)
-                         |
-             [ Backend API (ASP.NET Core) ]
-                         |
-                    ORM (EF Core)
-                         |
-                   [ PostgreSQL ]
+[ Web Client ]      [ Desktop Client ]      [ Desktop Client ]
+  (Next.js)              (WPF)                 (Avalonia)
+      |                    |                       |
+      +------------------ REST API ----------------+
+                            (JWT)
+                              |
+                [ Backend API (ASP.NET Core) ]
+                              |
+                         ORM (EF Core)
+                              |
+                        [ PostgreSQL ]
 ```
 ### 構成の特徴
 
-- Webクライアント / WPFクライアントとバックエンドAPIを分離
+- Webクライアント / WPFクライアント / AvaloniaクライアントとバックエンドAPIを分離
 - 共通APIを複数クライアントから利用する構成
 - APIベース設計による責務の明確化
 - Web・デスクトップの双方から同一の業務ロジックを利用
+- AvaloniaクライアントはWPFクライアントのViewModel / Service / Modelを移植し、UI層のみを置き換えた構成
+  - 業務ロジックをAPIに、画面ロジックをViewModelに集約しているため、UIフレームワークを変えても再利用できることを確認
+
+### クライアント構成
+
+| クライアント | 技術 | 配置先 | 特徴 |
+| ---- | ---- | ---- | ---- |
+| Webクライアント | Next.js / TypeScript | `frontend/` | ブラウザ向けUI、レスポンシブ対応 |
+| WPFクライアント | C# / WPF / .NET 10 | `wpfclient/` | Windows向けネイティブUI、MVVM構成 |
+| Avaloniaクライアント | C# / Avalonia UI 12 / .NET 10 | `avaloniaClient/` | WPF版から移植したクロスプラットフォーム対応UI（現在はDesktop版のみ） |
 
 ## 3. ユーザー区分と責務分離
 本システムでは 2 種類のユーザー を想定しています。
@@ -137,7 +148,7 @@ Invoice Management System (Lite) における設計方針・構成意図を整�
 ASP.NET Core による REST API として実装しています。
 
 本APIは、Next.jsによるWebクライアントと、
-C# / WPFによるデスクトップクライアントから共通して利用します。
+C# / WPF、C# / Avalonia UIによるデスクトップクライアントから共通して利用します。
 業務ロジックと権限制御はバックエンドAPI側に集約しています。
 
 開発・検証環境では Swagger UI により API 仕様を確認できる構成とする。
@@ -183,12 +194,21 @@ C# / WPFによるデスクトップクライアントから共通して利用し
 - API通信はServiceインターフェースとFake実装により分離
 - UIそのものではなく、ViewModelの状態と業務処理を中心に検証
 
+### Avaloniaクライアントテスト
+
+- WPFクライアントのViewModelテストを移植し、xUnit v3で実行
+- Avalonia.Headlessのヘッドレス UI スレッド上でテストを実行（WPF版の `[StaFact]` に相当）
+- 確認ダイアログは `Task<bool>` を返す関数としてFake化
+- 月別売上グラフは描画結果ではなく、グラフ表示データ（`MonthlyChartData`）を検証
+
 ### CI
 
 - GitHub Actions により、push / pull request 時にビルド・テストを自動実行
 - フロントエンドは lint / test / build を実行
 - バックエンドは restore / build / test を実行
 - WPFクライアントはWindows環境で restore / build / test を実行
+- AvaloniaクライアントはWindows環境で restore / build / test を実行
+- クライアントごとにワークフローを分け、対象フォルダ（`wpfclient/**`、`avaloniaClient/**`）の変更時のみ実行
 
 ## 9. レイヤードアーキテクチャ
 
@@ -231,6 +251,6 @@ Infrastructure
 - 状態変化を意識した設計
 - 一部入金・割当対応
 - 実務視点での画面遷移・集計
-- 共通APIを利用したWeb・WPFのマルチクライアント構成
+- 共通APIを利用したWeb・WPF・Avaloniaのマルチクライアント構成
 
 を重視した構成としています。

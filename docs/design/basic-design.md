@@ -116,11 +116,13 @@ Invoice Management System Lite
 ### 3.1 全体構成
 
 本システムは、フロントエンドとバックエンドを分離した Web アプリケーション構成とする。
+また、Web フロントエンドと同じバックエンド API を、デスクトップクライアント（WPF / Avalonia）からも利用するマルチクライアント構成とする。
 
 ```text
-[ Frontend: Next.js / Vercel・Azure Static Web Apps ]
+[ Frontend: Next.js / Vercel・Azure Static Web Apps ]   [ Desktop Client: WPF / Avalonia ]
+        |                                                      |
+        +----------------- HTTPS / REST API / JWT -------------+
         |
-        | HTTPS / REST API / JWT
         v
 [ api.oybusin.com ]
         |
@@ -140,12 +142,13 @@ Invoice Management System Lite
 | 区分 | 技術 | 主な責務 |
 |---|---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS | 画面表示、入力受付、画面遷移、API 呼び出し |
+| デスクトップクライアント | C# / WPF / .NET 10、C# / Avalonia UI 12 / .NET 10 | Web 版と同等の業務画面をデスクトップアプリとして提供し、同じ API を呼び出す |
 | バックエンド API | ASP.NET Core / .NET 10 / Minimal API | 認証・認可、業務ロジック、データアクセス、PDF・CSV 生成 |
 | データベース | PostgreSQL 16 | 会員、請求書、入金、入金割当、督促履歴、監査ログの保持 |
 | ORM | Entity Framework Core | エンティティと DB テーブルの対応、リレーション、制約管理 |
 | 認証方式 | JWT | ログイン後の認証、API アクセス制御 |
 | PDF 出力 | QuestPDF | 請求書 PDF の生成 |
-| CI | GitHub Actions | フロントエンド・バックエンドのビルド、単体テスト、統合テスト、継続的検証 |
+| CI | GitHub Actions | フロントエンド・バックエンド・デスクトップクライアントのビルド、単体テスト、統合テスト、継続的検証 |
 | デプロイ | ConoHa VPS / Docker Compose / nginx / Vercel / Azure Static Web Apps | VPS上のAPI・DB運用、HTTPS公開、UIホスティング検証 |
 
 ### 3.3 レイヤー構成
@@ -175,6 +178,7 @@ API
 | Infrastructure | EF Core、PDF 生成、メール送信などの実装詳細を担当する |
 | API | HTTP リクエストを受け取り、認証・認可後に Application 層へ処理を委譲する |
 | Frontend | 画面表示とユーザー操作に専念し、業務判定はバックエンドへ委譲する |
+| Desktop Client | MVVM 構成とし、画面状態は ViewModel、API 通信は Service に分離する。業務判定はバックエンドへ委譲する |
 
 ---
 
@@ -532,7 +536,7 @@ docs/diagram/er-diagram.drawio.png
 
 ### 9.1 API 方式
 
-フロントエンドとバックエンドは REST API により通信する。
+フロントエンドおよびデスクトップクライアント（WPF / Avalonia）とバックエンドは REST API により通信する。
 
 | 項目 | 内容 |
 |---|---|
@@ -651,6 +655,7 @@ Lite 版として大規模処理は対象外だが、以下を考慮する。
 - 請求書一覧、入金一覧、売上一覧のページングまたは条件検索
 - 集計値は必要に応じて算出し、過度な重複保持を避ける
 - 将来的なモバイルアプリや別クライアント追加を考慮し、API ベースで設計する
+  - 実際に、Web 版に加えて WPF / Avalonia のデスクトップクライアントを、API を変更せずに追加している
 
 ---
 
@@ -708,6 +713,16 @@ Lite 版として大規模処理は対象外だが、以下を考慮する。
 - PDF 出力で日本語が正常に表示されること
 - VPS上の本番相当環境（`https://api.oybusin.com`）で HTTPS による API 通信が成立すること
 
+### 12.5 デスクトップクライアントテスト
+
+デスクトップクライアント（WPF / Avalonia）では、UI そのものではなく ViewModel の状態と処理を中心に単体テストを実施する。
+API 通信は Service インターフェースと Fake 実装に差し替え、外部 API に依存せずに実行できるようにする。
+
+| 分類 | 対象 | 内容 |
+|---|---|---|
+| 単体テスト | WPF クライアント ViewModel | 認証、会員画面、請求、入金、売上、管理者ダッシュボード、催促の画面状態・入力検証・Request DTO 生成を確認する（xUnit） |
+| 単体テスト | Avalonia クライアント ViewModel | WPF 版のテストを移植し、Avalonia.Headless のヘッドレス UI スレッド上で同じ観点を確認する（xUnit v3） |
+
 ---
 
 ## 13. CI/CD・環境設計
@@ -720,6 +735,8 @@ GitHub Actions により、フロントエンドとバックエンドのビル�
 |---|---|
 | フロントエンド | install、lint、test、build |
 | バックエンド | restore、build、test。`dotnet test` により、サービス単体テストと API 統合テストを実行する |
+| WPF クライアント | Windows 環境で restore、build、test。`wpfclient/**` の変更時に実行する（`dotnet-wpf-tests.yml`） |
+| Avalonia クライアント | Windows 環境で restore、build、test。`avaloniaClient/**` の変更時に実行する（`avalonia-tests.yml`） |
 | DB | PostgreSQL サービスを用いた Testing 環境で、API 統合テストを実行する |
 
 ### 13.2 デプロイ環境
@@ -813,7 +830,9 @@ GitHub Actions により、フロントエンドとバックエンドのビル�
 | 会員画面遷移図 | `docs/diagram/member-diagram.drawio.png` |
 | バックエンド | `backend/InvoiceSystem.Api`, `Application`, `Domain`, `Infrastructure` |
 | フロントエンド | `frontend/src/app`, `frontend/src/lib` |
-| CI | `.github/workflows/ci.yml` |
+| WPF クライアント | `wpfclient/README.md`, `wpfclient/InvoiceSystem.Wpf` |
+| Avalonia クライアント | `avaloniaClient/README.md`, `avaloniaClient/InvoiceAvaloniaClient` |
+| CI | `.github/workflows/ci.yml`, `.github/workflows/dotnet-wpf-tests.yml`, `.github/workflows/avalonia-tests.yml` |
 
 ---
 

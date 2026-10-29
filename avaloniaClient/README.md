@@ -1,11 +1,11 @@
 # Invoice System Client (Avalonia)
 
-[![AvaloniaTest](https://github.com/fewioaghwrao/InvoiceAvaloniaClient/actions/workflows/avalonia-tests.yml/badge.svg)](https://github.com/fewioaghwrao/InvoiceAvaloniaClient/actions/workflows/avalonia-tests.yml)
+[![AvaloniaTest](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/avalonia-tests.yml/badge.svg)](https://github.com/fewioaghwrao/Invoice-management-system-lite/actions/workflows/avalonia-tests.yml)
 
 C# / Avalonia UI で開発した、**Invoice Management System (Lite)** 向けのデスクトップクライアントです。  
 既存の **ASP.NET Core Web API** を利用し、**請求・入金・会員管理・売上確認** をデスクトップアプリとして操作できます。
 
-[Invoice-management-system-lite](https://github.com/fewioaghwrao/Invoice-management-system-lite) の **WPF Client（`wpfclient/InvoiceSystem.Wpf`）を基に Avalonia へ移植**したもので、画面構成・配色・ViewModel・API 通信は WPF 版と同等です。
+同リポジトリの [WPF クライアント](../wpfclient/README.md)（`wpfclient/InvoiceSystem.Wpf`）を**基に Avalonia へ移植**したもので、画面構成・配色・ViewModel・API 通信は WPF 版と同等です。
 
 ---
 
@@ -27,7 +27,7 @@ JWT ベースの認証、Admin / Member ロール別の画面遷移、請求書�
 - サイドバー式のシングルウィンドウ構成（画面遷移で別ウィンドウを開かない）
 
 接続先のバックエンド（ASP.NET Core Web API）やシステム全体の構成は、
-[Invoice-management-system-lite](https://github.com/fewioaghwrao/Invoice-management-system-lite) を参照してください。
+[リポジトリのルート README](../README.md) と [バックエンド API の README](../backend/README.md) を参照してください。
 
 ---
 
@@ -385,42 +385,47 @@ UI フレームワーク固有の部分（スタイル・ダイアログ・グ�
 ## ディレクトリ構成
 
 ```
-InvoiceAvaloniaClient/                 # リポジトリ直下
+Invoice-management-system-lite/        # リポジトリ直下
 ├─ .github/workflows/
-│  └─ avalonia-tests.yml               # GitHub Actions（ビルド・テスト）
-├─ InvoiceAvaloniaClient.slnx
-├─ InvoiceAvaloniaClient/
-│  ├─ Directory.Packages.props         # NuGet パッケージのバージョン一括管理
-│  ├─ InvoiceAvaloniaClient/           # 共通プロジェクト（画面・ロジック）
-│  │  ├─ Models/
-│  │  ├─ Services/
-│  │  ├─ ViewModels/
-│  │  ├─ Views/
-│  │  ├─ Commands/
-│  │  ├─ Configuration/                # ApiSettings / AppServices（設定読み込み・サービス生成）
-│  │  ├─ Controls/                     # MonthlyLineChart（月別売上グラフ）
-│  │  ├─ Helpers/                      # コンバーター / DialogService / 外部リンク
-│  │  ├─ Infrastructure/
-│  │  ├─ Themes/                       # AppTheme.axaml（共通スタイル）
-│  │  ├─ Assets/
-│  │  └─ App.axaml
-│  ├─ InvoiceAvaloniaClient.Desktop/   # Desktop 版の起動プロジェクト
-│  │  ├─ Program.cs
-│  │  └─ appsettings.json
-│  └─ InvoiceAvaloniaClient.Tests/     # ViewModel の単体テスト
-│     ├─ Fakes/
-│     ├─ ViewModels/
-│     └─ TestAppBuilder.cs
-├─ docs/
-│  └─ images/
-└─ README.md
+│  └─ avalonia-tests.yml               # GitHub Actions（Avalonia クライアントのビルド・テスト）
+├─ backend/                            # ASP.NET Core Web API（接続先）
+├─ frontend/                           # Next.js Web クライアント
+├─ wpfclient/                          # WPF デスクトップクライアント（移植元）
+└─ avaloniaClient/                     # ★ Avalonia デスクトップクライアント（本 README）
+   ├─ InvoiceAvaloniaClient.slnx
+   ├─ InvoiceAvaloniaClient/
+   │  ├─ Directory.Packages.props      # NuGet パッケージのバージョン一括管理
+   │  ├─ InvoiceAvaloniaClient/        # 共通プロジェクト（画面・ロジック）
+   │  │  ├─ Models/
+   │  │  ├─ Services/
+   │  │  ├─ ViewModels/
+   │  │  ├─ Views/
+   │  │  ├─ Commands/
+   │  │  ├─ Configuration/             # ApiSettings / AppServices（設定読み込み・サービス生成）
+   │  │  ├─ Controls/                  # MonthlyLineChart（月別売上グラフ）
+   │  │  ├─ Helpers/                   # コンバーター / DialogService / 外部リンク
+   │  │  ├─ Infrastructure/
+   │  │  ├─ Themes/                    # AppTheme.axaml（共通スタイル）
+   │  │  ├─ Assets/
+   │  │  └─ App.axaml
+   │  ├─ InvoiceAvaloniaClient.Desktop/ # Desktop 版の起動プロジェクト
+   │  │  ├─ Program.cs
+   │  │  └─ appsettings.json
+   │  └─ InvoiceAvaloniaClient.Tests/  # ViewModel の単体テスト
+   │     ├─ Fakes/
+   │     ├─ ViewModels/
+   │     └─ TestAppBuilder.cs
+   ├─ docs/
+   │  └─ images/
+   ├─ .gitignore
+   └─ README.md
 ```
 
 ---
 
 ## 設定ファイル
 
-API ベース URL は `InvoiceAvaloniaClient/InvoiceAvaloniaClient.Desktop/appsettings.json` で管理しています（WPF 版と同じ形式）。
+API ベース URL は `avaloniaClient/InvoiceAvaloniaClient/InvoiceAvaloniaClient.Desktop/appsettings.json` で管理しています（WPF 版の `wpfclient/InvoiceSystem.Wpf/appsettings.json` と同じ形式）。
 
 ```json
 {
@@ -437,17 +442,24 @@ API ベース URL は `InvoiceAvaloniaClient/InvoiceAvaloniaClient.Desktop/appse
 
 ## 動作確認手順
 
-1. `appsettings.json` に API のベース URL を設定
-2. バックエンド API を起動
-3. Desktop 版を起動
+1. リポジトリを取得し、`avaloniaClient` フォルダへ移動
+
+   ```bash
+   git clone https://github.com/fewioaghwrao/Invoice-management-system-lite.git
+   cd Invoice-management-system-lite/avaloniaClient
+   ```
+
+2. `appsettings.json` に API のベース URL を設定
+3. バックエンド API を起動（公開中の `https://api.oybusin.com` を使う場合は不要）
+4. Desktop 版を起動
 
    ```bash
    dotnet run --project InvoiceAvaloniaClient/InvoiceAvaloniaClient.Desktop
    ```
 
-4. ログイン画面から認証
-5. ロールに応じて会員画面 / 管理者画面へ遷移
-6. 請求書・入金・会員・売上機能を確認
+5. ログイン画面から認証
+6. ロールに応じて会員画面 / 管理者画面へ遷移
+7. 請求書・入金・会員・売上機能を確認
 
 ---
 
@@ -503,7 +515,10 @@ Avalonia の ViewModel は UI スレッド（`Dispatcher.UIThread`）経由で�
 
 ### 実行方法
 
+`avaloniaClient` フォルダで実行します。
+
 ```bash
+cd avaloniaClient
 dotnet test InvoiceAvaloniaClient/InvoiceAvaloniaClient.Tests
 ```
 
@@ -515,7 +530,12 @@ dotnet test InvoiceAvaloniaClient.slnx
 
 ### CI
 
-GitHub Actions（`.github/workflows/avalonia-tests.yml`）により、Windows 環境で .NET 10 SDK を使用したビルドとテストを自動実行します。  
+リポジトリ直下の GitHub Actions（[`.github/workflows/avalonia-tests.yml`](../.github/workflows/avalonia-tests.yml)）により、Windows 環境で .NET 10 SDK を使用したビルドとテストを自動実行します。
+
+- 実行タイミング：`main` / `feature/**` への push、`main` への pull request
+- 対象パス：`avaloniaClient/**` と ワークフローファイル自身（WPF / Web / API のみの変更では実行されません）
+- 作業ディレクトリ：`avaloniaClient`
+
 テスト結果は `.trx` として保存し、Artifact（`avalonia-test-results`）からダウンロードできます。
 
 ---
@@ -535,10 +555,13 @@ GitHub Actions（`.github/workflows/avalonia-tests.yml`）により、Windows �
 
 ## 関連システム
 
-本クライアントが接続する元システムは、請求・入金・会員管理を扱う **Invoice Management System (Lite)** です。  
-Web 版では Next.js フロントエンドと ASP.NET Core バックエンドを分離した構成を採用しており、同リポジトリには WPF 版クライアントも含まれています。
+本クライアントは、請求・入金・会員管理を扱う **Invoice Management System (Lite)** リポジトリの一部です。  
+同じバックエンド API を、Web / WPF / Avalonia の 3 種類のクライアントから利用しています。
 
-- [Invoice-management-system-lite](https://github.com/fewioaghwrao/Invoice-management-system-lite)
+- [システム全体（ルート README）](../README.md)
+- [バックエンド API](../backend/README.md)
+- [Web フロントエンド（Next.js）](../frontend/README.md)
+- [WPF デスクトップクライアント（移植元）](../wpfclient/README.md)
 
 ---
 

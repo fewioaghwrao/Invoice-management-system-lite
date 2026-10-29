@@ -474,13 +474,14 @@ docs/diagram/er-diagram.drawio.png
 | 認証方式 | JWT |
 | データ形式 | JSON |
 | API提供元 | ASP.NET Core Backend API |
-| API利用元 | Next.js Frontend |
+| API利用元 | Next.js Frontend / WPF デスクトップクライアント / Avalonia デスクトップクライアント |
 
 ### 12.2 フロントエンド・バックエンド連携
 
 - フロントエンドは画面表示、入力受付、API呼び出しを担当する
 - バックエンドは認証・認可、業務ロジック、DBアクセス、PDF生成、CSV生成を担当する
 - 請求金額や入金ステータスなどの重要な業務判定はバックエンドで行う
+- デスクトップクライアント（WPF / Avalonia）も Web フロントエンドと同じ API を利用し、業務判定はバックエンドに委譲する
 
 ### 12.3 外部サービス連携
 
@@ -541,6 +542,7 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | NFR-TST-006 | API、認証、認可、DB連携を含むバックエンド統合テストを実施できること |
 | NFR-TST-007 | フロントエンドの主要画面に対するテストを追加できること |
 | NFR-TST-008 | CIによりビルド・テストを実行できること |
+| NFR-TST-009 | デスクトップクライアント（WPF / Avalonia）の主要ViewModelに対する単体テストを実施できること |
 
 ---
 
@@ -551,6 +553,7 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | 項目 | 内容 |
 |---|---|
 | フロントエンド | Next.js / TypeScript / Tailwind CSS |
+| デスクトップクライアント | C# / WPF / .NET 10、C# / Avalonia UI 12 / .NET 10 |
 | バックエンド | ASP.NET Core / .NET 10 / Minimal API |
 | データベース | PostgreSQL 16 |
 | ORM | Entity Framework Core |
@@ -676,3 +679,5 @@ Lite版では、外部会計システム、銀行API、メール配信サービ�
 | docs/diagram/member-diagram.drawio.png | 会員画面遷移図 |
 | backend/README.md | バックエンドAPI概要 |
 | frontend/README.md | フロントエンド概要 |
+| wpfclient/README.md | WPF デスクトップクライアント概要 |
+| avaloniaClient/README.md | Avalonia デスクトップクライアント概要 |
