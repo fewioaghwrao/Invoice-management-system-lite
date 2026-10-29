@@ -1,0 +1,283 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminPaymentDetailView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 入金詳細（割当）（Next.js: app/payments/[id]/PaymentDetailClient.tsx）。DataContext は PaymentDetailViewModel。 -->
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.SectionTitle2">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+        </Style>
+        <Style Selector="TextBlock.InfoValue">
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="入金一覧" Classes="BreadcrumbButton" Click="BackToListButton_OnClick"/>
+                        <TextBlock Text=" / 入金詳細" Classes="BreadcrumbText"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Text="入金詳細（割当）" Classes="PageHeaderTitle"/>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Sky300Brush}"
+                                   IsVisible="{Binding IsLoading}"/>
+                    </StackPanel>
+                    <TextBlock Text="入金状況を確認し、請求書への割当を管理します。" Margin="0,6,0,0" Classes="SmallMuted"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="← 入金一覧へ"
+                        VerticalAlignment="Center"
+                        Classes="AdminOutlineButton"
+                        Click="BackToListButton_OnClick"/>
+            </Grid>
+        </Border>
+
+        <Border Margin="0,16,0,0"
+                Classes="RoseBanner"
+                IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- ===== 入金の概要 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="入金ID" FontSize="11" Foreground="{DynamicResource Slate400Brush}"/>
+                        <TextBlock Text="{Binding PaymentIdText}" Margin="0,4,0,0" FontSize="16" FontWeight="SemiBold" Foreground="{DynamicResource Slate50Brush}"/>
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            VerticalAlignment="Top"
+                            Tag="{Binding Status, Converter={x:Static helpers:UpperCaseConverter.Instance}}"
+                            Classes="AllocationStatusPill">
+                        <TextBlock Text="{Binding StatusText}" FontSize="11" FontWeight="SemiBold"/>
+                    </Border>
+                </Grid>
+
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="12"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Grid.Column="0" Classes="StatBox">
+                        <StackPanel>
+                            <TextBlock Text="入金額" Classes="StatLabel"/>
+                            <TextBlock Text="{Binding AmountText}" Classes="StatValue" Foreground="#6EE7B7"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="2" Classes="StatBox">
+                        <StackPanel>
+                            <TextBlock Text="割当合計" Classes="StatLabel"/>
+                            <TextBlock Text="{Binding AllocatedAmountText}" Classes="StatValue"/>
+                            <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Slate400Brush}">
+                                <Run Text="（入力中合計: "/><Run Text="{Binding InputAllocatedSumText, Mode=OneWay}"/><Run Text="）"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="0" Grid.Column="4" Classes="StatBox">
+                        <StackPanel>
+                            <TextBlock Text="未割当" Classes="StatLabel"/>
+                            <TextBlock Text="{Binding UnallocatedAmountText}" Classes="StatValue" Foreground="{DynamicResource Amber300Brush}"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Row="2" Grid.Column="0" Classes="StatBox">
+                        <StackPanel>
+                            <TextBlock Text="入金日" Classes="StatLabel"/>
+                            <TextBlock Text="{Binding PaymentDateText}" Classes="InfoValue"/>
+                        </StackPanel>
+                    </Border>
+                    <Border Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="3" Classes="StatBox">
+                        <StackPanel>
+                            <TextBlock Text="入金名義" Classes="StatLabel"/>
+                            <TextBlock Text="{Binding PayerName}" Classes="InfoValue"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 請求書への割当 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="請求書への割当" Classes="SectionTitle2"/>
+                        <TextBlock Text="請求書番号で検索して選択してください" Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Slate400Brush}"/>
+                    </StackPanel>
+                    <Button Grid.Column="1" Content="＋ 行を追加" VerticalAlignment="Center" Classes="AdminOutlineButton" Click="AddRowButton_OnClick"/>
+                </Grid>
+
+                <ItemsControl x:Name="AllocationItems" ItemsSource="{Binding AllocationRows}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,12" Classes="StatBox">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="3*"/>
+                                        <ColumnDefinition Width="12"/>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 請求書（検索して選択） -->
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="請求書（検索して選択）" Classes="AdminFieldLabel"/>
+                                        <Grid>
+                                            <TextBox x:Name="InvoiceSearchBox"
+                                                     Padding="12,0,80,0"
+                                                     PlaceholderText="請求書番号を入力して Enter または「検索」"
+                                                     Text="{Binding InvoiceNumber}"
+                                                     KeyDown="InvoiceSearchBox_OnKeyDown"
+                                                     Classes="AdminTextBox"
+                                                     IsReadOnly="{Binding InvoiceId, Converter={x:Static helpers:PositiveConverter.Instance}}"/>
+                                            <!-- 請求書を選択済みの行は読み取り専用（変更は「解除」してから） -->
+
+                                            <!-- 未選択: 検索 / 選択済み: 解除 -->
+                                            <Button HorizontalAlignment="Right"
+                                                    Margin="0,4,4,4"
+                                                    MinHeight="24"
+                                                    Padding="10,0"
+                                                    Click="SearchOrClearButton_OnClick"
+                                                    Classes="AdminOutlineButton"
+                                                    Content="{Binding InvoiceId, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='解除|検索'}"/>
+                                        </Grid>
+
+                                        <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Slate500Brush}" IsVisible="{Binding InvoiceId, Converter={x:Static helpers:PositiveConverter.Instance}}">
+                                            <Run Text="選択中: "/><Run Text="{Binding InvoiceNumber, Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Slate200Brush}"/><Run Text="（ID:"/><Run Text="{Binding InvoiceId, Mode=OneWay}"/><Run Text="）"/>
+                                        </TextBlock>
+                                    </StackPanel>
+
+                                    <!-- 割当金額 -->
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="割当金額（円）" Classes="AdminFieldLabel"/>
+                                        <TextBox Classes="AdminTextBox"
+                                                 PlaceholderText="例：60000"
+                                                 Text="{Binding AmountText}"
+                                                 TextChanged="AmountTextBox_OnTextChanged"/>
+                                    </StackPanel>
+
+                                    <Button Grid.Column="4"
+                                            VerticalAlignment="Center"
+                                            Content="削除"
+                                            Classes="AdminOutlineButton"
+                                            Click="RemoveRowButton_OnClick"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 検索結果（候補） -->
+                <Border Margin="0,0,0,12"
+                        CornerRadius="12"
+                        BorderThickness="1"
+                        BorderBrush="#660EA5E9"
+                        Background="#0D0EA5E9"
+                        Padding="16,12" IsVisible="{Binding CandidateInvoices.Count, Converter={x:Static helpers:PositiveConverter.Instance}}">
+                    <StackPanel>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock x:Name="CandidateTitleText"
+                                       Text="検索結果（選択すると行に設定されます）"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource Sky200Brush}"/>
+                            <Button Grid.Column="1" Content="閉じる" Classes="AdminOutlineButton" Click="CloseCandidatesButton_OnClick"/>
+                        </Grid>
+
+                        <ItemsControl ItemsSource="{Binding CandidateInvoices}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="InnerTableRow" Padding="0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="2*"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="120"/>
+                                                <ColumnDefinition Width="100"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding InvoiceNumber}" FontWeight="SemiBold" Foreground="{DynamicResource Slate100Brush}" Classes="InnerTableCell"/>
+                                            <TextBlock Grid.Column="1" Text="{Binding MemberName}" TextTrimming="CharacterEllipsis" Classes="InnerTableCell"/>
+                                            <TextBlock Grid.Column="2" Text="{Binding TotalAmount, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Classes="InnerTableCell"/>
+                                            <Border Grid.Column="3"
+                                                    Margin="12,0,0,0"
+                                                    Classes="StatusPill"
+                                                    Background="{Binding StatusBackground}"
+                                                    BorderBrush="{Binding StatusBorderBrush}">
+                                                <TextBlock Text="{Binding StatusName}" FontSize="11" FontWeight="SemiBold" Foreground="{Binding StatusForeground}"/>
+                                            </Border>
+                                            <Button Grid.Column="4" Margin="12,0" Content="選択" Classes="AdminOutlineButton" Click="ApplyCandidateButton_OnClick"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <Button Content="戻る" MinWidth="64" Classes="AdminOutlineButton" Click="BackToListButton_OnClick"/>
+                    <Button Grid.Column="2"
+                            Classes="EmeraldSolidButton"
+                            IsEnabled="{Binding !IsSaving}"
+                            Content="{Binding IsSaving, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='保存中...|割当を保存'}"
+                            Click="SaveButton_OnClick"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

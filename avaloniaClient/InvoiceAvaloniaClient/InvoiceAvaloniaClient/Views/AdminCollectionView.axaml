@@ -1,0 +1,255 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminCollectionView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 督促（Next.js: app/collections/[invoiceId]/CollectionsClient.tsx）。DataContext は AdminCollectionViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.SectionTitle2">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+        </Style>
+        <Style Selector="TextBlock.SummaryValue">
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate50Brush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.SummarySub">
+            <Setter Property="Margin" Value="0,6,0,0"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate400Brush}"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+        <Style Selector="TextBlock.PreviewLabel">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate400Brush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="請求書一覧" Classes="BreadcrumbButton" Click="BreadcrumbList_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="{Binding InvoiceNumber}" Classes="BreadcrumbButton" Click="BackToDetailButton_OnClick"/>
+                        <TextBlock Text=" / 督促" Classes="BreadcrumbText"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Classes="PageHeaderTitle">
+                            <Run Text="督促（"/><Run Text="{Binding InvoiceNumber, Mode=OneWay}"/><Run Text="）"/>
+                        </TextBlock>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Sky300Brush}"
+                                   IsVisible="{Binding IsLoading}"/>
+                    </StackPanel>
+                    <TextBlock Text="テンプレ選択 → 文面プレビュー → 履歴管理 → 次アクションまで一画面で管理します。"
+                               Margin="0,6,0,0"
+                               Classes="SmallMuted"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="← 請求書詳細へ" Classes="AdminOutlineButton" Click="BackToDetailButton_OnClick"/>
+                    <Button Content="本文コピー" Margin="8,0,0,0" Classes="AdminOutlineButton" Click="CopyBodyButton_OnClick"/>
+                    <Button Margin="8,0,0,0"
+                            Classes="EmeraldOutlineButton"
+                            IsEnabled="{Binding CanRecord}"
+                            ToolTip.Tip="督促を実施済みとして履歴に記録します（未回収残額がある場合のみ）"
+                            ToolTip.ShowOnDisabled="True"
+                            Content="{Binding IsSaving, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='記録中...|督促処理を受け付ける'}"
+                            Click="RecordButton_OnClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Margin="0,16,0,0"
+                Classes="RoseBanner"
+                IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- ===== 概要（4 列） ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="12"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Classes="StatBox">
+                    <StackPanel>
+                        <TextBlock Text="顧客" Classes="StatLabel"/>
+                        <TextBlock Text="{Binding MemberName}" Classes="SummaryValue"/>
+                        <TextBlock Text="{Binding MemberEmail}" Classes="SummarySub"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Classes="StatBox">
+                    <StackPanel>
+                        <TextBlock Text="支払期限" Classes="StatLabel"/>
+                        <TextBlock Text="{Binding DueDateText}" Classes="SummaryValue"/>
+                        <TextBlock Classes="SummarySub">
+                            <Run Text="請求日："/><Run Text="{Binding InvoiceDateText, Mode=OneWay}"/>
+                        </TextBlock>
+                    </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Classes="StatBox">
+                    <StackPanel>
+                        <TextBlock Text="請求合計" Classes="StatLabel"/>
+                        <TextBlock Text="{Binding TotalText}" Classes="SummaryValue"/>
+                        <TextBlock Text="{Binding PaidTotalText}" Classes="SummarySub"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- 未回収残額: border-amber-500/40 bg-amber-500/10 -->
+                <Border Grid.Column="6" Classes="StatBox" BorderBrush="#66F59E0B" Background="#1AF59E0B">
+                    <StackPanel>
+                        <TextBlock Text="未回収残額" FontSize="11" Foreground="#FCD34D"/>
+                        <TextBlock Text="{Binding RemainingText}" Classes="SummaryValue" Foreground="#FCD34D"/>
+                        <TextBlock Text="次回対応日を決めて追う" Classes="SummarySub" Foreground="#FDE68A"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Border>
+
+        <!-- ===== 左: 督促設定 / 右: 文面プレビュー・督促履歴 ===== -->
+        <Grid Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="24"/>
+                <ColumnDefinition Width="2*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 督促設定 -->
+            <Border Grid.Column="0" VerticalAlignment="Top" Classes="PageHeaderCard">
+                <StackPanel>
+                    <TextBlock Text="督促設定" Classes="SectionTitle2"/>
+
+                    <TextBlock Text="チャネル" Margin="0,14,0,6" Classes="AdminFieldLabel"/>
+                    <ListBox Classes="SegmentListBox"
+                             Margin="0,0,-8,0"
+                             ItemsSource="{Binding ChannelOptions}"
+                             DisplayMemberBinding="{Binding Label}"
+                             SelectedValueBinding="{Binding Value}"
+                             SelectedValue="{Binding SelectedChannel, Mode=TwoWay, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"/>
+
+                    <TextBlock Text="トーン" Margin="0,14,0,6" Classes="AdminFieldLabel"/>
+                    <ListBox Classes="SegmentListBox"
+                             Margin="0,0,-8,0"
+                             ItemsSource="{Binding ToneOptions}"
+                             DisplayMemberBinding="{Binding Label}"
+                             SelectedValueBinding="{Binding Value}"
+                             SelectedValue="{Binding SelectedTone, Mode=TwoWay, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"/>
+
+                    <TextBlock Text="次回アクション日" Margin="0,14,0,6" Classes="AdminFieldLabel"/>
+                    <CalendarDatePicker Classes="DateBoxPicker"
+                                        SelectedDate="{Binding NextActionDate, Mode=TwoWay}"/>
+
+                    <TextBlock Text="メモ（任意）" Margin="0,14,0,6" Classes="AdminFieldLabel"/>
+                    <TextBox Classes="AdminTextBox"
+                             Height="72"
+                             Padding="12,8"
+                             VerticalContentAlignment="Top"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             PlaceholderText="対応内容など（履歴に残ります）"
+                             Text="{Binding Memo, Mode=TwoWay}"/>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="2">
+                <!-- メール送信文面プレビュー -->
+                <Border Classes="PageHeaderCard">
+                    <StackPanel>
+                        <TextBlock Text="メール送信文面プレビュー" Margin="0,0,0,12" Classes="SectionTitle2"/>
+                        <Border Classes="StatBox">
+                            <StackPanel>
+                                <TextBlock Text="件名" Classes="PreviewLabel"/>
+                                <TextBlock Text="{Binding SubjectPreview}"
+                                           Margin="0,4,0,0"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Slate100Brush}"
+                                           TextWrapping="Wrap"/>
+
+                                <TextBlock Text="本文" Margin="0,16,0,0" Classes="PreviewLabel"/>
+                                <TextBox Text="{Binding BodyPreview, Mode=OneWay}"
+                                         Margin="0,6,0,0"
+                                         IsReadOnly="True"
+                                         TextWrapping="Wrap"
+                                         Background="Transparent"
+                                         BorderThickness="0"
+                                         Padding="0"
+                                         FontSize="12"
+                                         Foreground="{DynamicResource Slate100Brush}"
+                                         SelectionBrush="{DynamicResource Sky500Brush}"
+                                         ToolTip.Tip="本文は選択してコピーすることもできます"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- 督促履歴 -->
+                <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+                    <StackPanel>
+                        <TextBlock Text="督促履歴" Margin="0,0,0,12" Classes="SectionTitle2"/>
+
+                        <ItemsControl ItemsSource="{Binding Logs}" Focusable="False">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8" Classes="StatBox" Padding="16,12">
+                                        <StackPanel>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource Slate100Brush}" TextTrimming="CharacterEllipsis">
+                                                    <Run Text="{Binding AtText, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding ChannelLabel, Mode=OneWay}"/><Run Text=" / "/><Run Text="{Binding ToneLabel, Mode=OneWay}"/>
+                                                </TextBlock>
+                                                <TextBlock Grid.Column="1" FontSize="11" Foreground="{DynamicResource Slate400Brush}">
+                                                    <Run Text="次回："/><Run Text="{Binding NextActionDateText, Mode=OneWay}"/>
+                                                </TextBlock>
+                                            </Grid>
+                                            <TextBlock Text="{Binding Title}" Margin="0,4,0,0" FontSize="12" Foreground="{DynamicResource Slate200Brush}" TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Memo}" Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Slate400Brush}" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <Border Classes="StatBox" IsVisible="{Binding Logs.Count, Converter={x:Static helpers:IntEqualsConverter.Instance}, ConverterParameter=0}">
+                            <TextBlock Text="履歴はまだありません。" FontSize="12" Foreground="{DynamicResource Slate400Brush}"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

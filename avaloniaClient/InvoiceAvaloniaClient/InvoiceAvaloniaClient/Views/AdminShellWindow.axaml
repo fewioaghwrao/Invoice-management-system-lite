@@ -1,0 +1,193 @@
+﻿<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="InvoiceAvaloniaClient.Views.AdminShellWindow"
+        x:CompileBindings="False"
+        Icon="/Assets/favicon.ico"
+        Title="ダッシュボード - Invoice Management System（管理者）"
+        Width="1440"
+        Height="900"
+        MinWidth="1200"
+        MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        Background="#020617"
+        UseLayoutRounding="True">
+
+    <!--
+        管理者用のシェル。ヘッダー / 左メニューは共通で、中央の PageHost に画面を差し込む。
+        Next.js の components/admin/AdminHeader.tsx・AdminSidebar.tsx に合わせている（操作ログは WPF 版では扱わない）。
+        DataContext は AdminDashboardViewModel（年の切り替え・ユーザー表示に使用）。
+    -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 背景: bg-slate-950 + 上（sky-500）と下（indigo-500）のぼかし -->
+        <Grid Grid.RowSpan="2" IsHitTestVisible="False" Opacity="0.3">
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                        <GradientStop Color="#0EA5E9" Offset="0"/>
+                        <GradientStop Color="#000EA5E9" Offset="0.45"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+            <Rectangle>
+                <Rectangle.Fill>
+                    <LinearGradientBrush StartPoint="50%,0%" EndPoint="50%,100%">
+                        <GradientStop Color="#006366F1" Offset="0.55"/>
+                        <GradientStop Color="#6366F1" Offset="1"/>
+                    </LinearGradientBrush>
+                </Rectangle.Fill>
+            </Rectangle>
+        </Grid>
+
+        <!-- ===== ヘッダー: border-b border-slate-800 bg-slate-950/80 ===== -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource Slate950_80Brush}"
+                BorderBrush="{DynamicResource Slate800Brush}"
+                BorderThickness="0,0,0,1">
+            <Grid MaxWidth="1440" Margin="32,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock x:Name="PageTitleText"
+                               Text="請求・入金ステータスダッシュボード（管理者）"
+                               FontSize="20"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource Slate50Brush}"/>
+                    <TextBlock x:Name="PageDescriptionText"
+                               Text="売上・未入金・請求書と入金の状況を確認できます。"
+                               Margin="0,4,0,0"
+                               FontSize="14"
+                               Foreground="{DynamicResource Slate400Brush}"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- 年の切り替え: rounded-xl border-slate-700 bg-slate-900/60 px-3 py-2 -->
+                    <Border x:Name="YearSwitcher"
+                            CornerRadius="12"
+                            BorderThickness="1"
+                            BorderBrush="{DynamicResource Slate700Brush}"
+                            Background="{DynamicResource PanelSoftBrush}"
+                            Padding="12,8"
+                            Margin="0,0,12,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="{Binding PreviousYearText}"
+                                    VerticalAlignment="Center"
+                                    Classes="YearStepButton"
+                                    Click="PreviousYearButton_OnClick"/>
+                            <Border Margin="8,0"
+                                    CornerRadius="999"
+                                    BorderThickness="1"
+                                    BorderBrush="{DynamicResource Slate600Brush}"
+                                    Background="{DynamicResource Slate800Brush}"
+                                    Padding="12,4">
+                                <TextBlock Text="{Binding SelectedYearText}"
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource Slate100Brush}"/>
+                            </Border>
+                            <Button Content="{Binding NextYearText}"
+                                    VerticalAlignment="Center"
+                                    Classes="YearStepButton"
+                                    Click="NextYearButton_OnClick"/>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- ロール / 氏名 / ログアウト -->
+                    <Border Background="#F3F4F6"
+                            CornerRadius="999"
+                            Padding="8,4"
+                            VerticalAlignment="Center">
+                        <TextBlock Text="ロール: 管理者" FontSize="14" Foreground="#4B5563"/>
+                    </Border>
+
+                    <TextBlock x:Name="DisplayNameText"
+                               Margin="8,0,12,0"
+                               VerticalAlignment="Center"
+                               FontSize="14"
+                               Foreground="{DynamicResource Slate500Brush}"/>
+
+                    <Button Content="ログアウト"
+                            Classes="LogoutButton"
+                            Click="LogoutButton_OnClick"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ===== メイン ===== -->
+        <ScrollViewer x:Name="MainScrollViewer"
+                      Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <Grid MaxWidth="1440" Margin="32,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="208"/>
+                    <ColumnDefinition Width="24"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左メニュー -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Top">
+                    <Button x:Name="NavDashboard" Classes="AdminNavItem active" Click="NavDashboard_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A9;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="{DynamicResource Slate300Brush}"/>
+                            <TextBlock Text="ダッシュボード" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="NavInvoices" Classes="AdminNavItem" Click="NavInvoices_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE8A5;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="{DynamicResource Slate200Brush}"/>
+                            <TextBlock Text="請求書一覧" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="NavPayments" Classes="AdminNavItem" Click="NavPayments_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE825;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="#FBBF24"/>
+                            <TextBlock Text="入金一覧" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="NavMembers" Classes="AdminNavItem" Click="NavMembers_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE716;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="#A78BFA"/>
+                            <TextBlock Text="会員一覧" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="NavSales" Classes="AdminNavItem" Click="NavSales_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D2;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="{DynamicResource Sky400Brush}"/>
+                            <TextBlock Text="売上一覧" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
+                    <Button x:Name="NavSalesByMember" Classes="AdminNavItem" Click="NavSalesByMember_OnClick">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xEB05;" Width="20" Margin="0,0,12,0"
+                                       Classes="IconGlyph" Foreground="#34D399"/>
+                            <TextBlock Text="顧客別集計" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <ContentControl x:Name="PageHost" Grid.Column="2" Focusable="False"/>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</Window>

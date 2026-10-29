@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.MemberProfileView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1100">
+
+    <!-- 登録情報（Next.js: account/profile/page.tsx + AccountProfileFormClient.tsx）。DataContext は MemberProfileViewModel。 -->
+    <StackPanel>
+        <TextBlock Text="登録情報" Classes="SectionTitle"/>
+        <TextBlock Text="請求書の宛名や連絡先に使用される情報です。"
+                   Margin="0,4,0,0"
+                   Classes="SmallMuted"/>
+
+        <!-- rounded-2xl border-slate-800 bg-slate-900/80 p-6 shadow-md -->
+        <Border Margin="0,16,0,0"
+                Padding="24"
+                Classes="Panel"
+                Background="{DynamicResource CardBrush}">
+            <StackPanel>
+                <TextBlock Text="登録情報の確認・変更"
+                           Margin="0,0,0,16"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource Slate200Brush}"/>
+
+                <!-- 2 列（gap-4） -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="氏名 *" Classes="CompactLabel"/>
+                        <TextBox x:Name="NameTextBox"
+                                 Classes="CompactTextBox"
+                                 Text="{Binding Name}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="メールアドレス *" Classes="CompactLabel"/>
+                        <TextBox Classes="CompactTextBox"
+                                 Text="{Binding Email}"/>
+                        <TextBlock Text="メールアドレスを変更しても確認メールは送信されません。"
+                                   Margin="0,4,0,0"
+                                   Classes="TinyMuted"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="電話番号" Classes="CompactLabel"/>
+                        <TextBox Classes="CompactTextBox"
+                                 Text="{Binding Phone}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="郵便番号" Classes="CompactLabel"/>
+                        <TextBox Classes="CompactTextBox"
+                                 Text="{Binding PostalCode}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3">
+                        <TextBlock Text="住所" Classes="CompactLabel"/>
+                        <TextBox Classes="CompactTextBox"
+                                 Text="{Binding Address}"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- エラー / 完了メッセージ -->
+                <Border Margin="0,16,0,0"
+                        Classes="RoseBanner"
+                        CornerRadius="8"
+                        IsVisible="{Binding ErrorMessageVisibility}">
+                    <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+                </Border>
+
+                <Border Margin="0,16,0,0"
+                        Classes="SuccessBanner"
+                        CornerRadius="8"
+                        IsVisible="{Binding InfoMessageVisibility}">
+                    <TextBlock Text="{Binding InfoMessage}" Classes="SuccessBannerText"/>
+                </Border>
+
+                <!-- 退会する / 保存 -->
+                <Grid Margin="0,24,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Button Grid.Column="0"
+                            Content="退会する"
+                            Classes="RoseSoftButton"
+                            Command="{Binding WithdrawCommand}"/>
+
+                    <TextBlock Grid.Column="1"
+                               Margin="0,0,12,0"
+                               HorizontalAlignment="Right"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               Foreground="{DynamicResource Slate400Brush}"
+                               Text="{Binding LoadingMessage}"
+                               IsVisible="{Binding LoadingVisibility}"/>
+
+                    <Button Grid.Column="2"
+                            Content="保存"
+                            Classes="EmeraldButton"
+                            Command="{Binding SaveCommand}"/>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

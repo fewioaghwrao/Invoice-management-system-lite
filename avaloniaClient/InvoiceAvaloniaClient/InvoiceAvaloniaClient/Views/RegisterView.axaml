@@ -1,0 +1,182 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             mc:Ignorable="d"
+             d:DesignWidth="800"
+             x:Class="InvoiceAvaloniaClient.Views.RegisterView"
+             x:CompileBindings="False">
+
+    <!-- Next.js frontend/src/app/auth/register/page.tsx に合わせたレイアウト。LoginWindow 内に差し込んで表示する。 -->
+    <UserControl.Styles>
+        <!-- h-1.5 w-1.5 rounded-full bg-sky-400 -->
+        <Style Selector="Ellipse.BulletDot">
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Height" Value="6"/>
+            <Setter Property="Margin" Value="0,8,8,0"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Fill" Value="#38BDF8"/>
+        </Style>
+        <Style Selector="TextBlock.BulletText">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="LineHeight" Value="22"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- 外側カード: max-w-3xl rounded-3xl border-slate-800 bg-slate-900/80 p-8 shadow-2xl -->
+    <Border MaxWidth="768"
+            CornerRadius="24"
+            Background="{DynamicResource CardBrush}"
+            BorderBrush="{DynamicResource Slate800Brush}"
+            BorderThickness="1"
+            BoxShadow="0 20 50 0 #59000000"
+            Padding="32">
+        <StackPanel>
+            <Button Content="← ログインに戻る"
+                    Margin="-4,0,0,16"
+                    Classes="BackLinkButton"
+                    Click="BackButton_OnClick"/>
+
+            <!-- 説明 -->
+            <Border Classes="BrandPill">
+                <TextBlock Text="Invoice Management System" Classes="BrandPillText"/>
+            </Border>
+
+            <TextBlock Text="新規会員登録" Margin="0,16,0,0" Classes="PageTitle"/>
+
+            <TextBlock Margin="0,8,0,0" Classes="PageDescription">
+                <Run Text="請求書・入金ステータスダッシュボードのデモ用アカウントを登録します。"/>
+                <LineBreak/>
+                <Run Text="氏名とメールアドレス、パスワードだけでも登録可能です。"/>
+            </TextBlock>
+
+            <!-- mt-8 space-y-3 / 先頭に sky-400 の丸 -->
+            <StackPanel Margin="0,32,0,0" Spacing="12">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Classes="BulletDot"/>
+                    <TextBlock Grid.Column="1" Text="登録後は、請求書一覧・入金状況を閲覧できるようになります。" Classes="BulletText"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Classes="BulletDot"/>
+                    <TextBlock Grid.Column="1" Text="メールアドレスはログインIDとして使用します。" Classes="BulletText"/>
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*">
+                    <Ellipse Classes="BulletDot"/>
+                    <TextBlock Grid.Column="1" Text="ダミー情報でも問題ありません（ポートフォリオ用）。" Classes="BulletText"/>
+                </Grid>
+            </StackPanel>
+
+            <!-- フォーム: rounded-2xl bg-slate-900/80 p-6 shadow-lg -->
+            <Border Margin="0,28,0,0"
+                    CornerRadius="16"
+                    Background="{DynamicResource CardBrush}"
+                    BoxShadow="0 6 18 0 #4D000000"
+                    Padding="24">
+                <StackPanel>
+
+                    <!-- エラー / 成功 -->
+                    <Border Margin="0,0,0,16"
+                            Classes="ErrorBanner"
+                            IsVisible="{Binding HasError}">
+                        <TextBlock Text="{Binding ErrorMessage}" Classes="ErrorBannerText"/>
+                    </Border>
+
+                    <Border Margin="0,0,0,16"
+                            Classes="SuccessBanner"
+                            IsVisible="{Binding HasSuccess}">
+                        <TextBlock Text="{Binding SuccessMessage}" Classes="SuccessBannerText"/>
+                    </Border>
+
+                    <!-- 氏名 -->
+                    <TextBlock Classes="FieldLabel">
+                        <Run Text="氏名 "/>
+                        <Run Text="*" Foreground="#F87171"/>
+                    </TextBlock>
+                    <TextBox x:Name="NameTextBox"
+                             Classes="ModernTextBox"
+                             Text="{Binding Name}"/>
+
+                    <!-- メールアドレス -->
+                    <TextBlock Margin="0,16,0,4" Classes="FieldLabel">
+                        <Run Text="メールアドレス "/>
+                        <Run Text="*" Foreground="#F87171"/>
+                    </TextBlock>
+                    <TextBox Classes="ModernTextBox"
+                             Text="{Binding Email}"/>
+
+                    <!-- パスワード -->
+                    <TextBlock Margin="0,16,0,4" Classes="FieldLabel">
+                        <Run Text="パスワード "/>
+                        <Run Text="*" Foreground="#F87171"/>
+                    </TextBlock>
+                    <Grid>
+                        <TextBox x:Name="PasswordBox"
+                                 Classes="ModernTextBox"
+                                 Padding="12,0,72,0"
+                                 PasswordChar="●"
+                                 PlaceholderText="8文字以上を推奨"
+                                 Text="{Binding Password}"/>
+
+                        <Button x:Name="TogglePasswordButton"
+                                Classes="GhostButton"
+                                Content="表示"
+                                HorizontalAlignment="Right"
+                                VerticalAlignment="Stretch"
+                                Margin="0,5,8,5"
+                                Click="TogglePasswordButton_OnClick"/>
+                    </Grid>
+
+                    <TextBlock Text="英数字・記号を組み合わせた8文字以上のパスワードを推奨します。"
+                               Classes="FieldHint"/>
+
+                    <!-- 郵便番号 / 電話番号 -->
+                    <Grid Margin="0,16,0,0" ColumnDefinitions="*,12,*">
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="郵便番号" Classes="FieldLabel"/>
+                            <TextBox Classes="ModernTextBox"
+                                     PlaceholderText="例）1000001"
+                                     Text="{Binding PostalCode}"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="電話番号" Classes="FieldLabel"/>
+                            <TextBox Classes="ModernTextBox"
+                                     PlaceholderText="例）090-1234-5678"
+                                     Text="{Binding Phone}"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- 住所 -->
+                    <TextBlock Text="住所" Margin="0,16,0,4" Classes="FieldLabel"/>
+                    <TextBox Classes="ModernTextBox"
+                             PlaceholderText="例）東京都千代田区1-1-1"
+                             Text="{Binding Address}"/>
+
+                    <!-- 送信（Enter キーでも実行） -->
+                    <Button Margin="0,24,0,0"
+                            Classes="PrimaryButton"
+                            IsDefault="True"
+                            Command="{Binding RegisterCommand}"
+                            Content="{Binding IsLoading, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='登録中...|アカウントを作成する'}"/>
+
+                    <!-- すでにアカウントをお持ちですか？ ログインはこちら -->
+                    <StackPanel Margin="0,16,0,0"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Center">
+                        <TextBlock Text="すでにアカウントをお持ちですか？"
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Slate400Brush}"/>
+                        <Button Content="ログインはこちら"
+                                FontWeight="Medium"
+                                Classes="LinkButton"
+                                Click="BackButton_OnClick"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

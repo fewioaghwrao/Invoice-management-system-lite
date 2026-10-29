@@ -1,0 +1,17 @@
+﻿<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:InvoiceAvaloniaClient"
+             x:Class="InvoiceAvaloniaClient.App"
+             RequestedThemeVariant="Dark">
+             <!-- WPF 版と同じ暗い配色の画面なので、テーマは Dark に固定する -->
+
+    <Application.DataTemplates>
+        <local:ViewLocator />
+    </Application.DataTemplates>
+
+    <Application.Styles>
+        <FluentTheme />
+        <!-- 請求管理システムの共通スタイル（WPF 版の Themes/*.xaml） -->
+        <StyleInclude Source="avares://InvoiceAvaloniaClient/Themes/AppTheme.axaml" />
+    </Application.Styles>
+</Application>

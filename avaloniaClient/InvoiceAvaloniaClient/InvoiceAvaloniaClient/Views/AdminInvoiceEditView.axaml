@@ -1,0 +1,250 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminInvoiceEditView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 請求書作成 / 編集（Next.js: app/invoices/new, [id]/edit + shared/InvoiceFormClient.tsx）。DataContext は AdminInvoiceEditViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.SectionTitle2">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="TextBlock.TotalRowLabel">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate300Brush}"/>
+        </Style>
+        <Style Selector="TextBlock.TotalRowValue">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="{DynamicResource Slate100Brush}"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style Selector="Button.SmallIconButton">
+            <Setter Property="MinWidth" Value="32"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="請求書一覧" Classes="BreadcrumbButton" Click="BreadcrumbList_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <TextBlock Text="{Binding ScreenTitle}" Classes="BreadcrumbText"/>
+                    </StackPanel>
+                    <StackPanel Margin="0,6,0,0" Orientation="Horizontal">
+                        <TextBlock Text="{Binding ScreenTitle}" Classes="PageHeaderTitle"/>
+                        <TextBlock Margin="12,0,0,0"
+                                   Text="読み込み中..."
+                                   VerticalAlignment="Center"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource Sky300Brush}"
+                                   IsVisible="{Binding IsLoading}"/>
+                    </StackPanel>
+                    <TextBlock Text="請求情報と明細を入力してください。" Margin="0,6,0,0" Classes="SmallMuted"/>
+                    <TextBlock Margin="0,4,0,0" FontSize="11" Foreground="{DynamicResource Slate500Brush}">
+                        <Run Text="小計："/><Run Text="{Binding TotalAmountText, Mode=OneWay}"/><Run Text=" / 合計："/><Run Text="{Binding TotalAmountText, Mode=OneWay}"/>
+                    </TextBlock>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="BackButton" Content="← 一覧へ" Classes="AdminOutlineButton" Click="BackButton_OnClick"/>
+                    <Button Margin="8,0,0,0"
+                            Classes="SkyButton"
+                            Content="{Binding IsSaving, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='保存中...|保存'}"
+                            Click="SaveButton_OnClick">
+                        <Button.IsEnabled>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!IsSaving"/>
+                                <Binding Path="!IsLoading"/>
+                            </MultiBinding>
+                        </Button.IsEnabled>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <Border Margin="0,16,0,0"
+                Classes="RoseBanner"
+                IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- ===== 基本情報 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <TextBlock Text="基本情報" Classes="SectionTitle2"/>
+
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="16"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.Column="0">
+                        <TextBlock Text="請求番号" Classes="AdminFieldLabel"/>
+                        <TextBox x:Name="InvoiceNumberTextBox"
+                                 Classes="AdminTextBox"
+                                 PlaceholderText="例：INV-2026-001"
+                                 Text="{Binding InvoiceNumber}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="2">
+                        <TextBlock Text="会員" Classes="AdminFieldLabel"/>
+                        <ComboBox Classes="AdminComboBox"
+                                  ItemsSource="{Binding Members}"
+                                  SelectedItem="{Binding SelectedMember, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                                  DisplayMemberBinding="{Binding Name}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="0" Grid.Column="4">
+                        <TextBlock Text="ステータス" Classes="AdminFieldLabel"/>
+                        <ComboBox Classes="AdminComboBox"
+                                  ItemsSource="{Binding StatusOptions}"
+                                  SelectedItem="{Binding SelectedStatus, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                                  DisplayMemberBinding="{Binding Name}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="0">
+                        <TextBlock Text="請求日" Classes="AdminFieldLabel"/>
+                        <CalendarDatePicker Classes="DateBoxPicker" SelectedDate="{Binding InvoiceDate}"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2" Grid.Column="2">
+                        <TextBlock Text="支払期限" Classes="AdminFieldLabel"/>
+                        <CalendarDatePicker Classes="DateBoxPicker" SelectedDate="{Binding DueDate}"/>
+                    </StackPanel>
+                </Grid>
+
+                <TextBlock Text="備考" Margin="0,16,0,4" Classes="AdminFieldLabel"/>
+                <TextBox Classes="AdminTextBox"
+                         Height="64"
+                         Padding="12,8"
+                         VerticalContentAlignment="Top"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         ScrollViewer.VerticalScrollBarVisibility="Auto"
+                         PlaceholderText="例：入金条件、担当者メモなど"
+                         Text="{Binding Remarks}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 請求明細 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <Grid Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="請求明細" Classes="SectionTitle2"/>
+                    <Button Grid.Column="1" Content="＋ 行追加" Classes="AdminOutlineButton" Click="AddLineButton_OnClick"/>
+                </Grid>
+
+                <ItemsControl x:Name="LineItems" ItemsSource="{Binding Lines}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <!-- 1 行分: rounded-xl border-slate-800 bg-slate-950/40 p-4 -->
+                            <Border Margin="0,0,0,12" Classes="StatBox">
+                                <StackPanel>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="3*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="12"/>
+                                            <ColumnDefinition Width="2*"/>
+                                        </Grid.ColumnDefinitions>
+
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="項目" Classes="AdminFieldLabel"/>
+                                            <TextBox Classes="AdminTextBox"
+                                                     PlaceholderText="例：月額利用料（3月）"
+                                                     Text="{Binding Name}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2">
+                                            <TextBlock Text="数量" Classes="AdminFieldLabel"/>
+                                            <TextBox Classes="AdminTextBox"
+                                                     Text="{Binding Qty}"/>
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="4">
+                                            <TextBlock Text="単価" Classes="AdminFieldLabel"/>
+                                            <TextBox Classes="AdminTextBox"
+                                                     Text="{Binding UnitPrice}"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Slate300Brush}">
+                                            <Run Text="金額："/><Run Text="{Binding Amount, StringFormat='￥{0:N0}', Mode=OneWay}" FontWeight="SemiBold" Foreground="{DynamicResource Slate50Brush}"/>
+                                        </TextBlock>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                            <Button Content="↑" ToolTip.Tip="1行上へ" Classes="AdminOutlineButton SmallIconButton" Click="MoveUpButton_OnClick"/>
+                                            <Button Content="↓" ToolTip.Tip="1行下へ" Classes="AdminOutlineButton SmallIconButton" Click="MoveDownButton_OnClick"/>
+                                            <!-- 明細が 1 行だけのときは削除できない -->
+                                            <Button Content="行削除"
+                                                    Classes="AdminOutlineButton"
+                                                    IsEnabled="{Binding $parent[ItemsControl].DataContext.Lines.Count, Converter={x:Static helpers:NotEqualsConverter.Instance}, ConverterParameter=1}"
+                                                    Click="RemoveLineButton_OnClick"/>
+                                        </StackPanel>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <!-- 合計: 右寄せの小ボックス -->
+                <Border Width="320"
+                        Margin="0,4,0,0"
+                        HorizontalAlignment="Right"
+                        Classes="StatBox">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="小計" Classes="TotalRowLabel"/>
+                            <TextBlock Text="{Binding TotalAmountText}" Classes="TotalRowValue"/>
+                        </Grid>
+                        <Grid Margin="0,8,0,0">
+                            <TextBlock Text="税" Classes="TotalRowLabel"/>
+                            <TextBlock Text="￥0" Classes="TotalRowValue"/>
+                        </Grid>
+                        <Border Margin="0,10,0,0" BorderBrush="{DynamicResource Slate800Brush}" BorderThickness="0,1,0,0" Padding="0,10,0,0">
+                            <Grid>
+                                <TextBlock Text="合計" FontWeight="SemiBold" Classes="TotalRowLabel" Foreground="{DynamicResource Slate50Brush}"/>
+                                <TextBlock Text="{Binding TotalAmountText}" FontSize="14" FontWeight="SemiBold" Classes="TotalRowValue" Foreground="{DynamicResource Slate50Brush}"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

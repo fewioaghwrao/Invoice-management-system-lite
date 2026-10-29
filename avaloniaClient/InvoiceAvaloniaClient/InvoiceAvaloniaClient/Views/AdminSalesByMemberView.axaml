@@ -1,0 +1,202 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminSalesByMemberView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 売上集計（顧客別）（Next.js: app/sales/by-member/page.tsx）。DataContext は SalesByMemberViewModel。 -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock.ListHeaderText">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+        <Style Selector="TextBlock.ListCell">
+            <Setter Property="Margin" Value="16,0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                    <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                    <Button Content="売上一覧" Classes="BreadcrumbButton" Click="BackToSalesButton_OnClick"/>
+                    <TextBlock Text=" / 顧客別集計" Classes="BreadcrumbText"/>
+                </StackPanel>
+                <TextBlock Text="売上集計（顧客別）" Margin="0,6,0,0" Classes="PageHeaderTitle"/>
+                <TextBlock Text="顧客ごとの請求額・入金額・未回収額と回収率を確認できます。" Margin="0,6,0,0" Classes="SmallMuted"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== 絞り込み + CSV / 戻る ===== -->
+        <Grid Margin="0,24,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="120"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="*" MaxWidth="320"/>
+                <ColumnDefinition Width="8"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox x:Name="YearComboBox"
+                      Grid.Column="0"
+                      VerticalAlignment="Center"
+                      Classes="AdminComboBox"
+                      SelectedItem="{Binding SelectedYear, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                      ToolTip.Tip="年">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding StringFormat='{}{0}年'}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <ComboBox Grid.Column="2"
+                      VerticalAlignment="Center"
+                      Classes="AdminComboBox"
+                      ItemsSource="{Binding MonthOptions}"
+                      SelectedItem="{Binding SelectedMonth, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                      DisplayMemberBinding="{Binding Label}"
+                      ToolTip.Tip="月"/>
+            <TextBox Grid.Column="4"
+                     VerticalAlignment="Center"
+                     Classes="AdminTextBox"
+                     PlaceholderText="顧客名で検索"
+                     Text="{Binding Keyword}"
+                     KeyDown="KeywordTextBox_OnKeyDown"/>
+            <Button Grid.Column="6" Content="絞り込み" MinHeight="34" Classes="AdminOutlineButton" Click="SearchButton_OnClick"/>
+
+            <StackPanel Grid.Column="8" Orientation="Horizontal">
+                <TextBlock Text="読み込み中..."
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           FontSize="12"
+                           Foreground="{DynamicResource Sky300Brush}"
+                           IsVisible="{Binding IsLoading}"/>
+                <Button Content="CSV出力" MinHeight="36" Padding="14,0" Classes="AdminOutlineButton" Click="ExportCsvButton_OnClick"/>
+                <Button Content="← 請求書ベースに戻る" Margin="8,0,0,0" MinHeight="36" Padding="14,0" Classes="AdminOutlineButton" Click="BackToSalesButton_OnClick"/>
+            </StackPanel>
+        </Grid>
+
+        <Border Margin="0,16,0,0"
+                Classes="RoseBanner"
+                IsVisible="{Binding HasError}">
+            <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+        </Border>
+
+        <!-- ===== 合計（4 枠） ===== -->
+        <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="16"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Classes="PageHeaderCard" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="請求合計" Classes="StatLabel"/>
+                    <TextBlock Text="{Binding InvoiceTotalText}" Classes="StatValue"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="2" Classes="PageHeaderCard" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="入金済み" Classes="StatLabel"/>
+                    <TextBlock Text="{Binding PaidTotalText}" Classes="StatValue" Foreground="#6EE7B7"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="4" Classes="PageHeaderCard" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="未回収" Classes="StatLabel"/>
+                    <TextBlock Text="{Binding RemainingTotalText}" Classes="StatValue" Foreground="{DynamicResource Amber300Brush}"/>
+                </StackPanel>
+            </Border>
+            <Border Grid.Column="6" Classes="PageHeaderCard" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="回収率" Classes="StatLabel"/>
+                    <TextBlock Text="{Binding RecoveryRateText}" Classes="StatValue" Foreground="{DynamicResource Sky300Brush}"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ===== 一覧 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard" Padding="0" ClipToBounds="True">
+            <StackPanel>
+                <Border Background="{DynamicResource Slate950_40Brush}" CornerRadius="16,16,0,0" Padding="0,12">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="顧客" Classes="InnerTableHeaderText ListHeaderText"/>
+                        <TextBlock Grid.Column="1" Text="請求合計" HorizontalAlignment="Right" Classes="InnerTableHeaderText ListHeaderText"/>
+                        <TextBlock Grid.Column="2" Text="入金済" HorizontalAlignment="Right" Classes="InnerTableHeaderText ListHeaderText"/>
+                        <TextBlock Grid.Column="3" Text="未回収" HorizontalAlignment="Right" Classes="InnerTableHeaderText ListHeaderText"/>
+                        <TextBlock Grid.Column="4" Text="回収率" HorizontalAlignment="Right" Classes="InnerTableHeaderText ListHeaderText"/>
+                    </Grid>
+                </Border>
+
+                <ItemsControl ItemsSource="{Binding Rows}" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="InnerTableRow" Padding="0,12">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="1.5*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0"
+                                            Margin="16,0"
+                                            VerticalAlignment="Center"
+                                            Content="{Binding MemberName}"
+                                            FontWeight="SemiBold"
+                                            Foreground="{DynamicResource Slate50Brush}"
+                                            ToolTip.Tip="この顧客の売上一覧を開く"
+                                            Classes="CellLinkButton"
+                                            Click="MemberLinkButton_OnClick"/>
+                                    <TextBlock Grid.Column="1" Text="{Binding InvoiceTotal, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="{DynamicResource Slate100Brush}" Classes="InnerTableCell ListCell"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding PaidTotal, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="#6EE7B7" Classes="InnerTableCell ListCell"/>
+                                    <TextBlock Grid.Column="3" Text="{Binding RemainingTotal, StringFormat='￥{0:N0}'}" HorizontalAlignment="Right" Foreground="{DynamicResource Amber300Brush}" Classes="InnerTableCell ListCell"/>
+                                    <TextBlock Grid.Column="4" Text="{Binding RecoveryRateText}" HorizontalAlignment="Right" FontWeight="SemiBold" Foreground="{DynamicResource Slate100Brush}" Classes="InnerTableCell ListCell"/>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="該当する顧客はいません。"
+                           Classes="InnerTableEmpty"
+                           IsVisible="{Binding Rows.Count, Converter={x:Static helpers:IntEqualsConverter.Instance}, ConverterParameter=0}"/>
+            </StackPanel>
+        </Border>
+
+        <!-- ===== ページ送り ===== -->
+        <Grid Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="{Binding PageText}" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource Slate400Brush}"/>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="← 前" MinWidth="56" Classes="AdminOutlineButton" Click="PrevPageButton_OnClick"/>
+                <Button Content="次 →" Margin="8,0,0,0" MinWidth="56" Classes="AdminOutlineButton" Click="NextPageButton_OnClick"/>
+            </StackPanel>
+        </Grid>
+    </StackPanel>
+</UserControl>

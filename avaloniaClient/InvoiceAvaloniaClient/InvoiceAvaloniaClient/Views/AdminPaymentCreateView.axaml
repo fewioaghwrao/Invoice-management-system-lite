@@ -1,0 +1,124 @@
+﻿<UserControl x:Class="InvoiceAvaloniaClient.Views.AdminPaymentCreateView"
+             x:CompileBindings="False"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:helpers="using:InvoiceAvaloniaClient.Helpers"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             d:DesignWidth="1150">
+
+    <!-- 入金登録（手動）（Next.js: app/payments/new/PaymentNewClient.tsx）。DataContext は PaymentCreateViewModel。 -->
+    <StackPanel>
+        <!-- ===== ページ見出し ===== -->
+        <Border Classes="PageHeaderCard">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="ダッシュボード" Classes="BreadcrumbButton" Click="BreadcrumbDashboard_OnClick"/>
+                        <TextBlock Text=" / " Classes="BreadcrumbText"/>
+                        <Button Content="入金一覧" Classes="BreadcrumbButton" Click="BackToListButton_OnClick"/>
+                        <TextBlock Text=" / 新規登録" Classes="BreadcrumbText"/>
+                    </StackPanel>
+                    <TextBlock Text="入金登録（手動）" Margin="0,6,0,0" Classes="PageHeaderTitle"/>
+                    <TextBlock Text="入金日・金額・入金名義を入力して登録します。登録後は請求書への割当画面へ進みます。"
+                               Margin="0,6,0,0"
+                               Classes="SmallMuted"/>
+                </StackPanel>
+                <Button Grid.Column="1"
+                        Content="← 入金一覧へ"
+                        VerticalAlignment="Center"
+                        Classes="AdminOutlineButton"
+                        Click="BackToListButton_OnClick"/>
+            </Grid>
+        </Border>
+
+        <!-- ===== 入力 ===== -->
+        <Border Margin="0,24,0,0" Classes="PageHeaderCard">
+            <StackPanel>
+                <Border Margin="0,0,0,16"
+                        Classes="RoseBanner"
+                        IsVisible="{Binding HasError}">
+                    <TextBlock Text="{Binding ErrorMessage}" Classes="RoseBannerText"/>
+                </Border>
+
+                <!-- 会員（入金元） -->
+                <TextBlock Text="会員（入金元）" Classes="AdminFieldLabel"/>
+                <Grid>
+                    <ComboBox x:Name="MemberComboBox"
+                              Classes="AdminComboBox"
+                              ItemsSource="{Binding Members}"
+                              SelectedItem="{Binding SelectedMember, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                              DisplayMemberBinding="{Binding Name}"/>
+                    <!-- 未選択時の案内 -->
+                    <TextBlock Margin="13,0,0,0"
+                               VerticalAlignment="Center"
+                               FontSize="12"
+                               IsHitTestVisible="False"
+                               Foreground="{DynamicResource Slate500Brush}"
+                               Text="{Binding IsLoading, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='会員を読み込み中...|会員を選択してください'}"
+                               IsVisible="{Binding #MemberComboBox.SelectedItem, Converter={x:Static ObjectConverters.IsNull}}"/>
+                </Grid>
+                <TextBlock Text="※ 一般 &amp; 有効の会員のみ表示（API側でフィルタ）" Classes="AdminFieldHint"/>
+
+                <!-- 入金日 / 入金名義 -->
+                <Grid Margin="0,16,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="入金日" Classes="AdminFieldLabel"/>
+                        <CalendarDatePicker Classes="DateBoxPicker" SelectedDate="{Binding PaymentDate}"/>
+                        <TextBlock Text="例：2025-03-10" Classes="AdminFieldHint"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="入金名義" Classes="AdminFieldLabel"/>
+                        <TextBox Classes="AdminTextBox"
+                                 PlaceholderText="会員を選ぶと自動入力されます（編集可）"
+                                 Text="{Binding PayerName}"
+                                 TextChanged="PayerNameTextBox_OnTextChanged"/>
+                        <TextBlock Text="※ 会員名を初期値にします。振込名義が異なる場合は編集してください。" Classes="AdminFieldHint"/>
+                    </StackPanel>
+                </Grid>
+
+                <!-- 入金額 -->
+                <TextBlock Text="入金額（円）" Margin="0,16,0,4" Classes="AdminFieldLabel"/>
+                <TextBox Classes="AdminTextBox"
+                         PlaceholderText="例：60000"
+                         Text="{Binding AmountText}"/>
+                <TextBlock Text="入金情報を手動で登録します。" Classes="AdminFieldHint"/>
+
+                <!-- 入金方法 -->
+                <TextBlock Text="入金方法（任意）" Margin="0,16,0,4" Classes="AdminFieldLabel"/>
+                <ComboBox Classes="AdminComboBox"
+                          ItemsSource="{Binding MethodOptions}"
+                          SelectedItem="{Binding SelectedMethod, Converter={x:Static helpers:IgnoreNullConverter.Instance}}"
+                          DisplayMemberBinding="{Binding Label}"/>
+
+                <!-- 戻る / 登録して割当へ -->
+                <StackPanel Margin="0,24,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="戻る" MinWidth="64" Classes="AdminOutlineButton" Click="BackToListButton_OnClick"/>
+                    <Button Margin="8,0,0,0"
+                            Classes="EmeraldSolidButton"
+                            Content="{Binding IsSaving, Converter={x:Static helpers:BoolTextConverter.Instance}, ConverterParameter='登録中...|登録して割当へ'}"
+                            Click="SaveButton_OnClick">
+                        <Button.IsEnabled>
+                            <MultiBinding Converter="{x:Static BoolConverters.And}">
+                                <Binding Path="!IsSaving"/>
+                                <Binding Path="!IsLoading"/>
+                            </MultiBinding>
+                        </Button.IsEnabled>
+                    </Button>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>
